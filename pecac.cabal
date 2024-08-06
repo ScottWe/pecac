@@ -1,0 +1,74 @@
+cabal-version:       2.2
+
+name:                pecac
+version:             0.1.0.0
+synopsis:            Parameterized equivalence checking for (quantum) ansatz circuits.
+-- description:
+license:             MIT
+license-file:        LICENSE
+author:              Scott Wesley
+maintainer:          scott.wesley@dal.ca
+-- copyright:
+category:            Quantum
+build-type:          Simple
+extra-source-files:  CHANGELOG.md, README.md
+
+-----------------------------------------------------------------------------------------
+-- Main library.
+
+library
+  exposed-modules:     Pecac.Parser.Parser
+                       Pecac.Parser.Syntax
+  other-modules:       Pecac.Parser.Lexer
+  build-tool-depends:  happy:happy,
+                       alex:alex
+  build-depends:       base,
+                       array,
+                       containers,
+                       filepath,
+  hs-source-dirs:      src/Pecac
+  default-language:    Haskell2010
+
+-----------------------------------------------------------------------------------------
+-- Executables.
+
+library pecac-exe
+  exposed-modules:     PecacExe.CmdLnFlags
+                       PecacExe.CmdLnParser
+                       PecacExe.IOUtils
+  build-depends:       base,
+                       cmdargs,
+                       directory,
+                       pecac
+  hs-source-dirs:      src/PecacExe
+  default-language:    Haskell2010
+
+common basic-exe-props
+  hs-source-dirs:      exe
+  default-language:    Haskell2010
+  build-depends:       base,
+                       pecac,
+                       pecac-exe
+
+executable pecac_parse
+  import:              basic-exe-props
+  main-is:             Parser/Main.hs
+  other-modules:       Parser.CmdLn
+  build-depends:       pretty-simple
+
+-----------------------------------------------------------------------------------------
+-- Unit Testing.
+
+common basic-unit-test-props
+  hs-source-dirs:      test
+  default-language:    Haskell2010
+  build-depends:       base,
+                       test-framework,
+                       test-framework-hunit,
+                       HUnit,
+                       pecac
+
+test-suite parser-parser-tests
+  import:              basic-unit-test-props
+  main-is:             Parser-Parser-Tests.hs
+  type:                exitcode-stdio-1.0
