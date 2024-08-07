@@ -1,7 +1,8 @@
 -- | Abstract syntax for a pecac-compliant OpenQASM 3 file.
 
 module Pecac.Parser.Syntax
-  ( Expr (..)
+  ( BaseGate (..)
+  , Expr (..)
   , Gate (..)
   , Operand (..)
   , ParamDecl (..)
@@ -25,9 +26,13 @@ data Stmt = GateStmt Gate
 -----------------------------------------------------------------------------------------
 -- * QASM Gates.
 
+-- | The modifier-free gates supported in a pecac-compliant OpenQASM 3 file.
+data BaseGate = PlainGate String [Operand]
+              | RotGate String Expr [Operand]
+              deriving (Show, Eq)
+
 -- | The supported gates in a pecac-compliant OpenQASM 3 file.
-data Gate = PlainGate String [Operand]
-          | RotGate String Expr [Operand]
+data Gate = Gate BaseGate
           | CtrlMod Gate
           | NegCtrlMod Gate
           | InvMod Gate

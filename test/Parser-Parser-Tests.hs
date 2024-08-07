@@ -76,45 +76,45 @@ test11 = TestCase (assertEqual "Can parse qreg declaration list (array)."
 test12 = TestCase (assertEqual "Can parse basic gates (one operand)."
                                (Right $ QASMFile "3" [] [decl])
                                (runPasmQasm "x qs[1];"))
-    where decl = GateStmt $ PlainGate "x" [QReg "qs" 1]
+    where decl = GateStmt $ Gate $ PlainGate "x" [QReg "qs" 1]
 
 test13 = TestCase (assertEqual "Can parse basic gates (three operands)."
                                (Right $ QASMFile "3" [] [decl])
                                (runPasmQasm "ccx q, qs[1], qs1[4];"))
-    where decl = GateStmt $ PlainGate "ccx" [QVar "q", QReg "qs" 1, QReg "qs1" 4]
+    where decl = GateStmt $ Gate $ PlainGate "ccx" [QVar "q", QReg "qs" 1, QReg "qs1" 4]
 
 test14 = TestCase (assertEqual "Can parse rotation gates (one operand)."
                                (Right $ QASMFile "3" [] [decl])
                                (runPasmQasm "rz(theta[1]) qs[1];"))
     where expr = CellId "theta" 1
-          decl = GateStmt $ RotGate "rz" expr [QReg "qs" 1]
+          decl = GateStmt $ Gate $ RotGate "rz" expr [QReg "qs" 1]
 
 test15 = TestCase (assertEqual "Can parse rotation gates (three operands)."
                                (Right $ QASMFile "3" [] [decl])
                                (runPasmQasm "ccrz(theta[1]) qs1[5], x, y;"))
     where expr = CellId "theta" 1
-          decl = GateStmt $ RotGate "ccrz" expr [QReg "qs1" 5, QVar "x", QVar "y"]
+          decl = GateStmt $ Gate $ RotGate "ccrz" expr [QReg "qs1" 5, QVar "x", QVar "y"]
 
 test16 = TestCase (assertEqual "Can parse rotation gates (complicated expression)."
                                (Right $ QASMFile "3" [] [decl])
                                (runPasmQasm line))
     where line = "rz(theta[1] + 5 * x + (-2) * rho[5]) q;"
-          decl = GateStmt $ RotGate "rz" complexExpr [QVar "q"]
+          decl = GateStmt $ Gate $ RotGate "rz" complexExpr [QVar "q"]
 
 test17 = TestCase (assertEqual "Can parse controlled gate."
                                (Right $ QASMFile "3" [] [decl])
                                (runPasmQasm "ctrl @ x q;"))
-    where decl = GateStmt $ CtrlMod $ PlainGate "x" [QVar "q"]
+    where decl = GateStmt $ CtrlMod $ Gate $ PlainGate "x" [QVar "q"]
 
 test18 = TestCase (assertEqual "Can parse negatively controlled gate."
                                (Right $ QASMFile "3" [] [decl])
                                (runPasmQasm "negctrl @ x q;"))
-    where decl = GateStmt $ NegCtrlMod $ PlainGate "x" [QVar "q"]
+    where decl = GateStmt $ NegCtrlMod $ Gate $ PlainGate "x" [QVar "q"]
 
 test19 = TestCase (assertEqual "Can parse inverse gate."
                                (Right $ QASMFile "3" [] [decl])
                                (runPasmQasm "inv @ x q;"))
-    where decl = GateStmt $ InvMod $ PlainGate "x" [QVar "q"]
+    where decl = GateStmt $ InvMod $ Gate $ PlainGate "x" [QVar "q"]
 
 test20 = TestCase (assertEqual "Can parse mixed statement (1/2)."
                                (Right $ QASMFile "2.0" ["stdgates.inc"] body)
@@ -128,9 +128,9 @@ test20 = TestCase (assertEqual "Can parse mixed statement (1/2)."
                   "crz(theta[1]) qs[1], q1;"
           body = [ParamDeclStmt $ ParamArrDecl "theta" 5,
                   QubitDeclStmt $ QubitVarDecl "q1",
-                  GateStmt $ PlainGate "x" [QVar "q1"],
+                  GateStmt $ Gate $ PlainGate "x" [QVar "q1"],
                   QubitDeclStmt $ QubitArrDecl "qs" 7,
-                  GateStmt $ RotGate "crz" (CellId "theta" 1) [QReg "qs" 1, QVar "q1"]]
+                  GateStmt $ Gate $ RotGate "crz" (CellId "theta" 1) [QReg "qs" 1, QVar "q1"]]
 
 test21 = TestCase (assertEqual "Can parse mixed statement (2/2)."
                                (Right $ QASMFile "3" [] body)
@@ -144,9 +144,9 @@ test21 = TestCase (assertEqual "Can parse mixed statement (2/2)."
           body = [ParamDeclStmt $ ParamArrDecl "phi" 5,
                   QubitDeclStmt $ QubitVarDecl "q1",
                   QubitDeclStmt $ QubitVarDecl "q2",
-                  GateStmt $ CtrlMod $ PlainGate "x" [QVar "q1", QVar "q2"],
+                  GateStmt $ CtrlMod $ Gate $ PlainGate "x" [QVar "q1", QVar "q2"],
                   QubitDeclStmt $ QubitArrDecl "qs1" 22,
-                  GateStmt $ RotGate "crz" (CellId "phi" 2) [QReg "qs1" 5, QVar "q2"]]
+                  GateStmt $ Gate $ RotGate "crz" (CellId "phi" 2) [QReg "qs1" 5, QVar "q2"]]
 
 -----------------------------------------------------------------------------------------
 -- Invalid Parsing Tests

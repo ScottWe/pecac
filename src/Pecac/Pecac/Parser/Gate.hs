@@ -4,12 +4,13 @@ module Pecac.Parser.Gate
   ( ExprErr (..)
   , OperandErr (..)
   , toCoeffs
+  , toPlainName
   , toQubitList
+  , toRotName
   ) where
 
 -------------------------------------------------------------------------------
 -- * Import Section.
-
 
 import Pecac.Either
   ( branchRight
@@ -19,6 +20,10 @@ import Pecac.List (repeatn)
 import Pecac.Parser.Syntax
   ( Expr (..)
   , Operand (..)
+  )
+import Pecac.Analyzer.Gate
+  ( PlainName (..)
+  , RotName (..)
   )
 
 -----------------------------------------------------------------------------------------
@@ -158,3 +163,38 @@ toQubitList reg sz n (QReg name idx:rst)
     | idx >= sz   = Left $ QubitOOB idx sz
     | 0 > idx     = Left $ QubitOOB idx sz
     | otherwise   = branchRight (toQubitList reg sz (n - 1) rst) (addOperand idx)
+
+-----------------------------------------------------------------------------------------
+-- * Gate Name Abstraction.
+
+-- | Converts string representations of plain gate names to enumerative representations.
+-- If a name is unknown, then nothing is returned.
+toPlainName :: String -> Maybe PlainName
+toPlainName "x"     = Just GateX
+toPlainName "y"     = Just GateY
+toPlainName "z"     = Just GateZ
+toPlainName "h"     = Just GateH
+toPlainName "s"     = Just GateS
+toPlainName "sdg"   = Just GateSdg
+toPlainName "t"     = Just GateT
+toPlainName "tdg"   = Just GateTdg
+toPlainName "sx"    = Just GateSX
+toPlainName "cx"    = Just GateCX
+toPlainName "cy"    = Just GateCY
+toPlainName "cz"    = Just GateCZ
+toPlainName "ch"    = Just GateCH
+toPlainName "swap"  = Just GateSwap
+toPlainName "ccx"   = Just GateCCX
+toPlainName "cswap" = Just GateCSwap
+toPlainName _       = Nothing
+
+-- | Converts string representations of rotation gate names to enumerative
+-- representations. If a name is unknown, then nothing is returned.
+toRotName :: String -> Maybe RotName
+toRotName "rx"  = Just RotX
+toRotName "ry"  = Just RotY
+toRotName "rz"  = Just RotZ
+toRotName "crx" = Just RotCX
+toRotName "cry" = Just RotCY
+toRotName "crz" = Just RotCZ
+toRotName _     = Nothing

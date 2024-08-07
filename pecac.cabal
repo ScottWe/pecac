@@ -19,6 +19,7 @@ extra-source-files:  CHANGELOG.md, README.md
 library
   exposed-modules:     Pecac.Either
                        Pecac.List
+                       Pecac.Analyzer.Gate
                        Pecac.Parser.Gate
                        Pecac.Parser.Parser
                        Pecac.Parser.Syntax

@@ -78,8 +78,8 @@ QubitDecl : qubit id                              { QubitVarDecl $2 }
 ----------------
 -- | Gate Format
 
-Gate : id GateOperands                            { PlainGate $1 $2 }
-     | id '(' Expr ')' GateOperands               { RotGate $1 $3 $5 }
+Gate : id GateOperands                            { Gate (PlainGate $1 $2) }
+     | id '(' Expr ')' GateOperands               { Gate (RotGate $1 $3 $5) }
      | ctrl '@' Gate                              { CtrlMod $3 }
      | negctrl '@' Gate                           { NegCtrlMod $3 }
      | inv '@' Gate                               { InvMod $3 }
