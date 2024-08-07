@@ -2,7 +2,9 @@
 
 module Pecac.Parser.Gate
   ( ExprErr (..)
+  , OperandErr (..)
   , toCoeffs
+  , toQubitList
   ) where
 
 -------------------------------------------------------------------------------
@@ -14,7 +16,10 @@ import Pecac.Either
   , updateRight
   )
 import Pecac.List (repeatn)
-import Pecac.Parser.Syntax (Expr (..))
+import Pecac.Parser.Syntax
+  ( Expr (..)
+  , Operand (..)
+  )
 
 -----------------------------------------------------------------------------------------
 -- * Expression Abstraction.
@@ -115,3 +120,41 @@ toCoeffs tar sz (Negate expr)       = unaryOp expr (toCoeffs tar sz) $ map negat
 toCoeffs _   _  (VarId name)        = Left $ UnknownParam name
 toCoeffs tar sz (CellId name idx)   = checkCell tar sz name idx
 toCoeffs _   _  (ConstNat n)        = Left $ UnexpectedNat n
+
+-----------------------------------------------------------------------------------------
+-- * Operand Abstraction.
+
+-- | Explanations for operand parsing failures.
+data OperandErr = TooManyOperands Int
+                | TooFewOperands Int
+                | NonArrOperand
+                | QubitOOB Int Int
+                | UnknownQubitReg String
+                | NoCloningViolation Int
+                deriving (Show, Eq)
+
+-- | Helper function to add an index to a partial list of valid operand indices. If the
+-- new index already appears in the list, then no-cloning is violated, and an error is
+-- returned. Otherwise, the new operand list is returned.
+addOperand :: Int -> [Int] -> Either OperandErr [Int]
+addOperand idx indices =
+    if idx `elem` indices
+    then Left $ NoCloningViolation idx
+    else Right $ idx : indices
+
+-- | Takes as input the name of the qubit registry (reg), the size of the registry (sz),
+-- the numer of operands expected by the given operator (n), and the actual list of
+-- operands. If every operand is a reference to a valid registry index, with the length
+-- of the list of operands equalling the number of expected operands, then a list of the
+-- corresponding indices is returned. Otherwise, an error is returned detailing why such
+-- a list could not be constructed.
+toQubitList :: String -> Int -> Int -> [Operand] -> Either OperandErr [Int]
+toQubitList _   _  0 []            = Right []
+toQubitList _   _  0 rst           = Left $ TooManyOperands $ length rst
+toQubitList _   _  n []            = Left $ TooFewOperands n
+toQubitList _   sz n (QVar name:_) = Left NonArrOperand
+toQubitList reg sz n (QReg name idx:rst)
+    | reg /= name = Left $ UnknownQubitReg name
+    | idx >= sz   = Left $ QubitOOB idx sz
+    | 0 > idx     = Left $ QubitOOB idx sz
+    | otherwise   = branchRight (toQubitList reg sz (n - 1) rst) (addOperand idx)
