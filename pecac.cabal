@@ -20,6 +20,7 @@ library
   exposed-modules:     Pecac.Either
                        Pecac.List
                        Pecac.Analyzer.Gate
+                       Pecac.Analyzer.Problem
                        Pecac.Parser.Gate
                        Pecac.Parser.Parser
                        Pecac.Parser.Syntax

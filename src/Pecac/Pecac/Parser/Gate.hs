@@ -21,6 +21,10 @@ import Pecac.Parser.Syntax
   ( Expr (..)
   , Operand (..)
   )
+import Pecac.Analyzer.Problem
+  ( ParamArr (..)
+  , QubitReg (..)
+  )
 import Pecac.Analyzer.Gate
   ( PlainName (..)
   , RotName (..)
@@ -69,12 +73,12 @@ toInt (VarId name)        = Left $ IntVarUse name
 toInt (CellId name idx)   = Left $ IntArrUse name idx
 toInt (ConstNat n)        = Right n
 
--- | Takes as input the name of the parameter array, and its length, together with an
--- array access at a given index. If the accessed array is the parameter array, and the
--- index is in bounds, then returns an alpha-vector corresponding to this access.
--- Otherwise, returns an error discribing why the access failed.
-checkCell :: String -> Int -> String -> Int -> Either ExprErr [Int]
-checkCell tar sz name idx
+-- | Takes a summary of the parameter array together with an array access at a given
+-- index. If the accessed array is the parameter array, and the index is in bounds, then
+-- returns an alpha-vector corresponding to this access. Otherwise, returns an error
+-- discribing why the access failed.
+checkCell :: ParamArr -> String -> Int -> Either ExprErr [Int]
+checkCell (ParamArr tar sz) name idx
     | tar /= name = Left $ UnknownParam name
     | idx >= sz   = Left $ ParamOOB idx sz
     | 0 > idx     = Left $ ParamOOB idx sz
@@ -89,11 +93,11 @@ data TimesLHS = Scalar Int | Vector [Int] | TimesFailure
 -- integer literal expression, or a reference to one (or more) entries of the parameter
 -- array. If the left-hand side is neither of these types, then nothing is returned to
 -- indicate a failure.
-handleTimesLhs :: String -> Int -> Expr -> TimesLHS
-handleTimesLhs tar sz expr =
+handleTimesLhs :: ParamArr -> Expr -> TimesLHS
+handleTimesLhs pvar expr =
     case toInt expr of
         Right n -> Scalar n
-        _       -> case toCoeffs tar sz expr of
+        _       -> case toCoeffs pvar expr of
             Right vec -> Vector vec
             _         -> TimesFailure
 
@@ -102,29 +106,29 @@ handleTimesLhs tar sz expr =
 -- reference, or the left-hand side is an angle reference while the right-hand side is a
 -- natural number. If the left-hand side is neither of these, then a typing error has
 -- occured, and a special error is raised.
-timesToCoeffs :: String -> Int -> Expr -> Expr -> Either ExprErr [Int]
-timesToCoeffs tar sz lexpr rexpr =
-    case handleTimesLhs tar sz lexpr of
-        Scalar n     -> updateRight (toCoeffs tar sz rexpr) $ scale n
+timesToCoeffs :: ParamArr -> Expr -> Expr -> Either ExprErr [Int]
+timesToCoeffs pvar lexpr rexpr =
+    case handleTimesLhs pvar lexpr of
+        Scalar n     -> updateRight (toCoeffs pvar rexpr) $ scale n
         Vector vec   -> updateRight (toInt rexpr) $ \n -> scale n vec
         TimesFailure -> Left $ UnknownTimesLHS (Times lexpr rexpr)
     where scale n vec = map (n *) vec
 
--- | Takes as input the name of the parameter array (tar), the size of the parameter
--- array (sz), an the parameter to a rotation gate. If the expression can be interpreted
--- as an integer linear sum of entries in <tar>, then the coefficients of this linear sum
--- are returned as an alpha-vector. For example, <tar>[j] will correspond to the j-th
--- component of the alpha-vector. If such an interpretation is not possible (e.g., if the
--- expression is non-linear), then the relevant error is returned.
-toCoeffs :: String -> Int -> Expr -> Either ExprErr [Int]
-toCoeffs tar sz (Plus lexpr rexpr)  = binOp lexpr rexpr (toCoeffs tar sz) $ zipWith (+)
-toCoeffs tar sz (Minus lexpr rexpr) = binOp lexpr rexpr (toCoeffs tar sz) $ zipWith (-)
-toCoeffs tar sz (Times lexpr rexpr) = timesToCoeffs tar sz lexpr rexpr
-toCoeffs tar sz (Brack expr)        = toCoeffs tar sz expr
-toCoeffs tar sz (Negate expr)       = unaryOp expr (toCoeffs tar sz) $ map negate
-toCoeffs _   _  (VarId name)        = Left $ UnknownParam name
-toCoeffs tar sz (CellId name idx)   = checkCell tar sz name idx
-toCoeffs _   _  (ConstNat n)        = Left $ UnexpectedNat n
+-- | Takes as input a summary of the parameter arrays (pvar) and the parameter to a
+-- rotation gate. If the expression can be interpreted as an integer linear sum of
+-- entries in <tar>, then the coefficients of this linear sum are returned as an
+-- alpha-vector. For example, <tar>[j] will correspond to the j-th component of the
+-- alpha-vector. If such an interpretation is not possible (e.g., if the expression is
+-- non-linear), then the relevant error is returned.
+toCoeffs :: ParamArr -> Expr -> Either ExprErr [Int]
+toCoeffs pvar (Plus lexpr rexpr)  = binOp lexpr rexpr (toCoeffs pvar) $ zipWith (+)
+toCoeffs pvar (Minus lexpr rexpr) = binOp lexpr rexpr (toCoeffs pvar) $ zipWith (-)
+toCoeffs pvar (Times lexpr rexpr) = timesToCoeffs pvar lexpr rexpr
+toCoeffs pvar (Brack expr)        = toCoeffs pvar expr
+toCoeffs pvar (Negate expr)       = unaryOp expr (toCoeffs pvar) $ map negate
+toCoeffs _    (VarId name)        = Left $ UnknownParam name
+toCoeffs pvar (CellId name idx)   = checkCell pvar name idx
+toCoeffs _    (ConstNat n)        = Left $ UnexpectedNat n
 
 -----------------------------------------------------------------------------------------
 -- * Operand Abstraction.
@@ -147,22 +151,21 @@ addOperand idx indices =
     then Left $ NoCloningViolation idx
     else Right $ idx : indices
 
--- | Takes as input the name of the qubit registry (reg), the size of the registry (sz),
--- the numer of operands expected by the given operator (n), and the actual list of
--- operands. If every operand is a reference to a valid registry index, with the length
--- of the list of operands equalling the number of expected operands, then a list of the
--- corresponding indices is returned. Otherwise, an error is returned detailing why such
--- a list could not be constructed.
-toQubitList :: String -> Int -> Int -> [Operand] -> Either OperandErr [Int]
-toQubitList _   _  0 []            = Right []
-toQubitList _   _  0 rst           = Left $ TooManyOperands $ length rst
-toQubitList _   _  n []            = Left $ TooFewOperands n
-toQubitList _   sz n (QVar name:_) = Left NonArrOperand
-toQubitList reg sz n (QReg name idx:rst)
+-- | Takes as input a summary of the qubit register (var), the numer of operands expected
+-- by the given operator (n), and the actual list of operands. If every operand is a
+-- reference to a valid registry index, with the length of the list of operands equalling
+-- the number of expected operands, then a list of the corresponding indices is returned.
+-- Otherwise, an error is returned detailing why such a list could not be constructed.
+toQubitList :: QubitReg -> Int -> [Operand] -> Either OperandErr [Int]
+toQubitList _                     0 []            = Right []
+toQubitList _                     0 rst           = Left $ TooManyOperands $ length rst
+toQubitList _                     n []            = Left $ TooFewOperands n
+toQubitList (QubitReg _   sz)     n (QVar name:_) = Left NonArrOperand
+toQubitList var@(QubitReg reg sz) n (QReg name idx:rst)
     | reg /= name = Left $ UnknownQubitReg name
     | idx >= sz   = Left $ QubitOOB idx sz
     | 0 > idx     = Left $ QubitOOB idx sz
-    | otherwise   = branchRight (toQubitList reg sz (n - 1) rst) (addOperand idx)
+    | otherwise   = branchRight (toQubitList var (n - 1) rst) (addOperand idx)
 
 -----------------------------------------------------------------------------------------
 -- * Gate Name Abstraction.
