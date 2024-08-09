@@ -23,6 +23,7 @@ library
                        Pecac.Analyzer.Problem
                        Pecac.Parser.Gate
                        Pecac.Parser.Parser
+                       Pecac.Parser.Problem
                        Pecac.Parser.Syntax
   other-modules:       Pecac.Parser.Lexer
   build-tool-depends:  happy:happy,
@@ -76,6 +77,11 @@ common basic-unit-test-props
 test-suite parser-parser-tests
   import:              basic-unit-test-props
   main-is:             Parser-Parser-Tests.hs
+  type:                exitcode-stdio-1.0
+
+test-suite parser-problem-tests
+  import:              basic-unit-test-props
+  main-is:             Parser-Problem-Tests.hs
   type:                exitcode-stdio-1.0
 
 test-suite parser-gate-tests
