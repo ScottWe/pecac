@@ -1,7 +1,9 @@
 -- | Conversion from AST statements to abstract parameterized circuits.
 
 module Pecac.Parser.Problem
-  ( StmtErr (..)
+  ( CircErr (..)
+  , StmtErr (..)
+  , qasmToParamCirc
   , summarizeStmts
   ) where
 
@@ -16,6 +18,7 @@ import Pecac.Analyzer.Problem
   )
 import Pecac.Either
   ( branchRight
+  , updateLeft
   , updateRight
   )
 import Pecac.Parser.Gate
@@ -25,9 +28,13 @@ import Pecac.Parser.Gate
 import Pecac.Parser.Syntax
   ( Gate (..)
   , ParamDecl (..)
+  , QASMFile (..)
   , QubitDecl (..)
   , Stmt (..)
   )
+
+import qualified Data.Set as Set
+import qualified Data.List.NonEmpty as NonEmpty
 
 -----------------------------------------------------------------------------------------
 -- * Statement List Parsing.
@@ -92,3 +99,54 @@ summarizeStmts (ParamDeclStmt pdecl:QubitDeclStmt qdecl:stmts) =
 summarizeStmts []                      = Left MissingParams
 summarizeStmts (ParamDeclStmt _:stmts) = Left MissingQubits
 summarizeStmts _                       = Left MissingParams
+
+-----------------------------------------------------------------------------------------
+-- * QASM File Parsing.
+
+-- | The list of required include statements.
+_REQ_INCLUDES :: Set.Set String
+_REQ_INCLUDES = Set.fromList ["stdgates.inc"]
+
+-- | Explanation for file parsing failures.
+data CircErr = UnsupportedVersion String
+             | MissingIncludes (NonEmpty.NonEmpty String)
+             | UnsupportedIncludes (NonEmpty.NonEmpty String)
+             | InvalidStmt StmtErr
+             deriving (Show, Eq)
+
+-- | Predicate to identify OpenQASM versions supported by pecac.
+isVerSupported :: String -> Bool
+isVerSupported "3"   = True
+isVerSupported "3.0" = True
+isVerSupported _     = False
+
+-- | Helper method to commpute the non-empty difference between two sets.
+getInclDiff :: Set.Set String -> Set.Set String -> Maybe (NonEmpty.NonEmpty String)
+getInclDiff expt act = NonEmpty.nonEmpty $ Set.toList $ Set.difference expt act
+
+-- | Takes as input a list of included files. If this list does not contain the entire
+-- list of include statements required by pecac, then a non-empty list of the missing
+-- files is returned. Otherwise, nothing is returned.
+hasMissingIncludes :: [String] -> Maybe (NonEmpty.NonEmpty String)
+hasMissingIncludes incl = getInclDiff _REQ_INCLUDES $ Set.fromList incl
+
+-- | Takes as input a list of included files. If this list does contains items not on the
+-- list of include statements required by pecac, then a non-empty list of the unexpected
+-- files is returned. Otherwise, nothing is returned.
+hasExtraIncludes :: [String] -> Maybe (NonEmpty.NonEmpty String)
+hasExtraIncludes incl = getInclDiff (Set.fromList incl) _REQ_INCLUDES
+
+-- | Takes as input the AST of a QASM file. If the file version and include statements
+-- meet the requirements of pecac, then a ParamCirc is returned corresponding to the
+-- statements in the file, or an error is returned explaining why this is not possible
+-- (see summarizeStmts). Otherwise, an error is returned explaining why the file metadata
+-- does not conform to the requirements of pecac. 
+qasmToParamCirc :: QASMFile -> Either CircErr ParamCirc
+qasmToParamCirc (QASMFile ver incls stmts) =
+    if not $ isVerSupported ver
+    then Left $ UnsupportedVersion ver
+    else case hasMissingIncludes incls of
+        Just diff -> Left $ MissingIncludes diff
+        Nothing   -> case hasExtraIncludes incls of
+            Just diff -> Left $ UnsupportedIncludes diff
+            Nothing   -> updateLeft (summarizeStmts stmts) InvalidStmt

@@ -9,6 +9,8 @@ import Pecac.Parser.Gate
 import Pecac.Parser.Problem
 import Pecac.Parser.Syntax
 
+import qualified Data.List.NonEmpty as NonEmpty
+
 -----------------------------------------------------------------------------------------
 -- summarizeStmts: Valid Cases
 
@@ -130,13 +132,13 @@ test12 = TestCase (assertEqual "summarizeStmts rejects unexpected qubit declarat
           bdecl = QubitArrDecl "reg2" 54
           bstmt = QubitDeclStmt bdecl
 
-test13 = TestCase (assertEqual "summarizeStmts rejects non-array parameter varaibles."
+test13 = TestCase (assertEqual "summarizeStmts rejects non-array parameter variables."
                                (Left NonArrParamDecl)
                                (summarizeStmts [pdecl, qdecl, gate1]))
     where pdecl = ParamDeclStmt $ ParamVarDecl "theta"
           qdecl = QubitDeclStmt $ QubitArrDecl qname 50
 
-test14 = TestCase (assertEqual "summarizeStmts rejects non-array qubit varaibles."
+test14 = TestCase (assertEqual "summarizeStmts rejects non-array qubit variables."
                                (Left NonArrQubitDecl)
                                (summarizeStmts [pdecl, qdecl, gate1]))
     where pdecl = ParamDeclStmt $ ParamArrDecl "theta" 5
@@ -150,6 +152,86 @@ test15 = TestCase (assertEqual "summarizeStmts rejects invalid gates."
           qdecl = QubitDeclStmt $ QubitArrDecl qname 100
           bgate = Gate $ PlainGate bname [QReg qname 10]
           bdecl = GateStmt bgate
+
+-----------------------------------------------------------------------------------------
+-- qasmToParamCirc
+
+test16 = TestCase (assertEqual "qasmToParamCirc handles version 3 files."
+                               (Right $ ParamCirc pvar qvar [summ1, summ2, summ3])
+                               (qasmToParamCirc file))
+    where pname = "theta"
+          psize = 5
+          qsize = 100
+          pdecl = ParamDeclStmt $ ParamArrDecl pname psize
+          qdecl = QubitDeclStmt $ QubitArrDecl qname qsize
+          file  = QASMFile "3" ["stdgates.inc"] [pdecl, qdecl, gate1, gate2, gate3]
+          pvar  = ParamArr pname psize
+          qvar  = QubitReg qname qsize
+
+test17 = TestCase (assertEqual "qasmToParamCirc handles version 3.0 files."
+                               (Right $ ParamCirc pvar qvar [summ1, summ3])
+                               (qasmToParamCirc file))
+    where pname = "theta"
+          psize = 5
+          qsize = 100
+          pdecl = ParamDeclStmt $ ParamArrDecl pname psize
+          qdecl = QubitDeclStmt $ QubitArrDecl qname qsize
+          file  = QASMFile "3.0" ["stdgates.inc"] [pdecl, qdecl, gate1, gate3]
+          pvar  = ParamArr pname psize
+          qvar  = QubitReg qname qsize
+
+test18 = TestCase (assertEqual "qasmToParamCirc rejects unsupported versions (1/2)."
+                               (Left $ UnsupportedVersion vers)
+                               (qasmToParamCirc file))
+    where pdecl = ParamDeclStmt $ ParamArrDecl "theta" 5
+          qdecl = QubitDeclStmt $ QubitArrDecl qname 100
+          vers  = "2.0"
+          file  = QASMFile vers ["stdgates.inc"] [pdecl, qdecl, gate1, gate3]
+
+test19 = TestCase (assertEqual "qasmToParamCirc rejects unsupported versions (2/2)."
+                               (Left $ UnsupportedVersion vers)
+                               (qasmToParamCirc file))
+    where pdecl = ParamDeclStmt $ ParamArrDecl "theta" 5
+          qdecl = QubitDeclStmt $ QubitArrDecl qname 100
+          vers  = "2"
+          file  = QASMFile vers ["stdgates.inc"] [pdecl, qdecl, gate1, gate3]
+
+test20 = TestCase (assertEqual "qasmToParamCirc identifies missing include files."
+                               (Left $ MissingIncludes reqs)
+                               (qasmToParamCirc file))
+    where pdecl = ParamDeclStmt $ ParamArrDecl "theta" 5
+          qdecl = QubitDeclStmt $ QubitArrDecl qname 100
+          file  = QASMFile "3.0" [] [pdecl, qdecl, gate1, gate3]
+          reqs  = NonEmpty.fromList ["stdgates.inc"]
+
+test21 = TestCase (assertEqual "qasmToParamCirc identifies extra include files (1/2)."
+                               (Left $ UnsupportedIncludes reqs)
+                               (qasmToParamCirc file))
+    where pdecl = ParamDeclStmt $ ParamArrDecl "theta" 5
+          qdecl = QubitDeclStmt $ QubitArrDecl qname 100
+          extra = "mylib.inc"
+          file  = QASMFile "3.0" ["stdgates.inc", extra] [pdecl, qdecl, gate1, gate3]
+          reqs  = NonEmpty.fromList [extra]
+
+test22 = TestCase (assertEqual "qasmToParamCirc identifies extra include files (2/2)."
+                               (Left $ UnsupportedIncludes reqs)
+                               (qasmToParamCirc file))
+    where pdecl = ParamDeclStmt $ ParamArrDecl "theta" 5
+          qdecl = QubitDeclStmt $ QubitArrDecl qname 100
+          extra = "mylib.inc"
+          file  = QASMFile "3" [extra, "stdgates.inc"] [pdecl, qdecl, gate1, gate3]
+          reqs  = NonEmpty.fromList [extra]
+
+test23 = TestCase (assertEqual "qasmToParamCirc handles invalid statements."
+                               (Left $ InvalidStmt error)
+                               (qasmToParamCirc file))
+    where bname = "bad"
+          pdecl = ParamDeclStmt $ ParamArrDecl "theta" 5
+          qdecl = QubitDeclStmt $ QubitArrDecl qname 100
+          bgate = Gate $ PlainGate bname [QReg qname 10]
+          bdecl = GateStmt bgate
+          error = InvalidGate bgate $ UnknownPlainName bname
+          file  = QASMFile "3" ["stdgates.inc"] [pdecl, qdecl, gate1, bdecl, gate3]
 
 -----------------------------------------------------------------------------------------
 -- Orchestrates tests.
@@ -168,6 +250,14 @@ tests = hUnitTestToTests $ TestList [TestLabel "Valid_summarizeStmts_NoGates_1" 
                                      TestLabel "Invalid_summarizeStmts_DupQubit" test12,
                                      TestLabel "Invalid_summarizeStmts_Para Var" test13,
                                      TestLabel "Invalid_summarizeStmts_QubitVar" test14,
-                                     TestLabel "Invalid_summarizeStmts_BadGate" test15]
+                                     TestLabel "Invalid_summarizeStmts_BadGate" test15,
+                                     TestLabel "Valid_qasmToParamCirc_V3" test16,
+                                     TestLabel "Valid_qasmToParamCirc_V3.0" test17,
+                                     TestLabel "Invalid_qasmToParamCirc_V2.0" test18,
+                                     TestLabel "Invalid_qasmToParamCirc_V2" test19,
+                                     TestLabel "Invalid_qasmToParamCirc_Missing" test20,
+                                     TestLabel "Invalid_qasmToParamCirc_Extra_1" test21,
+                                     TestLabel "Invalid_qasmToParamCirc_Extra_2" test22,
+                                     TestLabel "Invalid_qasmToParamCirc_BadStmt" test23]
 
 main = defaultMain tests
