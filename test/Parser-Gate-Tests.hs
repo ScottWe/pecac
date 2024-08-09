@@ -5,6 +5,7 @@ import Test.Framework.Providers.HUnit
 import Test.HUnit
 import Pecac.Parser.Gate
 import Pecac.Parser.Syntax
+import Pecac.Analyzer.Gate
 import Pecac.Analyzer.Problem
 
 -----------------------------------------------------------------------------------------
@@ -192,6 +193,122 @@ test31 = TestCase (assertEqual "toQubitList rejects operands which repeat qubit 
           ops = [QReg qvar 0, QReg qvar 1, QReg qvar idx, QReg qvar idx]
 
 -----------------------------------------------------------------------------------------
+-- summarizeGate: Valid Cases
+
+parr :: ParamArr
+parr = ParamArr pvar 5
+
+qreg :: QubitReg
+qreg = QubitReg qvar 100
+
+test32 = TestCase (assertEqual "Can summarize a plain gate without modifiers (1/2)."
+                               (Right summ)
+                               (summarizeGate qreg parr gate))
+    where gate = Gate $ PlainGate "x" [QReg qvar 10]
+          summ = PlainSummary GateX $ GateConfigs False [] [10]
+
+test33 = TestCase (assertEqual "Can summarize a plain gate without modifiers (2/2)."
+                               (Right summ)
+                               (summarizeGate qreg parr gate))
+    where gate = Gate $ PlainGate "ccx" [QReg qvar 10, QReg qvar 2, QReg qvar 5]
+          summ = PlainSummary GateCCX $ GateConfigs False [] [10, 2, 5]
+
+test34 = TestCase (assertEqual "Can summarize a rotation gate without modifiers (1/2)."
+                               (Right summ)
+                               (summarizeGate qreg parr gate))
+    where expr = Times (ConstNat 5) (CellId pvar 2)
+          gate = Gate $ RotGate "rx" expr [QReg qvar 10]
+          summ = RotSummary RotX [0, 0, 5, 0, 0] $ GateConfigs False [] [10]
+
+test35 = TestCase (assertEqual "Can summarize a rotation gate without modifiers (2/2)."
+                               (Right summ)
+                               (summarizeGate qreg parr gate))
+    where expr = Plus (Times (ConstNat 5) (CellId pvar 2)) (Negate $ CellId pvar 0)
+          gate = Gate $ RotGate "crx" expr [QReg qvar 10, QReg qvar 59]
+          summ = RotSummary RotCX [-1, 0, 5, 0, 0] $ GateConfigs False [] [10, 59]
+
+test36 = TestCase (assertEqual "Can summarize a plain gate with a ctrl modifier."
+                               (Right summ)
+                               (summarizeGate qreg parr gate))
+    where gate = CtrlMod $ Gate $ PlainGate "x" [QReg qvar 10, QReg qvar 2]
+          summ = PlainSummary GateX $ GateConfigs False [Pos] [10, 2]
+
+test37 = TestCase (assertEqual "Can summarize a plain gate with a negctrl modifier."
+                               (Right summ)
+                               (summarizeGate qreg parr gate))
+    where qops = [QReg qvar 10, QReg qvar 2, QReg qvar 7, QReg qvar 99]
+          gate = NegCtrlMod $ Gate $ PlainGate "ccx" qops
+          summ = PlainSummary GateCCX $ GateConfigs False [Neg] [10, 2, 7, 99]
+
+test38 = TestCase (assertEqual "Can summarize a plain gate with an inv modifier."
+                               (Right summ)
+                               (summarizeGate qreg parr gate))
+    where gate = InvMod $ Gate $ PlainGate "x" [QReg qvar 10]
+          summ = PlainSummary GateX $ GateConfigs True [] [10]
+
+test39 = TestCase (assertEqual "Can summarize a plain gate with two inv modifiers."
+                               (Right summ)
+                               (summarizeGate qreg parr gate))
+    where gate = InvMod $ InvMod $ Gate $ PlainGate "x" [QReg qvar 10]
+          summ = PlainSummary GateX $ GateConfigs False [] [10]
+
+test40 = TestCase (assertEqual "Can summarize a plain gate with mixed modifiers (1/2)."
+                               (Right summ)
+                               (summarizeGate qreg parr gate))
+    where qops = [QReg qvar 10, QReg qvar 2, QReg qvar 77, QReg qvar 5]
+          gate = NegCtrlMod $ InvMod $ CtrlMod $ Gate $ PlainGate "cx" qops
+          summ = PlainSummary GateCX $ GateConfigs True [Neg, Pos] [10, 2, 77, 5]
+
+test41 = TestCase (assertEqual "Can summarize a plain gate with mixed modifiers (2/2)."
+                               (Right summ)
+                               (summarizeGate qreg parr gate))
+    where qops = [QReg qvar 10, QReg qvar 5, QReg qvar 2, QReg qvar 4]
+          gate = CtrlMod $ InvMod $ NegCtrlMod $ InvMod $ Gate $ PlainGate "cx" qops
+          summ = PlainSummary GateCX $ GateConfigs False [Pos, Neg] [10, 5, 2, 4]
+
+test42 = TestCase (assertEqual "Can summarize a rotation gate with mixed modifiers."
+                               (Right summ)
+                               (summarizeGate qreg parr gate))
+    where expr = Plus (Times (ConstNat 5) (CellId pvar 2)) (CellId pvar 3)
+          qops = [QReg qvar 1, QReg qvar 2, QReg qvar 3]
+          gate = NegCtrlMod $ InvMod $ CtrlMod $ Gate $ RotGate "rx" expr qops
+          summ = RotSummary RotX [0, 0, 5, 1, 0] $ GateConfigs True [Neg, Pos] [1, 2, 3]
+
+-----------------------------------------------------------------------------------------
+-- summarizeGate: Invalid Cases
+
+test43 = TestCase (assertEqual "Rejects summarization for unknown plain names."
+                               (Left $ UnknownPlainName name)
+                               (summarizeGate qreg parr gate))
+    where name = "bad"
+          gate = Gate $ PlainGate name [QReg qvar 10]
+
+test44 = TestCase (assertEqual "Rejects summarization for unknown rotation names."
+                               (Left $ UnknownRotName name)
+                               (summarizeGate qreg parr gate))
+    where name = "bad"
+          expr = Times (ConstNat 5) (CellId pvar 2)
+          gate = Gate $ RotGate name expr [QReg qvar 10]
+
+test45 = TestCase (assertEqual "Rejects plain gates with too many operands (1/2)."
+                               (Left $ GateOperandErr $ TooManyOperands 1)
+                               (summarizeGate qreg parr gate))
+    where gate = Gate $ PlainGate "x" [QReg qvar 10, QReg qvar 12]
+
+test46 = TestCase (assertEqual "Rejects plain gates with too few operands (2/2)."
+                               (Left $ GateOperandErr $ TooFewOperands 2)
+                               (summarizeGate qreg parr gate))
+    where gate = Gate $ PlainGate "ccx" [QReg qvar 10]
+
+test47 = TestCase (assertEqual "Rejects plain gates with invalid angles."
+                               (Left $ GateAngleErr $ ParamOOB badi maxi)
+                               (summarizeGate qreg (ParamArr pvar maxi) gate))
+    where maxi = 6
+          badi = (-7)
+          expr = Plus (CellId pvar 0) (CellId pvar badi)
+          gate = Gate $ RotGate "crx" expr [QReg qvar 10, QReg qvar 59]
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "Valid_toCoeff_Angle_1" test1,
@@ -224,6 +341,22 @@ tests = hUnitTestToTests $ TestList [TestLabel "Valid_toCoeff_Angle_1" test1,
                                      TestLabel "Invalid_toOperandList_OOB_Small" test28,
                                      TestLabel "Invalid_toOperandList_OOB_Big" test29,
                                      TestLabel "Invalid_toOperandList_RegName" test30,
-                                     TestLabel "Invalid_toOperandList_Cloning" test31]
+                                     TestLabel "Invalid_toOperandList_Cloning" test31,
+                                     TestLabel "Valid_summarizeGate_Plain_1" test32,
+                                     TestLabel "Valid_summarizeGate_Plain_2" test33,
+                                     TestLabel "Valid_summarizeGate_Rot_1" test34,
+                                     TestLabel "Valid_summarizeGate_Rot_2" test35,
+                                     TestLabel "Valid_summarizeGate_Plain_Ctrl" test36,
+                                     TestLabel "Valid_summarizeGate_Plain_NCtrl" test37,
+                                     TestLabel "Valid_summarizeGate_Plain_Inv" test38,
+                                     TestLabel "Valid_summarizeGate_Plain_InvInv" test39,
+                                     TestLabel "Valid_summarizeGate_Plain_Mixed_1" test40,
+                                     TestLabel "Valid_summarizeGate_Plain_Mixed_2" test41,
+                                     TestLabel "Valid_summarizeGate_Rot_Mixed" test42,
+                                     TestLabel "Invalid_summarizeGate_PlainName" test43,
+                                     TestLabel "Invalid_summarizeGate_RotName" test44,
+                                     TestLabel "Invalid_summarizeGate_OpCount_1" test45,
+                                     TestLabel "Invalid_summarizeGate_OpCount_2" test46,
+                                     TestLabel "Invalid_summarizeGate_AngleErr" test47]
 
 main = defaultMain tests

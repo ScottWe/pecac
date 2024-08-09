@@ -2,7 +2,9 @@
 
 module Pecac.Parser.Gate
   ( ExprErr (..)
+  , GateErr (..)
   , OperandErr (..)
+  , summarizeGate
   , toCoeffs
   , toPlainName
   , toQubitList
@@ -18,16 +20,23 @@ import Pecac.Either
   )
 import Pecac.List (repeatn)
 import Pecac.Parser.Syntax
-  ( Expr (..)
+  ( BaseGate (..)
+  , Expr (..)
   , Operand (..)
+  , Gate (..)
   )
 import Pecac.Analyzer.Problem
   ( ParamArr (..)
   , QubitReg (..)
   )
 import Pecac.Analyzer.Gate
-  ( PlainName (..)
+  ( GateConfigs (..)
+  , GateSummary (..)
+  , PlainName (..)
+  , Polarity (..)
   , RotName (..)
+  , getPlainArity
+  , getRotArity
   )
 
 -----------------------------------------------------------------------------------------
@@ -160,7 +169,7 @@ toQubitList :: QubitReg -> Int -> [Operand] -> Either OperandErr [Int]
 toQubitList _                     0 []            = Right []
 toQubitList _                     0 rst           = Left $ TooManyOperands $ length rst
 toQubitList _                     n []            = Left $ TooFewOperands n
-toQubitList (QubitReg _   sz)     n (QVar name:_) = Left NonArrOperand
+toQubitList (QubitReg     _   sz) n (QVar name:_) = Left NonArrOperand
 toQubitList var@(QubitReg reg sz) n (QReg name idx:rst)
     | reg /= name = Left $ UnknownQubitReg name
     | idx >= sz   = Left $ QubitOOB idx sz
@@ -201,3 +210,76 @@ toRotName "crx" = Just RotCX
 toRotName "cry" = Just RotCY
 toRotName "crz" = Just RotCZ
 toRotName _     = Nothing
+
+-----------------------------------------------------------------------------------------
+-- * Gate Abstraction.
+
+-- | Explanations for gate parsing failures.
+data GateErr = GateOperandErr OperandErr
+             | GateAngleErr ExprErr
+             | UnknownPlainName String
+             | UnknownRotName String
+             deriving (Show, Eq)
+
+-- | Internal data structure to represent an unwrapped basic gate.
+data UnwrappedGate = UnwrappedGate BaseGate Bool [Polarity]
+
+-- | Representation for a basic gate without any modifications.
+defaultGate :: BaseGate -> UnwrappedGate
+defaultGate base = UnwrappedGate base False []
+
+-- | Returns the representation for the gate obtaiend by applying an inv modifier.
+invertGate :: UnwrappedGate -> UnwrappedGate
+invertGate (UnwrappedGate base inv ctrls) = UnwrappedGate base (not inv) ctrls
+
+-- | Returns the representation for the gate obtaiend by applying an ctrl modifier.
+addPosCtrl :: UnwrappedGate -> UnwrappedGate
+addPosCtrl (UnwrappedGate base inv ctrls) = UnwrappedGate base inv $ Pos : ctrls
+
+-- | Returns the representation for the gate obtaiend by applying a negctrl modifier.
+addNegCtrl :: UnwrappedGate -> UnwrappedGate
+addNegCtrl (UnwrappedGate base inv ctrls) = UnwrappedGate base inv $ Neg : ctrls
+
+-- | Converts a gate into its flat representation as an UnwrappedGate.
+unwrapGate :: Gate -> UnwrappedGate
+unwrapGate (Gate base)       = defaultGate base
+unwrapGate (CtrlMod gate)    = addPosCtrl $ unwrapGate gate
+unwrapGate (NegCtrlMod gate) = addNegCtrl $ unwrapGate gate
+unwrapGate (InvMod gate)     = invertGate $ unwrapGate gate
+
+-- | Internal represenation of a GateConfig object before parsing.
+data RawConfigs = RawConfigs Bool [Polarity] [Operand]
+
+-- | Attempts to convert a RawConfigs object to a GateConfigs object, given the name of
+-- the qubit register and the base airty of the corresponding gate. If parsing fails,
+-- then the corresponding GateErr is returned.
+getConfigs :: QubitReg -> Int -> RawConfigs -> Either GateErr GateConfigs
+getConfigs qvar baseAirty (RawConfigs inv ctrls ops) =
+    case (toQubitList qvar arity ops) of
+        Left err     -> Left $ GateOperandErr err
+        Right qubits -> Right $ GateConfigs inv ctrls qubits
+    where arity = baseAirty + length ctrls
+
+-- | Implements summarizedGate for an UnwrappedGate.
+summarizeGateImpl :: QubitReg -> ParamArr -> UnwrappedGate -> Either GateErr GateSummary
+summarizeGateImpl qvar _ (UnwrappedGate (PlainGate name ops) inv ctrls) =
+    case toPlainName name of
+        Nothing -> Left $ UnknownPlainName name
+        Just ty -> let raw = RawConfigs inv ctrls ops
+                   in updateRight (getConfigs qvar (getPlainArity ty) raw)
+                                  (PlainSummary ty)
+summarizeGateImpl qvar pvar (UnwrappedGate (RotGate name expr ops) inv ctrls) =
+    case toRotName name of
+        Nothing -> Left $ UnknownRotName name
+        Just ty -> let raw = RawConfigs inv ctrls ops
+                   in  branchRight (getConfigs qvar (getRotArity ty) raw) $
+                        \conf -> case toCoeffs pvar expr of
+                            Left err     -> Left $ GateAngleErr err
+                            Right coeffs -> Right $ RotSummary ty coeffs conf
+
+-- | Takes as input a description of the qubit registry, a description of the parameter
+-- array, and the syntactic representation of a gate. If the gate is valid with respect
+-- to the qubit registry and the parameter array, then a GateSummary is returned.
+-- Otherwise, a GateErr is returned explaining why the gate is not valid.
+summarizeGate :: QubitReg -> ParamArr -> Gate -> Either GateErr GateSummary
+summarizeGate qvar pvar gate = summarizeGateImpl qvar pvar $ unwrapGate gate
