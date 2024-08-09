@@ -25,6 +25,9 @@ library
                        Pecac.Parser.Parser
                        Pecac.Parser.Problem
                        Pecac.Parser.Syntax
+                       Pecac.Printer.Expr
+                       Pecac.Printer.Gate
+                       Pecac.Printer.General
   other-modules:       Pecac.Parser.Lexer
   build-tool-depends:  happy:happy,
                        alex:alex
@@ -87,4 +90,9 @@ test-suite parser-problem-tests
 test-suite parser-gate-tests
   import:              basic-unit-test-props
   main-is:             Parser-Gate-Tests.hs
+  type:                exitcode-stdio-1.0
+
+test-suite printer-expr-tests
+  import:              basic-unit-test-props
+  main-is:             Printer-Expr-Tests.hs
   type:                exitcode-stdio-1.0
