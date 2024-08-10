@@ -5,7 +5,7 @@ module Pecac.Printer.Gate (printGate) where
 -------------------------------------------------------------------------------
 -- * Import Section.
 
-import Data.List (intercalate)
+import Pecac.List (prettyItems)
 import Pecac.Parser.Syntax
   ( BaseGate (..)
   , Gate (..)
@@ -25,7 +25,7 @@ printOperand (QReg id idx) = printCell id idx
 -- | Converts a list of operands to a comma deliminated list of their prettified string
 -- representations, as dictated by (printOperand).
 printOperands :: [Operand] -> String
-printOperands ops = intercalate ", " $ map printOperand ops
+printOperands = prettyItems printOperand
 
 -- | Function to print a gate instance (either the name of a plain gate, or the name of a
 -- rotation gate including its stringified argument), followed by its stringified
