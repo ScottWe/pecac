@@ -28,6 +28,7 @@ library
                        Pecac.Printer.Expr
                        Pecac.Printer.Gate
                        Pecac.Printer.General
+                       Pecac.Printer.Stmt
   other-modules:       Pecac.Parser.Lexer
   build-tool-depends:  happy:happy,
                        alex:alex
@@ -100,4 +101,9 @@ test-suite printer-expr-tests
 test-suite printer-gate-tests
   import:              basic-unit-test-props
   main-is:             Printer-Gate-Tests.hs
+  type:                exitcode-stdio-1.0
+
+test-suite printer-stmt-tests
+  import:              basic-unit-test-props
+  main-is:             Printer-Stmt-Tests.hs
   type:                exitcode-stdio-1.0
