@@ -8,6 +8,8 @@ module Pecac.Analyzer.Gate
   , RotName (..)
   , getPlainArity
   , getRotArity
+  , plainNameToString
+  , rotNameToString
   ) where
 
 -----------------------------------------------------------------------------------------
@@ -51,6 +53,25 @@ getPlainArity GateSwap  = 2
 getPlainArity GateCCX   = 3
 getPlainArity GateCSwap = 3
 
+-- | Reverts a plain gate name to its string representation.
+plainNameToString :: PlainName -> String
+plainNameToString GateX     = "x"
+plainNameToString GateY     = "y"
+plainNameToString GateZ     = "z"
+plainNameToString GateH     = "h"
+plainNameToString GateS     = "s"
+plainNameToString GateSdg   = "sdg"
+plainNameToString GateT     = "t"
+plainNameToString GateTdg   = "tdg"
+plainNameToString GateSX    = "sx"
+plainNameToString GateCX    = "cx"
+plainNameToString GateCY    = "cy"
+plainNameToString GateCZ    = "cz"
+plainNameToString GateCH    = "ch"
+plainNameToString GateSwap  = "swap"
+plainNameToString GateCCX   = "ccx"
+plainNameToString GateCSwap = "cswap"
+
 -- | Supported named rotation gates.
 data RotName = RotX
              | RotY
@@ -68,6 +89,15 @@ getRotArity RotZ  = 1
 getRotArity RotCX = 2
 getRotArity RotCY = 2
 getRotArity RotCZ = 2
+
+-- | Reverts a rotation name to its string representation.
+rotNameToString :: RotName -> String
+rotNameToString RotX  = "rx"
+rotNameToString RotY  = "ry"
+rotNameToString RotZ  = "rz"
+rotNameToString RotCX = "crx"
+rotNameToString RotCY = "cry"
+rotNameToString RotCZ = "crz"
 
 -----------------------------------------------------------------------------------------
 -- * Abstract Gate Description.
