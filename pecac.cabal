@@ -45,6 +45,7 @@ library
 library pecac-exe
   exposed-modules:     PecacExe.CmdLnFlags
                        PecacExe.CmdLnParser
+                       PecacExe.ErrorLogging
                        PecacExe.IOUtils
   build-depends:       base,
                        cmdargs,
@@ -65,6 +66,11 @@ executable pecac_parse
   main-is:             Parser/Main.hs
   other-modules:       Parser.CmdLn
   build-depends:       pretty-simple
+
+executable pecac_circviewer
+  import:              basic-exe-props
+  main-is:             CircViewer/Main.hs
+  other-modules:       CircViewer.CmdLn
 
 -----------------------------------------------------------------------------------------
 -- Unit Testing.
