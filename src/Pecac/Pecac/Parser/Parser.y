@@ -24,6 +24,7 @@ import Pecac.Parser.Syntax
     qubit           { Token _ TokenQubit }
     angle           { Token _ TokenAngle }
     input           { Token _ TokenInput }
+    array           { Token _ TokenArray }
     nat             { Token _ (TokenNat $$) }
     id              { Token _ (TokenID $$) }
     '@'             { Token _ TokenAt }
@@ -65,10 +66,12 @@ Stmt : Gate ';'                                   { GateStmt $1 }
 -----------------------
 -- | Declaration Format
 
-Designator : '[' nat ']'                          { (read $2 :: Int) }
+Nat : nat                                         { (read $1 :: Int) }
+
+Designator : '[' Nat ']'                          { $2 }
 
 ParamDecl : input angle id                        { ParamVarDecl $3 }
-          | input angle Designator id             { ParamArrDecl $4 $3 }
+          | input array '[' angle ',' Nat ']' id  { ParamArrDecl $8 $6 }
 
 QubitDecl : qubit id                              { QubitVarDecl $2 }
           | qubit Designator id                   { QubitArrDecl $3 $2}
@@ -98,8 +101,6 @@ Expr : Expr '+' Expr                              { Plus $1 $3 }
      | id                                         { VarId $1 }
      | id Designator                              { CellId $1 $2 }
      | Nat                                        { ConstNat $1 }
-
-Nat : nat                                         { (read $1 :: Int) }
 
 {
 lexwrap :: (Token -> Alex a) -> Alex a

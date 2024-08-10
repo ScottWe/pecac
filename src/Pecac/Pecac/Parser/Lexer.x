@@ -58,6 +58,7 @@ tokens :-
     <0>             qubit                             { constLex TokenQubit }
     <0>             angle                             { constLex TokenAngle }
     <0>             input                             { constLex TokenInput }
+    <0>             array                             { constLex TokenArray }
     -- Literals and Identifiers.
     <0>             0 | [1-9] $decimal*               { charLex TokenNat }
     <0>             \x2107 | euler                    { charLex TokenEuler }
@@ -104,6 +105,7 @@ data TokenClass = TokenOpenQasm
                 | TokenQubit
                 | TokenAngle
                 | TokenInput
+                | TokenArray
                 | TokenNat String
                 | TokenEuler String
                 | TokenPi String
@@ -138,6 +140,8 @@ unlex TokenGPhase      = "gphase"
 unlex TokenQReg        = "qreg"
 unlex TokenQubit       = "qubit"
 unlex TokenAngle       = "angle"
+unlex TokenInput       = "input"
+unlex TokenArray       = "array"
 unlex (TokenNat n)     = n
 unlex (TokenEuler tok) = tok
 unlex (TokenPi tok)    = tok

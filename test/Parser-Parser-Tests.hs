@@ -50,7 +50,7 @@ test6 = TestCase (assertEqual "Can parse param declaration list (var)."
 
 test7 = TestCase (assertEqual "Can parse param declaration list (array)."
                               (Right $ QASMFile "3" [] [decl])
-                              (runPasmQasm "input angle[12] theta;"))
+                              (runPasmQasm "input array[angle, 12] theta;"))
     where decl = ParamDeclStmt $ ParamArrDecl "theta" 12
 
 test8 = TestCase (assertEqual "Can parse qubit declaration list (var)."
@@ -121,7 +121,7 @@ test20 = TestCase (assertEqual "Can parse mixed statement (1/2)."
                                (runPasmQasm lines))
     where lines = "OPENQASM 2.0;" ++ "\n" ++
                   "include \"stdgates.inc\";" ++ "\n" ++
-                  "input angle[5] theta;" ++ "\n" ++
+                  "input array[  angle, 5 ] theta;" ++ "\n" ++
                   "qubit q1;" ++ "\n" ++
                   "x q1;" ++ "\n" ++
                   "qreg qs[7];" ++ "\n" ++
@@ -135,7 +135,7 @@ test20 = TestCase (assertEqual "Can parse mixed statement (1/2)."
 test21 = TestCase (assertEqual "Can parse mixed statement (2/2)."
                                (Right $ QASMFile "3" [] body)
                                (runPasmQasm lines))
-    where lines = "input angle[5] phi;" ++ "\n" ++
+    where lines = "input array[angle, 5] phi;" ++ "\n" ++
                   "qubit q1;" ++ "\n" ++
                   "qubit q2;" ++ "\n" ++
                   "ctrl @ x q1, q2;" ++ "\n" ++
