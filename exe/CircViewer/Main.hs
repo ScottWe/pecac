@@ -10,12 +10,8 @@ import CircViewer.CmdLn
   , getToolArgs
   )
 import Control.Monad (foldM)
-import PecacExe.ErrorLogging (logCircErr)
-import PecacExe.IOUtils (readSrc)
+import PecacExe.IOUtils (readCirc)
 import Pecac.List (prettyList)
-import Pecac.Parser.Parser (parseQasm)
-import Pecac.Parser.Problem (qasmToParamCirc)
-import Pecac.Parser.Syntax (QASMFile)
 import Pecac.Analyzer.Gate
   ( GateConfigs (..)
   , GateSummary (..)
@@ -30,7 +26,7 @@ import Pecac.Analyzer.Problem
   )
 
 -----------------------------------------------------------------------------------------
--- * Entry Point.
+-- * Circuit Logging.
 
 -- | Adds a C(-) to the base name, for each control.
 formatName :: String -> [Polarity] -> String
@@ -96,21 +92,13 @@ printCirc (ParamCirc (ParamArr pvar psz) (QubitReg qvar qsz) gates) = do
     putStrLn "[GATE SUMMARY LIST]"
     printGates gates
 
--- | Helper function to convert an OpenQASM file to a parameterized circuit, and then
--- log the circuit to stdout. If the program is invalid, then an error is logged to
--- stdout instead.
-processProg :: QASMFile -> IO ()
-processProg prog =
-    case qasmToParamCirc prog of
-        Left  err  -> putStrLn $ unlines $ logCircErr err
-        Right circ -> printCirc circ
+-----------------------------------------------------------------------------------------
+-- * Entry Point.
 
+-- | Unwraps the src file name, and parses it as a circuit. The circuit is then passed
+-- along to a circuit logging routine.
 processArgs :: ViewTool -> IO ()
-processArgs (CircMode src) = do
-    contents <- readSrc src
-    case parseQasm src contents of
-        Left err   -> putStrLn err
-        Right prog -> processProg prog
+processArgs (CircMode src) = readCirc src printCirc
 
 main :: IO ()
 main = do

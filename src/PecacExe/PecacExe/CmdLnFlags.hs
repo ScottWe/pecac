@@ -3,8 +3,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 
 module PecacExe.CmdLnFlags
-  ( srcFlags
-  , def
+  ( def
+  , srcFlags
   ) where
 
 -----------------------------------------------------------------------------------------
