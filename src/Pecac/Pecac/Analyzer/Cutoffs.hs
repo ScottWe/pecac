@@ -3,9 +3,11 @@
 module Pecac.Analyzer.Cutoffs
   ( circToKappa
   , circToLambda
+  , forallElimSize
   , gatesToAlphas
   , gatesToKappa
   , gatesToLambda
+  , randomSampleSize
   ) where
 
 -----------------------------------------------------------------------------------------
@@ -18,6 +20,21 @@ import Pecac.Analyzer.Problem
   , ParamCirc (..)
   )
 import Pecac.List (repeatn)
+
+-----------------------------------------------------------------------------------------
+-- * Helper methods.
+
+-- |
+getSize :: ParamCirc -> Int
+getSize (ParamCirc (ParamArr _ sz) _ _) = sz
+
+-- |
+isSameSize :: ParamCirc -> ParamCirc -> Bool
+isSameSize circ1 circ2 = getSize circ1 == getSize circ2
+
+-- |
+getGates :: ParamCirc -> [GateSummary]
+getGates (ParamCirc _ _ gates) = gates
 
 -----------------------------------------------------------------------------------------
 -- * Alpha Extraction.
@@ -53,7 +70,7 @@ gatesToLambda len gates = foldl (zipWith lambdaZip) init avec
 -- | Computes the lambda vector associated with the gates in a circuit (see gatesToLambda
 -- for more details).
 circToLambda :: ParamCirc -> [Int]
-circToLambda (ParamCirc (ParamArr _ sz) _ gates) = gatesToLambda sz gates
+circToLambda circ = gatesToLambda (getSize circ) $ getGates circ
 
 -----------------------------------------------------------------------------------------
 -- * Kappa-Value Calcuation.
@@ -86,4 +103,29 @@ gatesToKappa gates = foldl foldKappa 0 avec
 -- | Computes the kappa vector associated with the gates in a circuit (see gatesToKappa
 -- for more details).
 circToKappa :: ParamCirc -> Int
-circToKappa (ParamCirc _ _ gates) = gatesToKappa gates
+circToKappa circ = gatesToKappa $ getGates circ
+
+-----------------------------------------------------------------------------------------
+-- * Cutoff Calcuations.
+
+-- | Returns the component-wise maximum for the lambda values from a pair of circuits.
+getMaxLambda :: ParamCirc -> ParamCirc -> [Int]
+getMaxLambda circ1 circ2 = zipWith max (circToLambda circ1) (circToLambda circ2)
+
+-- | Computes the number of instantiations needed for each parameter, such that PEC
+-- reduces to the parameter-free case.
+forallElimSize :: ParamCirc -> ParamCirc -> Maybe [Int]
+forallElimSize circ1 circ2 =
+    if isSameSize circ1 circ2
+    then let lambdaToElimSize lambda_j = 2 * lambda_j + 1
+         in Just $ map lambdaToElimSize $ getMaxLambda circ1 circ2
+    else Nothing
+
+-- | Computes the numerator in the probability bound for random sampling.
+randomSampleSize :: ParamCirc -> ParamCirc -> Maybe Int
+randomSampleSize circ1 circ2 = 
+    if isSameSize circ1 circ2
+    then let lambdaSum = sum $ getMaxLambda circ1 circ2
+             kappaTerm = max (circToKappa circ1) (circToKappa circ2)
+         in Just $ lambdaSum + kappaTerm
+    else Nothing
