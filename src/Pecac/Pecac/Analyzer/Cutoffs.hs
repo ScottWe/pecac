@@ -1,8 +1,10 @@
 -- | Functions to compute cutoff bounds for qunatum circuits.
 
 module Pecac.Analyzer.Cutoffs
-  ( circToLambda
+  ( circToKappa
+  , circToLambda
   , gatesToAlphas
+  , gatesToKappa
   , gatesToLambda
   ) where
 
@@ -52,3 +54,36 @@ gatesToLambda len gates = foldl (zipWith lambdaZip) init avec
 -- for more details).
 circToLambda :: ParamCirc -> [Int]
 circToLambda (ParamCirc (ParamArr _ sz) _ gates) = gatesToLambda sz gates
+
+-----------------------------------------------------------------------------------------
+-- * Kappa-Value Calcuation.
+
+-- | Implementation of kappaTerm, using counters for the positive and negative subsums.
+kappaTermImpl :: Int -> Int -> [Int] -> Int
+kappaTermImpl pos neg []     = max pos neg
+kappaTermImpl pos neg (x:xs) =
+    if x > 0
+    then kappaTermImpl (pos + x) neg xs
+    else kappaTermImpl pos (neg - x) xs
+
+-- | Computes the sum of the strictly positive terms in a list, and the sum of the
+-- strictly negative terms in a list, and returns the greatest of their asbolute values.
+kappaTerm :: [Int] -> Int
+kappaTerm = kappaTermImpl 0 0
+
+-- | Fold function for gatesToKappa. Adds the partial kappa value to the kappa term of
+-- the current alpha vector.
+foldKappa :: Int -> [Int] -> Int
+foldKappa kappa alpha = kappa + kappaTerm alpha
+
+-- | Computes the kappa value associated with a list of gate summaries. This is the sum
+-- of the kappa terms associated with each gate's alpha vector. For more detail, see the
+-- functions kappaTerm and gatesToAlphas.
+gatesToKappa :: [GateSummary] -> Int
+gatesToKappa gates = foldl foldKappa 0 avec
+    where avec = gatesToAlphas gates
+
+-- | Computes the kappa vector associated with the gates in a circuit (see gatesToKappa
+-- for more details).
+circToKappa :: ParamCirc -> Int
+circToKappa (ParamCirc _ _ gates) = gatesToKappa gates

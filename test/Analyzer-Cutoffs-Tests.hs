@@ -181,6 +181,68 @@ test25 = TestCase (assertEqual "circToLambda handles mixed gate lists (2/2)."
     where pvar = ParamArr "theta" 5
 
 -----------------------------------------------------------------------------------------
+-- gatesToKappa
+
+test26 = TestCase (assertEqual "gatesToKappa handles empty lists."
+                               0
+                               (gatesToKappa []))
+
+test27 = TestCase (assertEqual "gatesToKappa handles single plain gates"
+                               0
+                               (gatesToKappa [plain1]))
+
+test28 = TestCase (assertEqual "gatesToKappa handles lists of plain gates."
+                               0
+                               (gatesToKappa [plain1, plain2, plain3]))
+
+test29 = TestCase (assertEqual "gatesToKappa handles single rot gates (1/2)."
+                               5
+                               (gatesToKappa [rot1_k3]))
+
+test30 = TestCase (assertEqual "gatesToKappa handles single rot gates (2/2)."
+                               5
+                               (gatesToKappa [rot2_k5]))
+
+test31 = TestCase (assertEqual "gatesToKappa handles lists of rot gates (1/2)."
+                               17
+                               (gatesToKappa [rot1_k3, rot2_k3, rot3_k3]))
+
+test32 = TestCase (assertEqual "gatesToKappa handles lists of rot gates (2/2)."
+                               21
+                               (gatesToKappa [rot1_k5, rot2_k5, rot3_k5]))
+
+test33 = TestCase (assertEqual "gatesToKappa handles lists of mixed gates (1/2)."
+                               17
+                               (gatesToKappa mixed_k3))
+
+test34 = TestCase (assertEqual "gatesToKappa handles lists of mixed gates (2/2)."
+                               21
+                               (gatesToKappa mixed_k5))
+
+-----------------------------------------------------------------------------------------
+-- circToKappa
+
+test35 = TestCase (assertEqual "circToKappa handles empty gate lists (1/2)."
+                               0
+                               (circToKappa $ ParamCirc pvar qvar []))
+    where pvar = ParamArr "theta" 3
+
+test36 = TestCase (assertEqual "circToLambda handles empty gate lists (2/2)."
+                               0
+                               (circToKappa $ ParamCirc pvar qvar []))
+    where pvar = ParamArr "theta" 5
+
+test37 = TestCase (assertEqual "circToLambda handles mixed gate lists (1/2)."
+                               17
+                               (circToKappa $ ParamCirc pvar qvar mixed_k3))
+    where pvar = ParamArr "theta" 3
+
+test38 = TestCase (assertEqual "circToLambda handles mixed gate lists (2/2)."
+                               21
+                               (circToKappa $ ParamCirc pvar qvar mixed_k5))
+    where pvar = ParamArr "theta" 5
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "gatesToAlphas_Empty" test1,
@@ -207,7 +269,20 @@ tests = hUnitTestToTests $ TestList [TestLabel "gatesToAlphas_Empty" test1,
                                      TestLabel "circToLambda_Empty_1" test22,
                                      TestLabel "circToLambda_Empty_2" test23,
                                      TestLabel "circToLambda_Mixed_1" test24,
-                                     TestLabel "circToLambda_Mixed_2" test25]
+                                     TestLabel "circToLambda_Mixed_2" test25,
+                                     TestLabel "gatesToKappa_Empty" test26,
+                                     TestLabel "gatesToKappa_1Plain" test27,
+                                     TestLabel "gatesToKappa_3Plain" test28,
+                                     TestLabel "gatesToKappa_1Rot_1" test29,
+                                     TestLabel "gatesToKappa_1Rot_2" test30,
+                                     TestLabel "gatesToKappa_3Rot_1" test31,
+                                     TestLabel "gatesToKappa_3Rot_2" test32,
+                                     TestLabel "gatesToKappa_Mixed_1" test33,
+                                     TestLabel "gatesToKappa_Mixed_2" test34,
+                                     TestLabel "circToKappa_Empty_1" test35,
+                                     TestLabel "circToKappa_Empty_2" test36,
+                                     TestLabel "circToKappa_Mixed_1" test37,
+                                     TestLabel "circToKappa_Mixed_2" test38]
 
 main = defaultMain tests
 
