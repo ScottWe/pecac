@@ -73,6 +73,11 @@ executable pecac_circviewer
   main-is:             CircViewer/Main.hs
   other-modules:       CircViewer.CmdLn
 
+executable pecac_cutoffviewer
+  import:              basic-exe-props
+  main-is:             CutoffViewer/Main.hs
+  other-modules:       CutoffViewer.CmdLn
+
 -----------------------------------------------------------------------------------------
 -- Unit Testing.
 
