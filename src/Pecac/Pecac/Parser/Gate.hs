@@ -72,7 +72,7 @@ unaryOp :: Expr -> (Expr -> Either a b) -> (b -> b) -> Either a b
 unaryOp expr reader f = updateRight (reader expr) f
 
 -- | Helper function to interpret sub-expressions as integer literals.
-toInt :: Expr -> Either ExprErr Int
+toInt :: Expr -> Either ExprErr Integer
 toInt (Plus lexpr rexpr)  = binOp lexpr rexpr toInt (+)
 toInt (Minus lexpr rexpr) = binOp lexpr rexpr toInt (-)
 toInt (Times lexpr rexpr) = binOp lexpr rexpr toInt (*)
@@ -80,13 +80,13 @@ toInt (Brack expr)        = toInt expr
 toInt (Negate expr)       = unaryOp expr toInt $ \x -> -x
 toInt (VarId name)        = Left $ IntVarUse name
 toInt (CellId name idx)   = Left $ IntArrUse name idx
-toInt (ConstNat n)        = Right n
+toInt (ConstNat n)        = Right $ toInteger n
 
 -- | Takes a summary of the parameter array together with an array access at a given
 -- index. If the accessed array is the parameter array, and the index is in bounds, then
 -- returns an alpha-vector corresponding to this access. Otherwise, returns an error
 -- discribing why the access failed.
-checkCell :: ParamArr -> String -> Int -> Either ExprErr [Int]
+checkCell :: ParamArr -> String -> Int -> Either ExprErr [Integer]
 checkCell (ParamArr tar sz) name idx
     | tar /= name = Left $ UnknownParam name
     | idx >= sz   = Left $ ParamOOB idx sz
@@ -96,7 +96,7 @@ checkCell (ParamArr tar sz) name idx
           rhs = repeatn 0 $ sz - idx - 1
 
 -- | Possible results when analyzing the LHS of a Times expression.
-data TimesLHS = Scalar Int | Vector [Int] | TimesFailure
+data TimesLHS = Scalar Integer | Vector [Integer] | TimesFailure
 
 -- | Helper function to identify whether the left-hand side of a Times expression is an
 -- integer literal expression, or a reference to one (or more) entries of the parameter
@@ -115,7 +115,7 @@ handleTimesLhs pvar expr =
 -- reference, or the left-hand side is an angle reference while the right-hand side is a
 -- natural number. If the left-hand side is neither of these, then a typing error has
 -- occured, and a special error is raised.
-timesToCoeffs :: ParamArr -> Expr -> Expr -> Either ExprErr [Int]
+timesToCoeffs :: ParamArr -> Expr -> Expr -> Either ExprErr [Integer]
 timesToCoeffs pvar lexpr rexpr =
     case handleTimesLhs pvar lexpr of
         Scalar n     -> updateRight (toCoeffs pvar rexpr) $ scale n
@@ -129,7 +129,7 @@ timesToCoeffs pvar lexpr rexpr =
 -- alpha-vector. For example, <tar>[j] will correspond to the j-th component of the
 -- alpha-vector. If such an interpretation is not possible (e.g., if the expression is
 -- non-linear), then the relevant error is returned.
-toCoeffs :: ParamArr -> Expr -> Either ExprErr [Int]
+toCoeffs :: ParamArr -> Expr -> Either ExprErr [Integer]
 toCoeffs pvar (Plus lexpr rexpr)  = binOp lexpr rexpr (toCoeffs pvar) $ zipWith (+)
 toCoeffs pvar (Minus lexpr rexpr) = binOp lexpr rexpr (toCoeffs pvar) $ zipWith (-)
 toCoeffs pvar (Times lexpr rexpr) = timesToCoeffs pvar lexpr rexpr

@@ -115,5 +115,5 @@ data GateConfigs = GateConfigs Bool [Polarity] [Int] deriving (Show, Eq)
 -- list of integers, which stores the coefficients of the paramteters theta_1 through to
 -- theta_k (recall that the angle is a_1*theta_1 + ... + a_k*theta_k).
 data GateSummary = PlainSummary PlainName GateConfigs
-                 | RotSummary RotName [Int] GateConfigs
+                 | RotSummary RotName [Integer] GateConfigs
                  deriving (Show, Eq)

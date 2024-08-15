@@ -24,7 +24,7 @@ import PecacExe.IOUtils (readCirc)
 -- | Helper function to log a vector to stdout. Takes as input a string identifier for
 -- the vector (id), the first index of the array (j), and the list. Logs each element to
 -- stdout, such that the j-th line is: <id>[<j>]: <elem(j)>
-printVect :: String -> Int -> [Int] -> IO ()
+printVect :: String -> Int -> [Integer] -> IO ()
 printVect _  _ []       = return ()
 printVect id j (x_j:xs) = do
     putStrLn $ id ++ "[" ++ show j ++ "]: " ++ show x_j

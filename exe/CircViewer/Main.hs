@@ -48,7 +48,7 @@ formatQubits (x:xs) (c:cs) = formatQubit x c : formatQubits xs cs
 
 -- | Unifies PlainSummary and RotSummary gate formatting, by taking the type of the gate
 -- as a string, and by taking the list of parameter coefficients as an optional list.
-formatGateImpl :: String -> Maybe [Int] -> GateConfigs -> String
+formatGateImpl :: String -> Maybe [Integer] -> GateConfigs -> String
 formatGateImpl name Nothing (GateConfigs inv ctrls ops) = full
     where cname = formatName name ctrls
           opstr = prettyList id $ formatQubits ops ctrls

@@ -41,7 +41,7 @@ getGates (ParamCirc _ _ gates) = gates
 
 -- | Returns the alpha vector associated with a gate. If the gate is a plain gate, then
 -- nothing is returned. Otherwise, the coefficient vector is returned.
-gateToAlpha :: GateSummary -> Maybe [Int]
+gateToAlpha :: GateSummary -> Maybe [Integer]
 gateToAlpha (PlainSummary _ _)     = Nothing
 gateToAlpha (RotSummary _ alpha _) = Just alpha
 
@@ -49,7 +49,7 @@ gateToAlpha (RotSummary _ alpha _) = Just alpha
 -- gate, there is a element in the list of alpha vectors. This element corresponds to the
 -- coefficient vector of the rotation (i.e., the coefficients of the angle parameters in
 -- the integer linear sum of parameters).
-gatesToAlphas :: [GateSummary] -> [[Int]]
+gatesToAlphas :: [GateSummary] -> [[Integer]]
 gatesToAlphas = catMaybes . map gateToAlpha
 
 -----------------------------------------------------------------------------------------
@@ -57,26 +57,26 @@ gatesToAlphas = catMaybes . map gateToAlpha
 
 -- | This zip function takes the sum of the left-hand side with the absolute value of the
 -- right-hand side. This coincides with how lambda-values are computed.
-lambdaZip :: Int -> Int -> Int
+lambdaZip :: Integer -> Integer -> Integer
 lambdaZip lambda_j alpha_j = lambda_j + abs alpha_j
 
 -- | Computes the lambda vector associated with a list of gate summaries. This is the sum
 -- of the absolute value of each gate's alpha vector.
-gatesToLambda :: Int -> [GateSummary] -> [Int]
+gatesToLambda :: Int -> [GateSummary] -> [Integer]
 gatesToLambda len gates = foldl (zipWith lambdaZip) init avec
     where init = repeatn 0 len
           avec = gatesToAlphas gates
 
 -- | Computes the lambda vector associated with the gates in a circuit (see gatesToLambda
 -- for more details).
-circToLambda :: ParamCirc -> [Int]
+circToLambda :: ParamCirc -> [Integer]
 circToLambda circ = gatesToLambda (getSize circ) $ getGates circ
 
 -----------------------------------------------------------------------------------------
 -- * Kappa-Value Calcuation.
 
 -- | Implementation of kappaTerm, using counters for the positive and negative subsums.
-kappaTermImpl :: Int -> Int -> [Int] -> Int
+kappaTermImpl :: Integer -> Integer -> [Integer] -> Integer
 kappaTermImpl pos neg []     = max pos neg
 kappaTermImpl pos neg (x:xs) =
     if x > 0
@@ -85,36 +85,36 @@ kappaTermImpl pos neg (x:xs) =
 
 -- | Computes the sum of the strictly positive terms in a list, and the sum of the
 -- strictly negative terms in a list, and returns the greatest of their asbolute values.
-kappaTerm :: [Int] -> Int
+kappaTerm :: [Integer] -> Integer
 kappaTerm = kappaTermImpl 0 0
 
 -- | Fold function for gatesToKappa. Adds the partial kappa value to the kappa term of
 -- the current alpha vector.
-foldKappa :: Int -> [Int] -> Int
+foldKappa :: Integer -> [Integer] -> Integer
 foldKappa kappa alpha = kappa + kappaTerm alpha
 
 -- | Computes the kappa value associated with a list of gate summaries. This is the sum
 -- of the kappa terms associated with each gate's alpha vector. For more detail, see the
 -- functions kappaTerm and gatesToAlphas.
-gatesToKappa :: [GateSummary] -> Int
+gatesToKappa :: [GateSummary] -> Integer
 gatesToKappa gates = foldl foldKappa 0 avec
     where avec = gatesToAlphas gates
 
 -- | Computes the kappa vector associated with the gates in a circuit (see gatesToKappa
 -- for more details).
-circToKappa :: ParamCirc -> Int
+circToKappa :: ParamCirc -> Integer
 circToKappa circ = gatesToKappa $ getGates circ
 
 -----------------------------------------------------------------------------------------
 -- * Cutoff Calcuations.
 
 -- | Returns the component-wise maximum for the lambda values from a pair of circuits.
-getMaxLambda :: ParamCirc -> ParamCirc -> [Int]
+getMaxLambda :: ParamCirc -> ParamCirc -> [Integer]
 getMaxLambda circ1 circ2 = zipWith max (circToLambda circ1) (circToLambda circ2)
 
 -- | Computes the number of instantiations needed for each parameter, such that PEC
 -- reduces to the parameter-free case.
-forallElimSize :: ParamCirc -> ParamCirc -> Maybe [Int]
+forallElimSize :: ParamCirc -> ParamCirc -> Maybe [Integer]
 forallElimSize circ1 circ2 =
     if isSameSize circ1 circ2
     then let lambdaToElimSize lambda_j = 2 * lambda_j + 1
@@ -122,7 +122,7 @@ forallElimSize circ1 circ2 =
     else Nothing
 
 -- | Computes the numerator in the probability bound for random sampling.
-randomSampleSize :: ParamCirc -> ParamCirc -> Maybe Int
+randomSampleSize :: ParamCirc -> ParamCirc -> Maybe Integer
 randomSampleSize circ1 circ2 = 
     if isSameSize circ1 circ2
     then let lambdaSum = sum $ getMaxLambda circ1 circ2

@@ -255,10 +255,10 @@ test38 = TestCase (assertEqual "circToLambda handles mixed gate lists (2/2)."
 -----------------------------------------------------------------------------------------
 -- forallElimSize
 
-defaultElim_k3 :: Maybe [Int]
+defaultElim_k3 :: Maybe [Integer]
 defaultElim_k3 = Just $ [1, 1, 1]
 
-defaultElim_k5 :: Maybe [Int]
+defaultElim_k5 :: Maybe [Integer]
 defaultElim_k5 = Just $ [1, 1, 1, 1, 1]
 
 test39 = TestCase (assertEqual "forallElimSize handles empty gate lists (1/2)."
