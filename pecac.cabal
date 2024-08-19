@@ -30,6 +30,7 @@ library
                        Pecac.Printer.Gate
                        Pecac.Printer.General
                        Pecac.Printer.Stmt
+                       Pecac.Verifier.Matrix
   other-modules:       Pecac.Parser.Lexer
   build-tool-depends:  happy:happy,
                        alex:alex
@@ -37,6 +38,10 @@ library
                        array,
                        containers,
                        filepath,
+                       matrix,
+                       -- Forces a resolution to a dependency conflict.
+                       vector>=0.12.2.0,
+                       primitive>=0.7.1.0,
   hs-source-dirs:      src/Pecac
   default-language:    Haskell2010
 
@@ -123,4 +128,10 @@ test-suite printer-gate-tests
 test-suite printer-stmt-tests
   import:              basic-unit-test-props
   main-is:             Printer-Stmt-Tests.hs
+  type:                exitcode-stdio-1.0
+
+test-suite verifier-matrix-tests
+  import:              basic-unit-test-props
+  main-is:             Verifier-Matrix-Tests.hs
+  build-depends:       matrix
   type:                exitcode-stdio-1.0
