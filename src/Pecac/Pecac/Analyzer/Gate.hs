@@ -8,6 +8,7 @@ module Pecac.Analyzer.Gate
   , RotName (..)
   , getPlainArity
   , getRotArity
+  , isInverted
   , plainNameToString
   , rotNameToString
   ) where
@@ -109,6 +110,10 @@ data Polarity = Pos | Neg deriving (Show, Eq)
 -- are whether the gate is inverted, the list of controls for the gate, and the list of
 -- operands to the gate.
 data GateConfigs = GateConfigs Bool [Polarity] [Int] deriving (Show, Eq)
+
+-- | Returns whether a gate has been inverted.
+isInverted :: GateConfigs -> Bool
+isInverted (GateConfigs inv _ _) = inv
 
 -- | An abstract representation of a gate. For plain gates, this is simply the name of
 -- the gate and its configurations. For rotation gates, this includes an additional

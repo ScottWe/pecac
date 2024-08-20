@@ -30,6 +30,7 @@ library
                        Pecac.Printer.Gate
                        Pecac.Printer.General
                        Pecac.Printer.Stmt
+                       Pecac.Verifier.CycloGate
                        Pecac.Verifier.Matrix
                        Pecac.Verifier.MatrixGate
   other-modules:       Pecac.Parser.Lexer
@@ -38,6 +39,7 @@ library
   build-depends:       base,
                        array,
                        containers,
+                       cyclotomic,
                        filepath,
                        matrix,
                        -- Forces a resolution to a dependency conflict.
@@ -129,6 +131,15 @@ test-suite printer-gate-tests
 test-suite printer-stmt-tests
   import:              basic-unit-test-props
   main-is:             Printer-Stmt-Tests.hs
+  type:                exitcode-stdio-1.0
+
+test-suite verifier-cyclogate-tests
+  import:              basic-unit-test-props
+  main-is:             Verifier-CycloGate-Tests.hs
+  build-depends:       cyclotomic,
+                       -- Forces a resolution to a dependency conflict.
+                       vector>=0.12.2.0,
+                       primitive>=0.7.1.0
   type:                exitcode-stdio-1.0
 
 test-suite verifier-matrix-tests
