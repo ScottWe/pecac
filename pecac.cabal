@@ -31,6 +31,7 @@ library
                        Pecac.Printer.General
                        Pecac.Printer.Stmt
                        Pecac.Verifier.Matrix
+                       Pecac.Verifier.MatrixGate
   other-modules:       Pecac.Parser.Lexer
   build-tool-depends:  happy:happy,
                        alex:alex
@@ -134,4 +135,9 @@ test-suite verifier-matrix-tests
   import:              basic-unit-test-props
   main-is:             Verifier-Matrix-Tests.hs
   build-depends:       matrix
+  type:                exitcode-stdio-1.0
+
+test-suite verifier-matrixgate-tests
+  import:              basic-unit-test-props
+  main-is:             Verifier-MatrixGate-Tests.hs
   type:                exitcode-stdio-1.0
