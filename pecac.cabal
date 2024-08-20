@@ -87,6 +87,11 @@ executable pecac_cutoffviewer
   main-is:             CutoffViewer/Main.hs
   other-modules:       CutoffViewer.CmdLn
 
+executable pecac_cycloinst
+  import:              basic-exe-props
+  main-is:             CycloInst/Main.hs
+  other-modules:       CycloInst.CmdLn
+
 -----------------------------------------------------------------------------------------
 -- Unit Testing.
 
