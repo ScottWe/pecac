@@ -28,10 +28,11 @@ import Pecac.Analyzer.Problem
 -----------------------------------------------------------------------------------------
 -- * Circuit Logging.
 
--- | Adds a C(-) to the base name, for each control.
-formatName :: String -> [Polarity] -> String
-formatName name []        = name
-formatName name (_:ctrls) = "C(" ++ formatName name ctrls ++ ")"
+-- | Adds a C(-) to the base name, for each control, and inv(-) for inverses.
+formatName :: Bool -> String -> [Polarity] -> String
+formatName False name []        = name
+formatName True  name []        = "inv(" ++ name ++ ")"
+formatName inv   name (_:ctrls) = "C(" ++ formatName inv name ctrls ++ ")"
 
 -- | Converts a control qubit to its string representation, and then adds either a "+" or
 -- "-" prefix to indicate the polarity of the control.
@@ -50,7 +51,7 @@ formatQubits (x:xs) (c:cs) = formatQubit x c : formatQubits xs cs
 -- as a string, and by taking the list of parameter coefficients as an optional list.
 formatGateImpl :: String -> Maybe [Integer] -> GateConfigs -> String
 formatGateImpl name Nothing (GateConfigs inv ctrls ops) = full
-    where cname = formatName name ctrls
+    where cname = formatName inv name ctrls
           opstr = prettyList id $ formatQubits ops ctrls
           full  = cname ++ " at " ++ opstr
 formatGateImpl name (Just coeffs) confs = full
