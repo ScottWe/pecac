@@ -24,15 +24,15 @@ import Pecac.List (repeatn)
 -----------------------------------------------------------------------------------------
 -- * Helper methods.
 
--- |
+-- | Returns the number of parameters in a parameterized circuit.
 getSize :: ParamCirc -> Int
 getSize (ParamCirc (ParamArr _ sz) _ _) = sz
 
--- |
+-- | Determines if two parameterized circuits have the same parameter space.
 isSameSize :: ParamCirc -> ParamCirc -> Bool
 isSameSize circ1 circ2 = getSize circ1 == getSize circ2
 
--- |
+-- | Returns the gates in a parameterized circuit.
 getGates :: ParamCirc -> [GateSummary]
 getGates (ParamCirc _ _ gates) = gates
 

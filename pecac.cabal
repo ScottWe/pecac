@@ -34,6 +34,7 @@ library
                        Pecac.Verifier.CycloGate
                        Pecac.Verifier.Matrix
                        Pecac.Verifier.MatrixGate
+                       Pecac.Verifier.PEC
   other-modules:       Pecac.Parser.Lexer
   build-tool-depends:  happy:happy,
                        alex:alex
@@ -166,4 +167,9 @@ test-suite verifier-matrix-tests
 test-suite verifier-matrixgate-tests
   import:              basic-unit-test-props
   main-is:             Verifier-MatrixGate-Tests.hs
+  type:                exitcode-stdio-1.0
+
+test-suite verifier-pec-tests
+  import:              basic-unit-test-props
+  main-is:             Verifier-PEC-Tests.hs
   type:                exitcode-stdio-1.0
