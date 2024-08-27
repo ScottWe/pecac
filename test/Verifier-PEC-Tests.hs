@@ -12,7 +12,7 @@ import Pecac.Verifier.PEC
 -- Helper Functions
 
 cycloPec :: ParamCirc -> ParamCirc -> PECRes
-cycloPec circ1 circ2 = pec circ1 circ2 circToMat
+cycloPec circ1 circ2 = pec circ1 circ2 circToMat (==)
 
 checkParamSets :: [Int] -> [[Rational]] -> Bool
 checkParamSets []     []           = True
@@ -69,7 +69,7 @@ toyEval _ (ParamCirc (ParamArr v _) _ _) = if v == "bad" then Nothing else Just 
 
 checkEvalFail :: Side -> ParamCirc -> ParamCirc -> Bool
 checkEvalFail expected circ1 circ2 =
-    case pec circ1 circ2 toyEval of
+    case pec circ1 circ2 toyEval (==) of
         EvalFail actual _ -> expected == actual
         otherwise         -> False
 

@@ -35,6 +35,10 @@ data PECRes = BadCutoff
 -- returns a circuit representation of type a.
 type EvalFun a = [Rational] -> ParamCirc -> Maybe a
 
+-- | A function which takes a pair of circuit evaluations, and returns whether they are
+-- equivalent or not.
+type EquivFun a = a -> a -> Bool
+
 -- | Instantiation of EvalFun for a specific circuit.
 type CircFun a = [Rational] -> Maybe a
 
@@ -50,13 +54,13 @@ cutoffToParamSet n = map (\n -> (toInteger n) % k) [0 .. (n - 1)]
 -- angles, then an instantiation error is returned. Otherwise, the two circuits are
 -- compared. If the two circuit representations are not equal, then the angle is
 -- returned as a counterexample. Otherwise, nothing is returned (to indicate success).
-pecCase :: (Eq a) => [Rational] -> CircFun a -> CircFun a -> Maybe PECRes
-pecCase thetas lhsFn rhsFn =
+pecCase :: [Rational] -> CircFun a -> CircFun a -> EquivFun a -> Maybe PECRes
+pecCase thetas lhsFn rhsFn eq =
     case lhsFn thetas of
         Nothing -> Just $ EvalFail LHS thetas
         Just v1 -> case rhsFn thetas of
             Nothing -> Just $ EvalFail RHS thetas
-            Just v2 -> if v1 == v2 then Nothing else Just $ EqFail thetas
+            Just v2 -> if eq v1 v2 then Nothing else Just $ EqFail thetas
 
 -- | Takes as input a list of parameter sets, a list of rational angles, and the
 -- evaluation functions for two parameterized circuits. The purpose of this function is
@@ -69,18 +73,18 @@ pecCase thetas lhsFn rhsFn =
 -- function should be initialized with ([D_k, ..., D_1] [] fn1 fn2) where D_j is the
 -- parameter set for the j-th parameter. After j steps of the algorithm, the inputs to
 -- the function will be ([D_{k-j}, ..., D_1] [D_{k-j+1}, ..., D_k] fn1 fn2).
-pecRun :: (Eq a) => [[Rational]] -> [Rational] -> CircFun a -> CircFun a -> Maybe PECRes
-pecRun []           thetas lhsFn rhsFn = pecCase thetas lhsFn rhsFn
-pecRun (pset:psets) thetas lhsFn rhsFn = foldl f Nothing pset
-    where f res x = if isNothing res then pecRun psets (x:thetas) lhsFn rhsFn else res
+pecRun :: [[Rational]] -> [Rational] -> CircFun a -> CircFun a -> EquivFun a -> Maybe PECRes
+pecRun []           thetas lhsFn rhsFn eq = pecCase thetas lhsFn rhsFn eq
+pecRun (pset:psets) thetas lhsFn rhsFn eq = foldl f Nothing pset
+    where f res x = if isNothing res then pecRun psets (x:thetas) lhsFn rhsFn eq else res
 
 -- | Takes as input a list of cutoff bounds for the parameters, a pair of parameterize
 -- circuits, and a function which faithfully evaluates each circuit, given a choice of
 -- angles. Using these cutoff results, the circuits will be evaluated on sufficiently
 -- many instances (as described in pec), with results produced accordingly.
-pecSetup :: (Eq a) => [Integer] -> ParamCirc -> ParamCirc -> EvalFun a -> PECRes
-pecSetup cutoffs circ1 circ2 eval =
-    case pecRun (reverse degreeSets) [] (circFn circ1) (circFn circ2) of
+pecSetup :: [Integer] -> ParamCirc -> ParamCirc -> EvalFun a -> EquivFun a -> PECRes
+pecSetup cutoffs circ1 circ2 eval eq =
+    case pecRun (reverse degreeSets) [] (circFn circ1) (circFn circ2) eq of
         Nothing  -> EqSuccess radianSets
         Just res -> res
     where radianSets = map cutoffToParamSet cutoffs
@@ -97,8 +101,8 @@ pecSetup cutoffs circ1 circ2 eval =
 -- instantiation of the parameters witnessing this inequivalence is returned. If the
 -- evaluation fails at any point, then an error result which summarizes the failure is
 -- returned.
-pec :: (Eq a) => ParamCirc -> ParamCirc -> EvalFun a -> PECRes
-pec circ1 circ2 eval =
+pec :: ParamCirc -> ParamCirc -> EvalFun a -> EquivFun a -> PECRes
+pec circ1 circ2 eval eq =
     case forallElimSize circ1 circ2 of
         Nothing      -> BadCutoff
-        Just cutoffs -> pecSetup cutoffs circ1 circ2 eval
+        Just cutoffs -> pecSetup cutoffs circ1 circ2 eval eq
