@@ -25,6 +25,7 @@ library
                        Pecac.Parser.Gate
                        Pecac.Parser.Parser
                        Pecac.Parser.Problem
+                       Pecac.Parser.Revolution
                        Pecac.Parser.Syntax
                        Pecac.Printer.Expr
                        Pecac.Printer.Gate
@@ -118,6 +119,11 @@ test-suite parser-parser-tests
 test-suite parser-problem-tests
   import:              basic-unit-test-props
   main-is:             Parser-Problem-Tests.hs
+  type:                exitcode-stdio-1.0
+
+test-suite parser-revolution-tests
+  import:              basic-unit-test-props
+  main-is:             Parser-Revolution-Tests.hs
   type:                exitcode-stdio-1.0
 
 test-suite parser-gate-tests

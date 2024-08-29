@@ -71,6 +71,7 @@ tokens :-
     <0>             \-                                { constLex TokenMinus }
     <0>             \*                                { constLex TokenStar }
     <0>             \/                                { constLex TokenSlash }
+    <0>             \%                                { constLex TokenPercent }
     -- Braces.
     <0>             \(                                { constLex TokenLParen }
     <0>             \)                                { constLex TokenRParen }
@@ -116,6 +117,7 @@ data TokenClass = TokenOpenQasm
                 | TokenMinus
                 | TokenStar
                 | TokenSlash
+                | TokenPercent
                 | TokenLParen
                 | TokenRParen
                 | TokenLBrack
@@ -152,6 +154,7 @@ unlex TokenPlus        = "+"
 unlex TokenMinus       = "-"
 unlex TokenStar        = "*"
 unlex TokenSlash       = "/"
+unlex TokenPercent     = "%"
 unlex TokenLParen      = "("
 unlex TokenRParen      = ")"
 unlex TokenLBrack      = "["
