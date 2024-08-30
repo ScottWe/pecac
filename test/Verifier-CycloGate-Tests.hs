@@ -366,12 +366,12 @@ test33 = TestCase (assertEqual "gateToMat handles modifier-free RotX gates (1/3)
 
 test34 = TestCase (assertEqual "gateToMat handles modifier-free RotX gates (2/3)."
                                mat_I_rotx_I
-                               (gateToMat 3 [45%1] (RotSummary RotX [1] configs)))
+                               (gateToMat 3 [45%360] (RotSummary RotX [1] configs)))
     where configs = GateConfigs False [] [1]
 
 test35 = TestCase (assertEqual "gateToMat handles modifier-free RotX gates (3/3)."
                                mat_II_rotx
-                               (gateToMat 3 [90%1] (RotSummary RotX [1] configs)))
+                               (gateToMat 3 [90%360] (RotSummary RotX [1] configs)))
     where configs = GateConfigs False [] [2]
 
 test36 = TestCase (assertEqual "gateToMat handles modifier-free RotY gates (1/3)."
@@ -381,12 +381,12 @@ test36 = TestCase (assertEqual "gateToMat handles modifier-free RotY gates (1/3)
 
 test37 = TestCase (assertEqual "gateToMat handles modifier-free RotY gates (2/3)."
                                mat_roty_45deg
-                               (gateToMat 1 [45%1] (RotSummary RotY [1] configs)))
+                               (gateToMat 1 [45%360] (RotSummary RotY [1] configs)))
     where configs = GateConfigs False [] [0]
 
 test38 = TestCase (assertEqual "gateToMat handles modifier-free RotY gates (3/3)."
                                mat_roty_90deg
-                               (gateToMat 1 [90%1] (RotSummary RotY [1] configs)))
+                               (gateToMat 1 [90%360] (RotSummary RotY [1] configs)))
     where configs = GateConfigs False [] [0]
 
 test39 = TestCase (assertEqual "gateToMat handles modifier-free RotZ gates (1/3)."
@@ -396,27 +396,27 @@ test39 = TestCase (assertEqual "gateToMat handles modifier-free RotZ gates (1/3)
 
 test40 = TestCase (assertEqual "gateToMat handles modifier-free RotZ gates (2/3)."
                                mat_rotz_45deg
-                               (gateToMat 1 [45%1] (RotSummary RotZ [1] configs)))
+                               (gateToMat 1 [45%360] (RotSummary RotZ [1] configs)))
     where configs = GateConfigs False [] [0]
 
 test41 = TestCase (assertEqual "gateToMat handles modifier-free RotZ gates (3/3)."
                                mat_rotz_90deg
-                               (gateToMat 1 [90%1] (RotSummary RotZ [1] configs)))
+                               (gateToMat 1 [90%360] (RotSummary RotZ [1] configs)))
     where configs = GateConfigs False [] [0]
 
 test42 = TestCase (assertEqual "gateToMat handles modifier-free RotCX gates."
                                mat_rotcx_45deg
-                               (gateToMat 2 [45%1] (RotSummary RotCX [1] configs)))
+                               (gateToMat 2 [45%360] (RotSummary RotCX [1] configs)))
     where configs = GateConfigs False [] [0, 1]
 
 test43 = TestCase (assertEqual "gateToMat handles modifier-free RotCY gates."
                                (swap * mat_rotcy_45deg * swap)
-                               (gateToMat 2 [45%1] (RotSummary RotCY [1] configs)))
+                               (gateToMat 2 [45%360] (RotSummary RotCY [1] configs)))
     where configs = GateConfigs False [] [1, 0]
 
 test44 = TestCase (assertEqual "gateToMat handles modifier-free RotCZ gates."
                                mat_rotcz_45deg
-                               (gateToMat 2 [45%1] (RotSummary RotCZ [1] configs)))
+                               (gateToMat 2 [45%360] (RotSummary RotCZ [1] configs)))
     where configs = GateConfigs False [] [0, 1]
 
 -----------------------------------------------------------------------------------------
@@ -454,32 +454,32 @@ mat_inv_rotcz_90deg = Matrix.build [[one,  zero, zero, zero],
 
 test45 = TestCase (assertEqual "gateToMat handles inverted RotX gates."
                                mat_inv_rotx_90deg
-                               (gateToMat 1 [90%1] (RotSummary RotX [1] configs)))
+                               (gateToMat 1 [90%360] (RotSummary RotX [1] configs)))
     where configs = GateConfigs True [] [0]
 
 test46 = TestCase (assertEqual "gateToMat handles inverted RotY gates."
                                mat_inv_roty_90deg
-                               (gateToMat 1 [90%1] (RotSummary RotY [1] configs)))
+                               (gateToMat 1 [90%360] (RotSummary RotY [1] configs)))
     where configs = GateConfigs True [] [0]
 
 test47 = TestCase (assertEqual "gateToMat handles inverted RotZ gates."
                                mat_inv_rotz_90deg
-                               (gateToMat 1 [90%1] (RotSummary RotZ [1] configs)))
+                               (gateToMat 1 [90%360] (RotSummary RotZ [1] configs)))
     where configs = GateConfigs True [] [0]
 
 test48 = TestCase (assertEqual "gateToMat handles inverted RotCX gates."
                                mat_inv_rotcx_90deg
-                               (gateToMat 1 [90%1] (RotSummary RotCX [1] configs)))
+                               (gateToMat 1 [90%360] (RotSummary RotCX [1] configs)))
     where configs = GateConfigs True [] [0]
 
 test49 = TestCase (assertEqual "gateToMat handles inverted RotCY gates."
                                mat_inv_rotcy_90deg
-                               (gateToMat 1 [90%1] (RotSummary RotCY [1] configs)))
+                               (gateToMat 1 [90%360] (RotSummary RotCY [1] configs)))
     where configs = GateConfigs True [] [0]
 
 test50 = TestCase (assertEqual "gateToMat handles inverted RotCZ gates."
                                mat_inv_rotcz_90deg
-                               (gateToMat 1 [90%1] (RotSummary RotCZ [1] configs)))
+                               (gateToMat 1 [90%360] (RotSummary RotCZ [1] configs)))
     where configs = GateConfigs True [] [0]
 
 -----------------------------------------------------------------------------------------
@@ -487,27 +487,27 @@ test50 = TestCase (assertEqual "gateToMat handles inverted RotCZ gates."
 
 test51 = TestCase (assertEqual "gateToMat handles linear sums of angles for plain gates."
                                mat_X
-                               (gateToMat 1 [45%0, 90%0] (PlainSummary GateX configs)))
+                               (gateToMat 1 [45%1, 90%1] (PlainSummary GateX configs)))
     where configs = GateConfigs False [] [0]
 
 test52 = TestCase (assertEqual "gateToMat handles linear sums of angles on rots (1/3)."
                                mat_roty_45deg
                                (gateToMat 1 angles (RotSummary RotY coeffs configs)))
-    where angles  = [25%1, 25%2, 5%1]
+    where angles  = [25%360, 25%(2*360), 5%360]
           coeffs  = [1, 2, -1]
           configs = GateConfigs False [] [0]
 
 test53 = TestCase (assertEqual "gateToMat handles modifier-free RotY gates (2/3)."
                                mat_roty_90deg
                                (gateToMat 1 angles (RotSummary RotY coeffs configs)))
-    where angles  = [-110%1, 20%11]
+    where angles  = [-110%360, 20%(11*360)]
           coeffs  = [-1, -11]
           configs = GateConfigs False [] [0]
 
 test54 = TestCase (assertEqual "gateToMat handles modifier-free RotY gates (3/3)."
                                mat_I
                                (gateToMat 1 angles (RotSummary RotY coeffs configs)))
-    where angles  = [1%11, 1%7, 3%11, 3%7]
+    where angles  = [1%(11*360), 1%(7*360), 3%(11*360), 3%(7*360)]
           coeffs  = [3, 6, -1, -2]
           configs = GateConfigs False [] [0]
 
@@ -532,17 +532,17 @@ mat_CNX = Matrix.build [[one,  zero, zero, zero, zero, zero, zero, zero],
 
 test55 = TestCase (assertEqual "gateToMat handles positive controls."
                                mat_CX
-                               (gateToMat 2 [45%0, 90%0] (PlainSummary GateX configs)))
+                               (gateToMat 2 [45%1, 90%1] (PlainSummary GateX configs)))
     where configs = GateConfigs False [Pos] [0, 1]
 
 test56 = TestCase (assertEqual "gateToMat handles negative controls."
                                mat_NX
-                               (gateToMat 2 [45%0, 90%0] (PlainSummary GateX configs)))
+                               (gateToMat 2 [45%1, 90%1] (PlainSummary GateX configs)))
     where configs = GateConfigs False [Neg] [0, 1]
 
 test57 = TestCase (assertEqual "gateToMat handles mixed controls."
                                mat_CNX
-                               (gateToMat 1 [45%0, 90%0] (PlainSummary GateX configs)))
+                               (gateToMat 1 [45%1, 90%1] (PlainSummary GateX configs)))
     where configs = GateConfigs False [Pos, Neg] [0]
 
 test58 = TestCase (assertEqual "gateToMat can permute inputs to controlled gates."

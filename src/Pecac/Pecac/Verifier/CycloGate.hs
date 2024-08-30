@@ -149,15 +149,15 @@ matCCX = addCtrlToMatrix matCX
 -- * Rotation Gate Definitions.
 
 -- | Takes as input a unitary Hermitian matrix to exponentiate (mat), whether the
--- exponential should be inverted, and an angle theta (in degrees). Returns the operator
--- exp(i*mat*tau) where tau = theta when the circuit is not inverted, or tau = -theta
--- otherwise. Note that if mat is not unitary Hermitian matrix, then the result will be
--- incorrect (in particular, a special decomposition is used).
+-- exponential should be inverted, and an angle theta (in revolutions). Returns the
+-- operator exp(i*mat*tau) where tau = theta when the circuit is not inverted, or
+-- tau = -theta otherwise. Note that if mat is not unitary Hermitian matrix, then the
+-- result will be incorrect (in particular, a special decomposition is used).
 makeExponential :: CycMat -> Bool -> Rational -> CycMat
 makeExponential mat False theta = Matrix.add cosmat sinmat
     where (n, m) = Matrix.size mat
-          cosmat = Matrix.scale (Cyclotomic.cosDeg theta) $ Matrix.iden n
-          sinmat = Matrix.scale (img * Cyclotomic.sinDeg theta) mat
+          cosmat = Matrix.scale (Cyclotomic.cosRev theta) $ Matrix.iden n
+          sinmat = Matrix.scale (img * Cyclotomic.sinRev theta) mat
 makeExponential mat True theta = makeExponential mat False $ -theta
 
 -- | Instantiates makeExponential for the Pauli-X operator.

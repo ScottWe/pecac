@@ -127,7 +127,7 @@ test12 = TestCase (assertEqual "circToMat handles 3-qubit single gate circuits."
 
 test13 = TestCase (assertEqual "circToMat handles rotations."
                                (Just mat_rotx_deg45)
-                               (circToMat [45%1] pcirc))
+                               (circToMat [45%360] pcirc))
     where gates = [RotSummary RotX [1] $ GateConfigs False [] [0]]
           pcirc = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 1) gates
 
@@ -141,7 +141,7 @@ mat_RxXYZ = Matrix.kroneckerProduct mat_RxX mat_YZ
 
 test14 = TestCase (assertEqual "circToMat handles circuits with multiple gates."
                                (Just mat_RxXYZ)
-                               (circToMat [45%6, 45%2] pcirc))
+                               (circToMat [45%(6*360), 45%(2*360)] pcirc))
     where gates = [PlainSummary GateZ $ GateConfigs False [] [0],
                    PlainSummary GateX $ GateConfigs False [] [1],
                    RotSummary RotX [-3, -1] $ GateConfigs False [] [0],

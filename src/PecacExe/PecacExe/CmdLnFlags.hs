@@ -39,4 +39,4 @@ srcFlags x = x &= help "Input source (defaults to stdin)."
 -- anlges. The defualt value (typically an empty list) is taken as an argument,
 -- since flags are impure.
 radFlags :: [String] -> [String]
-radFlags x = x &= help "A rational multiple of pi."
+radFlags x = x &= help "A rational multiple of 2*pi."

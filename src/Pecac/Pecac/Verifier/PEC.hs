@@ -46,8 +46,7 @@ type CircFun a = [Rational] -> Maybe a
 -- number of distinct rational multiples of pi from [0, 2), such that parameterized
 -- equivalence can be determined.
 cutoffToParamSet :: Integer -> [Rational]
-cutoffToParamSet n = map (\n -> (toInteger n) % k) [0 .. (n - 1)]
-    where k = (n + 1) `div` 2
+cutoffToParamSet n = map (\j -> (toInteger j) % n) [0 .. (n - 1)]
 
 -- | Takes as input a list of rational degrees and the evaluation functions for two
 -- patameterized curcits. If the circuits cannot be evaluated with respect to these
@@ -84,11 +83,10 @@ pecRun (pset:psets) thetas lhsFn rhsFn eq = foldl f Nothing pset
 -- many instances (as described in pec), with results produced accordingly.
 pecSetup :: [Integer] -> ParamCirc -> ParamCirc -> EvalFun a -> EquivFun a -> PECRes
 pecSetup cutoffs circ1 circ2 eval eq =
-    case pecRun (reverse degreeSets) [] (circFn circ1) (circFn circ2) eq of
-        Nothing  -> EqSuccess radianSets
+    case pecRun (reverse paramSet) [] (circFn circ1) (circFn circ2) eq of
+        Nothing  -> EqSuccess paramSet
         Just res -> res
-    where radianSets = map cutoffToParamSet cutoffs
-          degreeSets = map (map $ \x -> x * 180) radianSets
+    where paramSet = map cutoffToParamSet cutoffs
           circFn x y = eval y x
 
 -- | Takes as input a pair of parameterized circuits, and a function which faithfully
