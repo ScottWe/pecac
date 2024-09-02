@@ -19,9 +19,11 @@ extra-source-files:  CHANGELOG.md, README.md
 library
   exposed-modules:     Pecac.Either
                        Pecac.List
+                       Pecac.Maybe
                        Pecac.Analyzer.Cutoffs
                        Pecac.Analyzer.Gate
                        Pecac.Analyzer.Problem
+                       Pecac.Analyzer.Revolution
                        Pecac.Parser.Gate
                        Pecac.Parser.Parser
                        Pecac.Parser.Problem
@@ -44,6 +46,7 @@ library
                        containers,
                        cyclotomic,
                        filepath,
+                       groups,
                        matrix,
                        -- Forces a resolution to a dependency conflict.
                        vector>=0.12.2.0,
@@ -109,6 +112,11 @@ common basic-unit-test-props
 test-suite analyzer-cutoffs-tests
   import:              basic-unit-test-props
   main-is:             Analyzer-Cutoffs-Tests.hs
+  type:                exitcode-stdio-1.0
+
+test-suite analyzer-revolution-tests
+  import:              basic-unit-test-props
+  main-is:             Analyzer-Revolution-Tests.hs
   type:                exitcode-stdio-1.0
 
 test-suite parser-parser-tests
