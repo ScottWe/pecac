@@ -53,18 +53,26 @@ test11 = TestCase (assertEqual "Can parse integral values (1/3)."
                                (-5, 2)
                                (fromJust $ parseRevolution "-5 * pi"))
 
+test12 = TestCase (assertEqual "Can parse pi in isolation (1/2)."
+                               (1, 2)
+                               (fromJust $ parseRevolution "pi"))
+
+test13 = TestCase (assertEqual "Can parse pi in isolation (2/2)."
+                               (-1, 2)
+                               (fromJust $ parseRevolution "-pi"))
+
 -----------------------------------------------------------------------------------------
 -- Invalid Parsing Tests
 
-test12 = TestCase (assertEqual "Rejects misplaced negatives."
+test14 = TestCase (assertEqual "Rejects misplaced negatives."
                                Nothing
                                (parseRevolution "1 / -5"))
 
-test13 = TestCase (assertEqual "Rejects double negatives."
+test15 = TestCase (assertEqual "Rejects double negatives."
                                Nothing
                                (parseRevolution "-1 / -5"))
 
-test14 = TestCase (assertEqual "Rejects expressions with more than pi."
+test16 = TestCase (assertEqual "Rejects expressions with more than pi."
                                Nothing
                                (parseRevolution "1 / 3 * 2 * pi"))
 
@@ -82,9 +90,11 @@ tests = hUnitTestToTests $ TestList [TestLabel "Valid_Pos_Ratio_1" test1,
                                      TestLabel "Valid_IntRatio_1" test9,
                                      TestLabel "Valid_IntRatio_2" test10,
                                      TestLabel "Valid_IntRatio_3" test11,
-                                     TestLabel "Invalid_IncorrectNeg" test12,
-                                     TestLabel "Invalid_DoubleNeg" test13,
-                                     TestLabel "Invalid_MoreThanPi" test14]
+                                     TestLabel "Valid_Pi_1" test12,
+                                     TestLabel "Valid_Pi_2" test13,
+                                     TestLabel "Invalid_IncorrectNeg" test14,
+                                     TestLabel "Invalid_DoubleNeg" test15,
+                                     TestLabel "Invalid_MoreThanPi" test16]
 
 main = defaultMain tests
 

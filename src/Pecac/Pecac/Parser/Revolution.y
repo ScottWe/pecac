@@ -24,6 +24,8 @@ import Pecac.Parser.Syntax
 
 Revolution : Ratio                                { $1 }
            | Ratio '*' pi                         { rescaleRev $1 }
+           | pi                                   { (1, 2) }
+           | '-' pi                               { (-1, 2) }
 
 Ratio : AbsRatio                                  { $1 }
       | '-' AbsRatio                              { negateRev $2 }
