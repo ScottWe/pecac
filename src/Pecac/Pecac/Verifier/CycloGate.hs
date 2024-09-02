@@ -18,6 +18,12 @@ import Pecac.Analyzer.Gate
   , RotName (..)
   , isInverted
   )
+import Pecac.Analyzer.Revolution
+  ( Revolution
+  , asRational
+  , invert
+  , scale
+  )
 import Pecac.Verifier.MatrixGate
   ( addCtrlToMatrix
   , addNegCtrlToMatrix
@@ -153,38 +159,39 @@ matCCX = addCtrlToMatrix matCX
 -- operator exp(i*mat*tau) where tau = theta when the circuit is not inverted, or
 -- tau = -theta otherwise. Note that if mat is not unitary Hermitian matrix, then the
 -- result will be incorrect (in particular, a special decomposition is used).
-makeExponential :: CycMat -> Bool -> Rational -> CycMat
-makeExponential mat False theta = Matrix.add cosmat sinmat
-    where (n, m) = Matrix.size mat
+makeExponential :: CycMat -> Bool -> Revolution -> CycMat
+makeExponential mat False rev = Matrix.add cosmat sinmat
+    where theta  = asRational rev
+          (n, m) = Matrix.size mat
           cosmat = Matrix.scale (Cyclotomic.cosRev theta) $ Matrix.iden n
           sinmat = Matrix.scale (img * Cyclotomic.sinRev theta) mat
-makeExponential mat True theta = makeExponential mat False $ -theta
+makeExponential mat True rev = makeExponential mat False $ invert rev
 
 -- | Instantiates makeExponential for the Pauli-X operator.
-matRX :: Bool -> Rational -> CycMat
+matRX :: Bool -> Revolution -> CycMat
 matRX = makeExponential matX
 
 -- | Instantiates makeExponential for the Pauli-Y operator.
-matRY :: Bool -> Rational -> CycMat
+matRY :: Bool -> Revolution -> CycMat
 matRY = makeExponential matY
 
 -- | Instantiates makeExponential for the Pauli-Z operator.
-matRZ :: Bool -> Rational -> CycMat
+matRZ :: Bool -> Revolution -> CycMat
 matRZ = makeExponential matZ
 
 -----------------------------------------------------------------------------------------
 -- * Modified Rotation Gates.
 
 -- | A controlled version of matRX.
-matCRX :: Bool -> Rational -> CycMat
+matCRX :: Bool -> Revolution -> CycMat
 matCRX inv = addCtrlToMatrix . matRX inv
 
 -- | A controlled version of matRY.
-matCRY :: Bool -> Rational -> CycMat
+matCRY :: Bool -> Revolution -> CycMat
 matCRY inv = addCtrlToMatrix . matRY inv
 
 -- | A controlled version of matRZ.
-matCRZ :: Bool -> Rational -> CycMat
+matCRZ :: Bool -> Revolution -> CycMat
 matCRZ inv = addCtrlToMatrix . matRZ inv
 
 -----------------------------------------------------------------------------------------
@@ -217,7 +224,7 @@ makePlain GateCSwap _     = matCSwap
 
 -- | Converts a rotation gate name to a corresponding cyclotomic operator, taking into
 -- account gate inversion, and the angle of rotation.
-makeRot :: RotName -> Bool -> Rational -> CycMat
+makeRot :: RotName -> Bool -> Revolution -> CycMat
 makeRot RotX  = matRX
 makeRot RotY  = matRY
 makeRot RotZ  = matRZ
@@ -239,14 +246,14 @@ gateToMatImpl n base (GateConfigs _ ctrls qubits) = applyAt n qubits cbase
 
 -- | Helper method to evaluate integer linear sums of angles, given the coefficients in
 -- the sum, and an instantiation for each angle.
-toArg :: [Integer] -> [Rational] -> Rational
-toArg []     []     = 0
-toArg (x:xs) (y:ys) = ((x % 1) * y) + toArg xs ys
+toArg :: [Integer] -> [Revolution] -> Revolution
+toArg []     []     = mempty
+toArg (x:xs) (y:ys) = (scale (x % 1) y) <> (toArg xs ys)
 
 -- | Takes as input the number of qubits in a circuit, an instantiation for each angle in
 -- the circuit, and a gate summary. Returns the cyclotomic operator corresponding to this
 -- gate summary, with respect to the circuit size (qubit count) and angle instantiations.
-gateToMat :: Int -> [Rational] -> GateSummary -> CycMat
+gateToMat :: Int -> [Revolution] -> GateSummary -> CycMat
 gateToMat n _ (PlainSummary name confs) = gateToMatImpl n base confs
     where base = makePlain name $ isInverted confs
 gateToMat n thetas (RotSummary name coeffs confs) = gateToMatImpl n base confs

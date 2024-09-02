@@ -7,6 +7,7 @@ import Data.Complex.Cyclotomic as Cyclotomic
 import Data.Ratio ((%))
 import Pecac.Analyzer.Gate
 import Pecac.Analyzer.Problem
+import Pecac.Analyzer.Revolution
 import Pecac.Verifier.CycloCircuit
 import Pecac.Verifier.Matrix as Matrix
 
@@ -40,39 +41,46 @@ mat_III = Matrix.kroneckerProduct mat_II mat_I
 -----------------------------------------------------------------------------------------
 -- circToMat: Empty Circuits (Valid Parameters)
 
+null_1angle :: [Revolution]
+null_1angle = map rationalToRev [0%1]
+
+null_2angle :: [Revolution]
+null_2angle = map rationalToRev [0%1, 0%1]
+
 test1 = TestCase (assertEqual "circToMat handles empty 1-qubit, 1-parameter, circuits."
                               (Just mat_I)
-                              (circToMat [0%1] pcirc))
+                              (circToMat null_1angle pcirc))
     where pcirc = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 1) []
 
 test2 = TestCase (assertEqual "circToMat handles empty 1-qubit, 2-parameter, circuits."
                               (Just mat_I)
-                              (circToMat [0%1, 0%1] pcirc))
+                              (circToMat null_2angle pcirc))
     where pcirc = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 1) []
 
 test3 = TestCase (assertEqual "circToMat handles empty 1-qubit, 3-parameter, circuits."
                               (Just mat_I)
-                              (circToMat [0%1, 0%1, 0%1] pcirc))
-    where pcirc = ParamCirc (ParamArr "thetas" 3) (QubitReg "qs" 1) []
+                              (circToMat angles pcirc))
+    where angles = map rationalToRev [0%1, 0%1, 0%1]
+          pcirc  = ParamCirc (ParamArr "thetas" 3) (QubitReg "qs" 1) []
 
 test4 = TestCase (assertEqual "circToMat handles empty 2-qubit, 1-parameter, circuits."
                               (Just mat_II)
-                              (circToMat [0%1] pcirc))
+                              (circToMat null_1angle pcirc))
     where pcirc = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 2) []
 
 test5 = TestCase (assertEqual "circToMat handles empty 2-qubit, 2-parameter, circuits."
                               (Just mat_II)
-                              (circToMat [0%1, 0%1] pcirc))
+                              (circToMat null_2angle pcirc))
     where pcirc = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 2) []
 
 test6 = TestCase (assertEqual "circToMat handles empty 3-qubit, 1-parameter, circuits."
                               (Just mat_III)
-                              (circToMat [0%1] pcirc))
+                              (circToMat null_1angle pcirc))
     where pcirc = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 3) []
 
 test7 = TestCase (assertEqual "circToMat handles empty 3-qubit, 2-parameter, circuits."
                               (Just mat_III)
-                              (circToMat [0%1, 0%1] pcirc))
+                              (circToMat null_2angle pcirc))
     where pcirc = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 3) []
 
 -----------------------------------------------------------------------------------------
@@ -80,13 +88,14 @@ test7 = TestCase (assertEqual "circToMat handles empty 3-qubit, 2-parameter, cir
 
 test8 = TestCase (assertEqual "circToMat rejects too few parameters."
                               Nothing
-                              (circToMat [0%1, 0%1] pcirc))
+                              (circToMat null_2angle pcirc))
     where pcirc = ParamCirc (ParamArr "thetas" 3) (QubitReg "qs" 1) []
 
 test9 = TestCase (assertEqual "circToMat rejects too many parameters."
                               Nothing
-                              (circToMat [0%1, 0%1, 0%1, 0%1] pcirc))
-    where pcirc = ParamCirc (ParamArr "thetas" 3) (QubitReg "qs" 1) []
+                              (circToMat angles pcirc))
+    where angles = map rationalToRev [0%1, 0%1, 0%1, 0%1]
+          pcirc  = ParamCirc (ParamArr "thetas" 3) (QubitReg "qs" 1) []
 
 -----------------------------------------------------------------------------------------
 -- circToMat: Single Gate Circuits
@@ -109,27 +118,28 @@ mat_rotx_deg45 = Matrix.build [[one / sqrt2, img / sqrt2],
 
 test10 = TestCase (assertEqual "circToMat handles 1-qubit single gate circuits."
                                (Just mat_X)
-                               (circToMat [0%1] pcirc))
+                               (circToMat null_1angle pcirc))
     where gates = [PlainSummary GateX $ GateConfigs False [] [0]]
           pcirc = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 1) gates
 
 test11 = TestCase (assertEqual "circToMat handles 2-qubit single gate circuits."
                                (Just $ Matrix.kroneckerProduct mat_I mat_Y)
-                               (circToMat [0%1] pcirc))
+                               (circToMat null_1angle pcirc))
     where gates = [PlainSummary GateY $ GateConfigs False [] [1]]
           pcirc = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 2) gates
 
 test12 = TestCase (assertEqual "circToMat handles 3-qubit single gate circuits."
                                (Just $ Matrix.kroneckerProduct mat_II mat_Z)
-                               (circToMat [0%1] pcirc))
+                               (circToMat null_1angle pcirc))
     where gates = [PlainSummary GateZ $ GateConfigs False [] [2]]
           pcirc = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 3) gates
 
 test13 = TestCase (assertEqual "circToMat handles rotations."
                                (Just mat_rotx_deg45)
-                               (circToMat [45%360] pcirc))
-    where gates = [RotSummary RotX [1] $ GateConfigs False [] [0]]
-          pcirc = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 1) gates
+                               (circToMat angles pcirc))
+    where angles = map rationalToRev [45%360]
+          gates  = [RotSummary RotX [1] $ GateConfigs False [] [0]]
+          pcirc  = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 1) gates
 
 -----------------------------------------------------------------------------------------
 -- circToMat: Multi-Gate Circuits
@@ -141,13 +151,14 @@ mat_RxXYZ = Matrix.kroneckerProduct mat_RxX mat_YZ
 
 test14 = TestCase (assertEqual "circToMat handles circuits with multiple gates."
                                (Just mat_RxXYZ)
-                               (circToMat [45%(6*360), 45%(2*360)] pcirc))
-    where gates = [PlainSummary GateZ $ GateConfigs False [] [0],
-                   PlainSummary GateX $ GateConfigs False [] [1],
-                   RotSummary RotX [-3, -1] $ GateConfigs False [] [0],
-                   PlainSummary GateZ $ GateConfigs False [] [0],
-                   PlainSummary GateY $ GateConfigs False [] [2],
-                   PlainSummary GateZ $ GateConfigs False [] [3]]
+                               (circToMat angles pcirc))
+    where angles = map rationalToRev [45%(6*360), 45%(2*360)]
+          gates  = [PlainSummary GateZ $ GateConfigs False [] [0],
+                    PlainSummary GateX $ GateConfigs False [] [1],
+                    RotSummary RotX [-3, -1] $ GateConfigs False [] [0],
+                    PlainSummary GateZ $ GateConfigs False [] [0],
+                    PlainSummary GateY $ GateConfigs False [] [2],
+                    PlainSummary GateZ $ GateConfigs False [] [3]]
           pcirc = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 4) gates
 
 -----------------------------------------------------------------------------------------

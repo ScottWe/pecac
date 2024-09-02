@@ -5,6 +5,7 @@ module Pecac.Verifier.CycloCircuit (circToMat) where
 -----------------------------------------------------------------------------------------
 -- * Import Section.
 
+import Pecac.Analyzer.Revolution (Revolution)
 import Pecac.Analyzer.Problem
   ( ParamArr (..)
   , ParamCirc (..)
@@ -26,7 +27,7 @@ import qualified Pecac.Verifier.Matrix as Matrix
 -- list (as a rational degree), and a list of gates. Returns a matrix which corresponds
 -- to applying each gate of the list, in order, to an n-qubit system, with all rotations
 -- instantiated according to the angles.
-gatesToMat :: Int -> [Rational] -> [GateSummary] -> CycMat
+gatesToMat :: Int -> [Revolution] -> [GateSummary] -> CycMat
 gatesToMat n thetas []           = idGate n
 gatesToMat n thetas (gate:gates) = Matrix.compose cmat gmat
     where cmat = gatesToMat n thetas gates
@@ -36,7 +37,7 @@ gatesToMat n thetas (gate:gates) = Matrix.compose cmat gmat
 -- of the list of angles is equal to the number of parameters in the circuit, then a
 -- matrix is returned which corresponds to executing the circuit, with the given angles.
 -- Otherwise, nothing is returned.
-circToMat :: [Rational] -> ParamCirc -> Maybe CycMat
+circToMat :: [Revolution] -> ParamCirc -> Maybe CycMat
 circToMat thetas (ParamCirc (ParamArr _ psz) (QubitReg _ qsz) gates) =
     if len == psz
     then Just $ gatesToMat qsz thetas gates

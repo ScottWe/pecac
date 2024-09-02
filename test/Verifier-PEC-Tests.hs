@@ -5,6 +5,7 @@ import Test.Framework.Providers.HUnit
 import Test.HUnit
 import Pecac.Analyzer.Gate
 import Pecac.Analyzer.Problem
+import Pecac.Analyzer.Revolution
 import Pecac.Verifier.CycloCircuit
 import Pecac.Verifier.PEC
 
@@ -14,7 +15,7 @@ import Pecac.Verifier.PEC
 cycloPec :: ParamCirc -> ParamCirc -> PECRes
 cycloPec circ1 circ2 = pec circ1 circ2 circToMat (==)
 
-checkParamSets :: [Int] -> [[Rational]] -> Bool
+checkParamSets :: [Int] -> [[Revolution]] -> Bool
 checkParamSets []     []           = True
 checkParamSets []     _            = False
 checkParamSets _      []           = False
@@ -64,7 +65,7 @@ test2 = TestCase (assertBool "pec handles inequivalent parameter-free circuits."
 -----------------------------------------------------------------------------------------
 -- pec: Error Cases
 
-toyEval :: [Rational] -> ParamCirc -> Maybe ()
+toyEval :: [Revolution] -> ParamCirc -> Maybe ()
 toyEval _ (ParamCirc (ParamArr v _) _ _) = if v == "bad" then Nothing else Just ()
 
 checkEvalFail :: Side -> ParamCirc -> ParamCirc -> Bool

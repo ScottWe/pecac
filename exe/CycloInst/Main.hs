@@ -9,8 +9,12 @@ import CycloInst.CmdLn
   ( CycloInstTool(..)
   , getToolArgs
   )
-import PecacExe.IOUtils (readCirc)
+import PecacExe.IOUtils
+  ( readCirc
+  , readRevs
+  )
 import Pecac.Analyzer.Problem (ParamCirc (..))
+import Pecac.Analyzer.Revolution (Revolution)
 import Pecac.Verifier.CycloCircuit (circToMat)
 
 import Pecac.Verifier.Matrix as Matrix
@@ -20,7 +24,7 @@ import Pecac.Verifier.Matrix as Matrix
 
 -- | Interprets a parameterized circuit as a cyclotomic matrix, when each rotation is
 -- instantiated according to the list of angles.
-evalCirc :: [Rational] -> ParamCirc -> IO ()
+evalCirc :: [Revolution] -> ParamCirc -> IO ()
 evalCirc revs circ =
     case circToMat revs circ of
         Nothing  -> putStrLn err
@@ -29,7 +33,7 @@ evalCirc revs circ =
 
 -- | Determines if two parameterized circuits are equal, when each rotation is
 -- instantiated according to the list of angles.
-compCircs :: [Rational] -> ParamCirc -> ParamCirc -> IO ()
+compCircs :: [Revolution] -> ParamCirc -> ParamCirc -> IO ()
 compCircs revs circ1 circ2 =
     case circToMat revs circ1 of
         Nothing   -> putStrLn $ err "left-hand side"
@@ -44,11 +48,15 @@ compCircs revs circ1 circ2 =
 -- | Unwraps the src file name, and parses it as a circuit. The circuit is then passed
 -- along to a circuit logging routine.
 processArgs :: CycloInstTool -> IO ()
-processArgs (Evaluate src revs) =
-    readCirc src $ \circ -> evalCirc revs circ
-processArgs (Compare lhs rhs revs) =
+processArgs (Evaluate src args) =
+    readCirc src $ \circ ->
+        readRevs args $ \revs ->
+            evalCirc revs circ
+processArgs (Compare lhs rhs args) =
     readCirc lhs $ \circ1 ->
-        readCirc rhs $ \circ2 -> compCircs revs circ1 circ2
+        readCirc rhs $ \circ2 -> 
+            readRevs args $ \revs ->
+                compCircs revs circ1 circ2
 
 main :: IO ()
 main = do

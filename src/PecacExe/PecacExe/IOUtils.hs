@@ -2,6 +2,7 @@
 
 module PecacExe.IOUtils
   ( readCirc
+  , readRevs
   , readSrc
   ) where
 
@@ -9,6 +10,11 @@ module PecacExe.IOUtils
 -- * Import Section.
 
 import Pecac.Analyzer.Problem (ParamCirc)
+import Pecac.Analyzer.Revolution
+  ( Revolution
+  , strToRev
+  )
+import Pecac.Either (branchRight)
 import Pecac.Parser.Parser (parseQasm)
 import Pecac.Parser.Problem (qasmToParamCirc)
 import PecacExe.ErrorLogging (logCircErr)
@@ -46,3 +52,27 @@ readCirc src f = do
         Right prog -> case qasmToParamCirc prog of
             Left err   -> putStrLn $ unlines $ logCircErr err
             Right circ -> f circ
+
+-------------------------------------------------------------------------------
+-- * Revolution Reading.
+
+-- | Takes as input a list of strings. If the strings can be interpreted as
+-- revolutions, then the corresponding list of revolutions is returned.
+-- Otherwise, nothing is returned.
+readRevsImpl :: [String] -> Either String [Revolution]
+readRevsImpl []         = Right []
+readRevsImpl (str:strs) =
+    case strToRev str of
+        Nothing  -> Left str
+        Just rev -> branchRight (readRevsImpl strs) $
+            \revs -> Right $ rev : revs
+
+-- | Takes as input a list of strings, and callback function. If the strings
+-- can be interpreted as revolutions, then the callback function is called with
+-- those revolutions, to perform an IO-action. Otherwise, an error is logged to
+-- stdout.
+readRevs :: [String] -> ([Revolution] -> IO ()) -> IO ()
+readRevs strs f =
+    case readRevsImpl strs of
+        Left err   -> putStrLn $ "Failed to parse angle: " ++ err
+        Right revs -> f revs
