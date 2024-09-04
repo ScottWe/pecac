@@ -51,7 +51,7 @@ data Expr = Plus Expr Expr
           | Negate Expr
           | VarId String
           | CellId String Int
-          | ConstNat Int
+          | ConstNat Integer
           deriving (Show, Eq)
 
 -----------------------------------------------------------------------------------------

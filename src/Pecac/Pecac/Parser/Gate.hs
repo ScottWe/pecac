@@ -47,7 +47,7 @@ data ExprErr = IntVarUse String
              | IntArrUse String Int
              | UnknownParam String
              | ParamOOB Int Int
-             | UnexpectedNat Int
+             | UnexpectedNat Integer
              | UnknownTimesLHS Expr
              deriving (Show, Eq)
 
@@ -77,7 +77,7 @@ toInt (Plus lexpr rexpr)  = binOp lexpr rexpr toInt (+)
 toInt (Minus lexpr rexpr) = binOp lexpr rexpr toInt (-)
 toInt (Times lexpr rexpr) = binOp lexpr rexpr toInt (*)
 toInt (Brack expr)        = toInt expr
-toInt (Negate expr)       = unaryOp expr toInt $ \x -> -x
+toInt (Negate expr)       = unaryOp expr toInt negate
 toInt (VarId name)        = Left $ IntVarUse name
 toInt (CellId name idx)   = Left $ IntArrUse name idx
 toInt (ConstNat n)        = Right $ toInteger n

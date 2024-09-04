@@ -66,12 +66,12 @@ Stmt : Gate ';'                                   { GateStmt $1 }
 -----------------------
 -- | Declaration Format
 
-Nat : nat                                         { (read $1 :: Int) }
+Int : nat                                         { (read $1 :: Int) }
 
-Designator : '[' Nat ']'                          { $2 }
+Designator : '[' Int ']'                          { $2 }
 
 ParamDecl : input angle id                        { ParamVarDecl $3 }
-          | input array '[' angle ',' Nat ']' id  { ParamArrDecl $8 $6 }
+          | input array '[' angle ',' Int ']' id  { ParamArrDecl $8 $6 }
 
 QubitDecl : qubit id                              { QubitVarDecl $2 }
           | qubit Designator id                   { QubitArrDecl $3 $2}
@@ -80,6 +80,8 @@ QubitDecl : qubit id                              { QubitVarDecl $2 }
 
 ----------------
 -- | Gate Format
+
+Nat : nat                                         { (read $1 :: Integer) }
 
 Gate : id GateOperands                            { Gate (PlainGate $1 $2) }
      | id '(' Expr ')' GateOperands               { Gate (RotGate $1 $3 $5) }
