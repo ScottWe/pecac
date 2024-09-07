@@ -52,6 +52,8 @@ data Expr = Plus Expr Expr
           | VarId String
           | CellId String Int
           | ConstNat Integer
+          | Pi
+          | Tau
           deriving (Show, Eq)
 
 -----------------------------------------------------------------------------------------

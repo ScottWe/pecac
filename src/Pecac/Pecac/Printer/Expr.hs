@@ -25,3 +25,5 @@ printExpr (Negate expr)   = "-" ++ printExpr expr
 printExpr (VarId id)      = id
 printExpr (CellId id idx) = printCell id idx
 printExpr (ConstNat n)    = show n
+printExpr Pi              = "pi"
+printExpr Tau             = "tau"

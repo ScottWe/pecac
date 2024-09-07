@@ -26,6 +26,8 @@ import Pecac.Parser.Syntax
     input           { Token _ TokenInput }
     array           { Token _ TokenArray }
     nat             { Token _ (TokenNat $$) }
+    pi              { Token _ (TokenPi _)}
+    tau             { Token _ (TokenTau _)}
     id              { Token _ (TokenID $$) }
     '@'             { Token _ TokenAt }
     '+'             { Token _ TokenPlus }
@@ -103,6 +105,8 @@ Expr : Expr '+' Expr                              { Plus $1 $3 }
      | id                                         { VarId $1 }
      | id Designator                              { CellId $1 $2 }
      | Nat                                        { ConstNat $1 }
+     | pi                                         { Pi }
+     | tau                                        { Tau }
 
 {
 lexwrap :: (Token -> Alex a) -> Alex a

@@ -4,6 +4,7 @@ import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.HUnit
 import Data.Maybe
+import Data.Ratio
 import Pecac.Affine
 import Pecac.Parser.Gate
 import Pecac.Parser.Syntax
@@ -315,6 +316,41 @@ test47 = TestCase (assertEqual "Rejects plain gates with invalid angles."
           gate = Gate $ RotGate "crx" expr [QReg qvar 10, QReg qvar 59]
 
 -----------------------------------------------------------------------------------------
+-- toCeoffs: constants
+
+pival :: Revolution
+pival = rationalToRev $ 1 % 2
+
+test48 = TestCase (assertEqual "toCeoffs handles the value pi."
+                               (Right $ lit pival)
+                               (toCoeffs (ParamArr pvar 8) Pi))
+
+test49 = TestCase (assertEqual "toCeoffs handles the value tau."
+                               (Right $ lit $ rationalToRev 1)
+                               (toCoeffs (ParamArr pvar 8) Tau))
+
+test50 = TestCase (assertEqual "toCeoffs handles affine linear sums."
+                               (Right $ affine [0, -2, 0, -5, 0, 0, 7, 0] pival)
+                               (toCoeffs (ParamArr pvar 8) $ Plus lexpr Pi))
+    where lexpr = Negate $ Minus (Plus (Times (ConstNat 5) (CellId pvar 3))
+                                       (Times (ConstNat 2) (CellId pvar 1)))
+                                 (Times (CellId pvar 6) (ConstNat 7))
+
+test51 = TestCase (assertEqual "toCeoffs rejects multiplication by anlges (1/2)."
+                               (Left $ AngleAsInt "pi")
+                               (toCoeffs (ParamArr pvar 8) $ Times lexpr Pi))
+    where lexpr = Negate $ Minus (Plus (Times (ConstNat 5) (CellId pvar 3))
+                                       (Times (ConstNat 2) (CellId pvar 1)))
+                                 (Times (CellId pvar 6) (ConstNat 7))
+
+test52 = TestCase (assertEqual "toCeoffs rejects multiplication by anlges (1/2)."
+                               (Left $ AngleAsInt "tau")
+                               (toCoeffs (ParamArr pvar 8) $ Times lexpr Tau))
+    where lexpr = Negate $ Minus (Plus (Times (ConstNat 5) (CellId pvar 3))
+                                       (Times (ConstNat 2) (CellId pvar 1)))
+                                 (Times (CellId pvar 6) (ConstNat 7))
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "Valid_toCoeff_Angle_1" test1,
@@ -363,6 +399,11 @@ tests = hUnitTestToTests $ TestList [TestLabel "Valid_toCoeff_Angle_1" test1,
                                      TestLabel "Invalid_summarizeGate_RotName" test44,
                                      TestLabel "Invalid_summarizeGate_OpCount_1" test45,
                                      TestLabel "Invalid_summarizeGate_OpCount_2" test46,
-                                     TestLabel "Invalid_summarizeGate_AngleErr" test47]
+                                     TestLabel "Invalid_summarizeGate_AngleErr" test47,
+                                     TestLabel "Valid_toCoeffs_Pi" test48,
+                                     TestLabel "Valid_toCoeffs_Tau" test49,
+                                     TestLabel "Valid_toCoeffs_Affine" test50,
+                                     TestLabel "Invalid_toCoeff_AngleAsInt_1" test51,
+                                     TestLabel "Invalid_toCoeff_AngleAsInt_2" test52]
 
 main = defaultMain tests

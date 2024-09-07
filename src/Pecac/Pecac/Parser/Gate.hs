@@ -20,6 +20,7 @@ import Pecac.Affine
   , (<>)
   , (~~)
   , invert
+  , lit
   , scale
   , var
   )
@@ -46,7 +47,10 @@ import Pecac.Analyzer.Problem
   ( ParamArr (..)
   , QubitReg (..)
   )
-import Pecac.Analyzer.Revolution (Revolution)
+import Pecac.Analyzer.Revolution
+  ( Revolution
+  , rationalToRev
+  )
 
 -----------------------------------------------------------------------------------------
 -- * Expression Abstraction.
@@ -58,6 +62,7 @@ data ExprErr = IntVarUse String
              | ParamOOB Int Int
              | UnexpectedNat Integer
              | UnknownTimesLHS Expr
+             | AngleAsInt String
              deriving (Show, Eq)
 
 -- | Helper function to fold over a binary term in an expression tree. Takes as input the
@@ -81,15 +86,17 @@ unaryOp :: Expr -> (Expr -> Either a b) -> (b -> b) -> Either a b
 unaryOp expr reader f = updateRight (reader expr) f
 
 -- | Helper function to interpret sub-expressions as integer literals.
-toInt :: Expr -> Either ExprErr Integer
-toInt (Plus lexpr rexpr)  = binOp lexpr rexpr toInt (+)
-toInt (Minus lexpr rexpr) = binOp lexpr rexpr toInt (-)
-toInt (Times lexpr rexpr) = binOp lexpr rexpr toInt (*)
-toInt (Brack expr)        = toInt expr
-toInt (Negate expr)       = unaryOp expr toInt negate
-toInt (VarId name)        = Left $ IntVarUse name
-toInt (CellId name idx)   = Left $ IntArrUse name idx
-toInt (ConstNat n)        = Right $ toInteger n
+toRat :: Expr -> Either ExprErr Rational
+toRat (Plus lexpr rexpr)  = binOp lexpr rexpr toRat (+)
+toRat (Minus lexpr rexpr) = binOp lexpr rexpr toRat (-)
+toRat (Times lexpr rexpr) = binOp lexpr rexpr toRat (*)
+toRat (Brack expr)        = toRat expr
+toRat (Negate expr)       = unaryOp expr toRat negate
+toRat (VarId name)        = Left $ IntVarUse name
+toRat (CellId name idx)   = Left $ IntArrUse name idx
+toRat (ConstNat n)        = Right $ (toInteger n) % 1
+toRat Pi                  = Left $ AngleAsInt "pi"
+toRat Tau                 = Left $ AngleAsInt "tau"
 
 -- | Takes a summary of the parameter array together with an array access at a given
 -- index. If the accessed array is the parameter array, and the index is in bounds, then
@@ -103,7 +110,7 @@ checkCell (ParamArr tar sz) name idx
     | otherwise   = Right $ var idx
 
 -- | Possible results when analyzing the LHS of a Times expression.
-data TimesLHS = Scalar Integer | Vector (Affine Rational Revolution) | TimesFailure
+data TimesLHS = Scalar Rational | Vector (Affine Rational Revolution) | TimesFailure
 
 -- | Helper function to identify whether the left-hand side of a Times expression is an
 -- integer literal expression, or a reference to one (or more) entries of the parameter
@@ -111,7 +118,7 @@ data TimesLHS = Scalar Integer | Vector (Affine Rational Revolution) | TimesFail
 -- indicate a failure.
 handleTimesLhs :: ParamArr -> Expr -> TimesLHS
 handleTimesLhs pvar expr =
-    case toInt expr of
+    case toRat expr of
         Right n -> Scalar n
         _       -> case toCoeffs pvar expr of
             Right vec -> Vector vec
@@ -125,8 +132,8 @@ handleTimesLhs pvar expr =
 timesToCoeffs :: ParamArr -> Expr -> Expr -> Either ExprErr (Affine Rational Revolution)
 timesToCoeffs pvar lexpr rexpr =
     case handleTimesLhs pvar lexpr of
-        Scalar n     -> updateRight (toCoeffs pvar rexpr) $ scale (n % 1)
-        Vector vec   -> updateRight (toInt rexpr) $ \n -> scale (n % 1) vec
+        Scalar n     -> updateRight (toCoeffs pvar rexpr) $ scale n
+        Vector vec   -> updateRight (toRat rexpr) $ \n -> scale n vec
         TimesFailure -> Left $ UnknownTimesLHS $ Times lexpr rexpr
 
 -- | Takes as input a summary of the parameter arrays (pvar) and the parameter to a
@@ -144,6 +151,8 @@ toCoeffs pvar (Negate expr)       = unaryOp expr (toCoeffs pvar) invert
 toCoeffs _    (VarId name)        = Left $ UnknownParam name
 toCoeffs pvar (CellId name idx)   = checkCell pvar name idx
 toCoeffs _    (ConstNat n)        = Left $ UnexpectedNat n
+toCoeffs _    Pi                  = Right $ lit $ rationalToRev $ 1 % 2
+toCoeffs _    Tau                 = Right $ lit $ rationalToRev 1
 
 -----------------------------------------------------------------------------------------
 -- * Operand Abstraction.

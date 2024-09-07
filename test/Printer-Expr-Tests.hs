@@ -48,6 +48,14 @@ test9 = TestCase (assertEqual "Can print a mixed expression."
     where expr = Plus (Times (ConstNat 7) (CellId "var" 5))
                       (Brack $ Plus (VarId "name") (ConstNat 2))
 
+test10 = TestCase (assertEqual "Can print pi."
+                               "pi"
+                               (printExpr Pi))
+
+test11 = TestCase (assertEqual "Can print tau."
+                               "tau"
+                               (printExpr Tau))
+
 -----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
@@ -59,6 +67,8 @@ tests = hUnitTestToTests $ TestList [TestLabel "printExpr_VarId" test1,
                                      TestLabel "printExpr_Times" test6,
                                      TestLabel "printExpr_Brack" test7,
                                      TestLabel "printExpr_Negate" test8,
-                                     TestLabel "printExpr_Mixed" test9]
+                                     TestLabel "printExpr_Mixed" test9,
+                                     TestLabel "printExpr_Pi" test10,
+                                     TestLabel "printExpr_Tau" test11]
 
 main = defaultMain tests

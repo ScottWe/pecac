@@ -60,6 +60,8 @@ logExprErr (UnexpectedNat n) = [msg]
     where msg = "Unexpected integer literal " ++ show n ++ "."
 logExprErr (UnknownTimesLHS expr) = [msg]
     where msg = "Unable to determine type of left-hand side: " ++ printExpr expr ++ "."
+logExprErr (AngleAsInt str) = [msg]
+    where msg = "Unexpected use of " ++ str ++ " as a scalar."
 
 -- | Function to convert an operand error to a display message. Each string in the error
 -- corresponds to one line of output.

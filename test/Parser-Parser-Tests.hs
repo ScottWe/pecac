@@ -161,7 +161,7 @@ test23 = TestCase (assertBool "Special constants are rejected as identifiers (2/
                               (checkValidity "qubit π;"))
 
 test24 = TestCase (assertBool "Special constants are rejected as identifiers (3/6)"
-                              (checkValidity "qubit tau;"))
+                              (checkValidity "qubit τ;"))
 
 test25 = TestCase (assertBool "Special constants are rejected as identifiers (4/6)"
                               (checkValidity "qubit pi;"))
@@ -171,6 +171,29 @@ test26 = TestCase (assertBool "Special constants are rejected as identifiers (5/
 
 test27 = TestCase (assertBool "Special constants are rejected as identifiers (6/6)"
                               (checkValidity "qubit ℇ;"))
+
+-----------------------------------------------------------------------------------------
+-- Constant Angle Parsing
+
+test28 = TestCase (assertEqual "Can parse rotation gates with literal pi (1/2)."
+                               (Right $ QASMFile "3" [] [decl])
+                               (runPasmQasm "rz(pi) qs[1];"))
+    where decl = GateStmt $ Gate $ RotGate "rz" Pi [QReg "qs" 1]
+
+test29 = TestCase (assertEqual "Can parse rotation gates with literal pi (2/2)."
+                               (Right $ QASMFile "3" [] [decl])
+                               (runPasmQasm "rz(π) qs[1];"))
+    where decl = GateStmt $ Gate $ RotGate "rz" Pi [QReg "qs" 1]
+
+test30 = TestCase (assertEqual "Can parse rotation gates with literal tau (1/2)."
+                               (Right $ QASMFile "3" [] [decl])
+                               (runPasmQasm "rz(tau) qs[1];"))
+    where decl = GateStmt $ Gate $ RotGate "rz" Tau [QReg "qs" 1]
+
+test31 = TestCase (assertEqual "Can parse rotation gates with literal tau (2/2)."
+                               (Right $ QASMFile "3" [] [decl])
+                               (runPasmQasm "rz(τ) qs[1];"))
+    where decl = GateStmt $ Gate $ RotGate "rz" Tau [QReg "qs" 1]
 
 -----------------------------------------------------------------------------------------
 -- Orchestrates tests.
@@ -201,6 +224,10 @@ tests = hUnitTestToTests $ TestList [TestLabel "Valid_Version_1" test1,
                                      TestLabel "Invalid_SpecialID_3" test24,
                                      TestLabel "Invalid_SpecialID_4" test25,
                                      TestLabel "Invalid_SpecialID_5" test26,
-                                     TestLabel "Invalid_SpecialID_6" test27]
+                                     TestLabel "Invalid_SpecialID_6" test27,
+                                     TestLabel "Pi_1" test28,
+                                     TestLabel "Pi_2" test29,
+                                     TestLabel "Tau_1" test30,
+                                     TestLabel "Tau_2" test31]
 
 main = defaultMain tests
