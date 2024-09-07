@@ -1,12 +1,18 @@
 -- | Types and functions for working with rational revolutions (multiples of 2*pi).
 
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module Pecac.Analyzer.Revolution
-  ( Revolution
-  , Group (..)
+  ( Group (..)
+  , Monoid (..)
+  , Revolution
+  , RMod (..)
+  , Semigroup (..)
   , asRational
   , rationalToRev
   , ratioToRev
-  , scale
   , strToRev
   ) where
 
@@ -19,6 +25,7 @@ import Data.Ratio
   , denominator
   , numerator
   )
+import Pecac.Affine (RMod (..))
 import Pecac.Maybe (branchJust)
 import Pecac.Parser.Revolution (parseRevolution)
 
@@ -59,9 +66,9 @@ instance Show Revolution where
               dstr = show $ denominator r
 
 -----------------------------------------------------------------------------------------
--- * Abelian Group Structure.
+-- * Q-Module Structure.
 
--- The group structure is by additional of angles.
+-- | The group structure is by additional of angles.
 instance Semigroup Revolution where
     (<>) rev1 rev2 = rationalToRev $ r1 + r2
         where r1 = asRational rev1
@@ -78,11 +85,6 @@ instance Group Revolution where
 -- | Rotation addition is clearly commutative.
 instance Abelian Revolution
 
------------------------------------------------------------------------------------------
--- * Q-Module Structure.
-
--- | This function takes as input a rational number s and a revolution r. The revolution
--- obtained by scaling r by a factor of s is returned. In other words, the abelian group
--- of revolutions form a Q-module (i.e., the action obeys the laws of a module).
-scale :: Rational -> Revolution -> Revolution
-scale s rev = rationalToRev $ s * asRational rev
+-- | Rotations can be scaled by rational numbers.
+instance RMod Rational Revolution where
+    scale s rev = rationalToRev $ s * asRational rev

@@ -20,6 +20,7 @@ library
   exposed-modules:     Pecac.Either
                        Pecac.List
                        Pecac.Maybe
+                       Pecac.Affine
                        Pecac.Analyzer.Cutoffs
                        Pecac.Analyzer.Gate
                        Pecac.Analyzer.Problem
@@ -108,6 +109,12 @@ common basic-unit-test-props
                        test-framework-hunit,
                        HUnit,
                        pecac
+
+test-suite affine-tests
+  import:              basic-unit-test-props
+  main-is:             Affine-Tests.hs
+  build-depends:       groups
+  type:                exitcode-stdio-1.0
 
 test-suite analyzer-cutoffs-tests
   import:              basic-unit-test-props

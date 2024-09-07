@@ -1,7 +1,8 @@
 -- | General-purpose list manipulation functions not found in Prelude.
 
 module Pecac.List
-  ( prettyList
+  ( mergeWith
+  , prettyList
   , prettyItems
   , prettyNonEmpty
   , repeatn
@@ -20,6 +21,16 @@ import qualified Data.List.NonEmpty as NonEmpty
 -- | Takes as input a value x and an integer n. Returns a list which repeats x n-times.
 repeatn :: a -> Int -> [a]
 repeatn x n = take n $ repeat x
+
+-- | Takes as input a binary operator, a default value, and two lists of the same type.
+-- First, the smaller list is padded (at  the end) with the default value, until the two
+-- lists are of the same length. Then, the two lists are zipped together using the binary
+-- operation (see zipWith).
+mergeWith :: (a -> a -> a) -> a -> [a] -> [a] -> [a]
+mergeWith _ v []     []     = []
+mergeWith f v xs     []     = map (\x -> f x v) xs
+mergeWith f v []     ys     = map (f v) ys
+mergeWith f v (x:xs) (y:ys) = f x y : mergeWith f v xs ys
 
 -----------------------------------------------------------------------------------------
 -- * List Printing.
