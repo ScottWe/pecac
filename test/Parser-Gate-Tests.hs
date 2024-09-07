@@ -3,10 +3,13 @@ module Main where
 import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.HUnit
+import Data.Maybe
+import Pecac.Affine
 import Pecac.Parser.Gate
 import Pecac.Parser.Syntax
 import Pecac.Analyzer.Gate
 import Pecac.Analyzer.Problem
+import Pecac.Analyzer.Revolution
 
 -----------------------------------------------------------------------------------------
 -- toCeoffs: Valid Cases
@@ -15,65 +18,65 @@ pvar :: String
 pvar = "theta"
 
 test1 = TestCase (assertEqual "Can parse a single angles without scalars (1/2)."
-                              (Right [0, 0, 1, 0, 0])
+                              (Right $ linear [0, 0, 1, 0, 0])
                               (toCoeffs (ParamArr pvar 5) $ CellId pvar 2))
 
 test2 = TestCase (assertEqual "Can parse a single angles without scalars (2/2)."
-                              (Right [0, 1, 0, 0, 0, 0])
+                              (Right $ linear [0, 1, 0, 0, 0, 0])
                               (toCoeffs (ParamArr pvar 6) $ Brack $ CellId pvar 1))
 
 test3 = TestCase (assertEqual "Can parse a sum of angles without scalars (1/2)."
-                              (Right [0, 1, 0, 1, 0])
+                              (Right $ linear [0, 1, 0, 1, 0])
                               (toCoeffs (ParamArr pvar 5) expr))
     where expr = Plus (CellId pvar 1) (CellId pvar 3)
 
 test4 = TestCase (assertEqual "Can parse a sum of angles without scalars (2/2)."
-                              (Right [0, 2, 0, 0, 0, 0])
+                              (Right $ linear [0, 2, 0, 0, 0, 0])
                               (toCoeffs (ParamArr pvar 6) expr))
     where expr = Brack $ Plus (Brack $ CellId pvar 1) (Brack $ CellId pvar 1)
 
 test5 = TestCase (assertEqual "Can parse a difference of angles without scalars (1/2)."
-                              (Right [0, 1, -1, 0, 0])
+                              (Right $ linear [0, 1, -1, 0, 0])
                               (toCoeffs (ParamArr pvar 5) expr))
     where expr = Minus (CellId pvar 1) (CellId pvar 2)
 
 test6 = TestCase (assertEqual "Can parse a difference of angles without scalars (2/2)."
-                              (Right [0, 0, 0, 0, 0, 0])
+                              (Right $ linear [0, 0, 0, 0, 0, 0])
                               (toCoeffs (ParamArr pvar 6) expr))
     where expr = Brack $ Minus (Brack $ CellId pvar 1) (Brack $ CellId pvar 1)
 
 test7 = TestCase (assertEqual "Can parse a combination of three angles without scalars."
-                              (Right [0, 1, 0, 1, 0, 0, -1, 0])
+                              (Right $ linear [0, 1, 0, 1, 0, 0, -1, 0])
                               (toCoeffs (ParamArr pvar 8) expr))
     where expr = Minus (Plus (CellId pvar 1) (CellId pvar 3))
                        (CellId pvar 6)
 
 test8 = TestCase (assertEqual "Can parse an angle with scalars (1/2)."
-                              (Right [0, 5, 0, 0, 0, 0])
+                              (Right $ linear [0, 5, 0, 0, 0, 0])
                               (toCoeffs (ParamArr pvar 6) expr))
     where expr = Times (CellId pvar 1) (ConstNat 5)
 
 test9 = TestCase (assertEqual "Can parse an angle with scalars (2/2)."
-                              (Right [0, 0, 6, 0, 0, 0])
+                              (Right $ linear [0, 0, 6, 0, 0, 0])
                               (toCoeffs (ParamArr pvar 6) expr))
     where expr = Times (ConstNat 6) (CellId pvar 2)
 
 test10 = TestCase (assertEqual "Can parse a combination of three angles with scalars."
-                               (Right [0, 2, 0, 5, 0, 0, -7, 0])
+                               (Right $ linear [0, 2, 0, 5, 0, 0, -7, 0])
                                (toCoeffs (ParamArr pvar 8) expr))
     where expr = Minus (Plus (Times (ConstNat 5) (CellId pvar 3))
                              (Times (ConstNat 2) (CellId pvar 1)))
                        (Times (CellId pvar 6) (ConstNat 7))
 
 test11 = TestCase (assertEqual "Can negate a combination of angles."
-                               (Right [0, -2, 0, -5, 0, 0, 7, 0])
+                               (Right $ linear [0, -2, 0, -5, 0, 0, 7, 0])
                                (toCoeffs (ParamArr pvar 8) expr))
     where expr = Negate $ Minus (Plus (Times (ConstNat 5) (CellId pvar 3))
                                       (Times (ConstNat 2) (CellId pvar 1)))
                                 (Times (CellId pvar 6) (ConstNat 7))
 
 test12 = TestCase (assertEqual "Can handle coefficient expressions"
-                               (Right [-6, 0, 0, 0, 0, 24])
+                               (Right $ linear [-6, 0, 0, 0, 0, 24])
                                (toCoeffs (ParamArr pvar 6) expr))
     where val1 = Negate $ Times (Minus (Brack $ ConstNat 5) (ConstNat 2)) (ConstNat 2)
           val2 = Times (Brack $ Times (ConstNat 2) (ConstNat 3)) (ConstNat 4)
@@ -218,14 +221,16 @@ test34 = TestCase (assertEqual "Can summarize a rotation gate without modifiers 
                                (summarizeGate qreg parr gate))
     where expr = Times (ConstNat 5) (CellId pvar 2)
           gate = Gate $ RotGate "rx" expr [QReg qvar 10]
-          summ = RotSummary RotX [0, 0, 5, 0, 0] $ GateConfigs False [] [10]
+          aff  = linear [0, 0, 5, 0, 0]
+          summ = RotSummary RotX aff $ GateConfigs False [] [10]
 
 test35 = TestCase (assertEqual "Can summarize a rotation gate without modifiers (2/2)."
                                (Right summ)
                                (summarizeGate qreg parr gate))
     where expr = Plus (Times (ConstNat 5) (CellId pvar 2)) (Negate $ CellId pvar 0)
           gate = Gate $ RotGate "crx" expr [QReg qvar 10, QReg qvar 59]
-          summ = RotSummary RotCX [-1, 0, 5, 0, 0] $ GateConfigs False [] [10, 59]
+          aff  = linear [-1, 0, 5, 0, 0]
+          summ = RotSummary RotCX aff $ GateConfigs False [] [10, 59]
 
 test36 = TestCase (assertEqual "Can summarize a plain gate with a ctrl modifier."
                                (Right summ)
@@ -272,7 +277,8 @@ test42 = TestCase (assertEqual "Can summarize a rotation gate with mixed modifie
     where expr = Plus (Times (ConstNat 5) (CellId pvar 2)) (CellId pvar 3)
           qops = [QReg qvar 1, QReg qvar 2, QReg qvar 3]
           gate = NegCtrlMod $ InvMod $ CtrlMod $ Gate $ RotGate "rx" expr qops
-          summ = RotSummary RotX [0, 0, 5, 1, 0] $ GateConfigs True [Neg, Pos] [1, 2, 3]
+          aff  = linear [0, 0, 5, 1, 0]
+          summ = RotSummary RotX aff $ GateConfigs True [Neg, Pos] [1, 2, 3]
 
 -----------------------------------------------------------------------------------------
 -- summarizeGate: Invalid Cases

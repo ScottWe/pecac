@@ -89,7 +89,7 @@ linear coeffs = affine coeffs mempty
 -- * Display.
 
 instance (RMod a b, Show a, Show b) => Show (Affine a b) where
-    show (Affine coeffs offset) = "Affine " ++ cstr ++ " " ++ ostr 
+    show (Affine coeffs offset) = "{Affine " ++ cstr ++ " (" ++ ostr  ++ ")}"
         where cstr = prettyList show coeffs
               ostr = show offset
 

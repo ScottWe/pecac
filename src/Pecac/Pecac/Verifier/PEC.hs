@@ -11,7 +11,10 @@ module Pecac.Verifier.PEC
 
 import Data.Maybe (isNothing)
 import Data.Ratio ((%))
-import Pecac.Analyzer.Cutoffs (forallElimSize)
+import Pecac.Analyzer.Cutoffs
+  ( CutoffResult (Result)
+  , forallElimSize
+  )
 import Pecac.Analyzer.Problem (ParamCirc (..))
 import Pecac.Analyzer.Revolution
   ( Revolution
@@ -107,5 +110,5 @@ pecSetup cutoffs circ1 circ2 eval eq =
 pec :: ParamCirc -> ParamCirc -> EvalFun a -> EquivFun a -> PECRes
 pec circ1 circ2 eval eq =
     case forallElimSize circ1 circ2 of
-        Nothing      -> BadCutoff
-        Just cutoffs -> pecSetup cutoffs circ1 circ2 eval eq
+        Result cutoffs -> pecSetup cutoffs circ1 circ2 eval eq
+        _              -> BadCutoff

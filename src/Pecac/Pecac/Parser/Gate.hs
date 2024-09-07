@@ -14,20 +14,24 @@ module Pecac.Parser.Gate
 -------------------------------------------------------------------------------
 -- * Import Section.
 
+import Data.Ratio ((%))
+import Pecac.Affine
+  ( Affine
+  , (<>)
+  , (~~)
+  , invert
+  , scale
+  , var
+  )
 import Pecac.Either
   ( branchRight
   , updateRight
   )
-import Pecac.List (repeatn)
 import Pecac.Parser.Syntax
   ( BaseGate (..)
   , Expr (..)
   , Operand (..)
   , Gate (..)
-  )
-import Pecac.Analyzer.Problem
-  ( ParamArr (..)
-  , QubitReg (..)
   )
 import Pecac.Analyzer.Gate
   ( GateConfigs (..)
@@ -38,6 +42,11 @@ import Pecac.Analyzer.Gate
   , getPlainArity
   , getRotArity
   )
+import Pecac.Analyzer.Problem
+  ( ParamArr (..)
+  , QubitReg (..)
+  )
+import Pecac.Analyzer.Revolution (Revolution)
 
 -----------------------------------------------------------------------------------------
 -- * Expression Abstraction.
@@ -86,17 +95,15 @@ toInt (ConstNat n)        = Right $ toInteger n
 -- index. If the accessed array is the parameter array, and the index is in bounds, then
 -- returns an alpha-vector corresponding to this access. Otherwise, returns an error
 -- discribing why the access failed.
-checkCell :: ParamArr -> String -> Int -> Either ExprErr [Integer]
+checkCell :: ParamArr -> String -> Int -> Either ExprErr (Affine Rational Revolution)
 checkCell (ParamArr tar sz) name idx
     | tar /= name = Left $ UnknownParam name
     | idx >= sz   = Left $ ParamOOB idx sz
     | 0 > idx     = Left $ ParamOOB idx sz
-    | otherwise   = Right $ lhs ++ (1 : rhs)
-    where lhs = repeatn 0 idx
-          rhs = repeatn 0 $ sz - idx - 1
+    | otherwise   = Right $ var idx
 
 -- | Possible results when analyzing the LHS of a Times expression.
-data TimesLHS = Scalar Integer | Vector [Integer] | TimesFailure
+data TimesLHS = Scalar Integer | Vector (Affine Rational Revolution) | TimesFailure
 
 -- | Helper function to identify whether the left-hand side of a Times expression is an
 -- integer literal expression, or a reference to one (or more) entries of the parameter
@@ -115,13 +122,12 @@ handleTimesLhs pvar expr =
 -- reference, or the left-hand side is an angle reference while the right-hand side is a
 -- natural number. If the left-hand side is neither of these, then a typing error has
 -- occured, and a special error is raised.
-timesToCoeffs :: ParamArr -> Expr -> Expr -> Either ExprErr [Integer]
+timesToCoeffs :: ParamArr -> Expr -> Expr -> Either ExprErr (Affine Rational Revolution)
 timesToCoeffs pvar lexpr rexpr =
     case handleTimesLhs pvar lexpr of
-        Scalar n     -> updateRight (toCoeffs pvar rexpr) $ scale n
-        Vector vec   -> updateRight (toInt rexpr) $ \n -> scale n vec
-        TimesFailure -> Left $ UnknownTimesLHS (Times lexpr rexpr)
-    where scale n vec = map (n *) vec
+        Scalar n     -> updateRight (toCoeffs pvar rexpr) $ scale (n % 1)
+        Vector vec   -> updateRight (toInt rexpr) $ \n -> scale (n % 1) vec
+        TimesFailure -> Left $ UnknownTimesLHS $ Times lexpr rexpr
 
 -- | Takes as input a summary of the parameter arrays (pvar) and the parameter to a
 -- rotation gate. If the expression can be interpreted as an integer linear sum of
@@ -129,12 +135,12 @@ timesToCoeffs pvar lexpr rexpr =
 -- alpha-vector. For example, <tar>[j] will correspond to the j-th component of the
 -- alpha-vector. If such an interpretation is not possible (e.g., if the expression is
 -- non-linear), then the relevant error is returned.
-toCoeffs :: ParamArr -> Expr -> Either ExprErr [Integer]
-toCoeffs pvar (Plus lexpr rexpr)  = binOp lexpr rexpr (toCoeffs pvar) $ zipWith (+)
-toCoeffs pvar (Minus lexpr rexpr) = binOp lexpr rexpr (toCoeffs pvar) $ zipWith (-)
+toCoeffs :: ParamArr -> Expr -> Either ExprErr (Affine Rational Revolution)
+toCoeffs pvar (Plus lexpr rexpr)  = binOp lexpr rexpr (toCoeffs pvar) (<>)
+toCoeffs pvar (Minus lexpr rexpr) = binOp lexpr rexpr (toCoeffs pvar) (~~)
 toCoeffs pvar (Times lexpr rexpr) = timesToCoeffs pvar lexpr rexpr
 toCoeffs pvar (Brack expr)        = toCoeffs pvar expr
-toCoeffs pvar (Negate expr)       = unaryOp expr (toCoeffs pvar) $ map negate
+toCoeffs pvar (Negate expr)       = unaryOp expr (toCoeffs pvar) invert
 toCoeffs _    (VarId name)        = Left $ UnknownParam name
 toCoeffs pvar (CellId name idx)   = checkCell pvar name idx
 toCoeffs _    (ConstNat n)        = Left $ UnexpectedNat n
@@ -272,10 +278,10 @@ summarizeGateImpl qvar pvar (UnwrappedGate (RotGate name expr ops) inv ctrls) =
     case toRotName name of
         Nothing -> Left $ UnknownRotName name
         Just ty -> let raw = RawConfigs inv ctrls ops
-                   in  branchRight (getConfigs qvar (getRotArity ty) raw) $
+                   in branchRight (getConfigs qvar (getRotArity ty) raw) $
                         \conf -> case toCoeffs pvar expr of
                             Left err     -> Left $ GateAngleErr err
-                            Right coeffs -> Right $ RotSummary ty coeffs conf
+                            Right aff -> Right $ RotSummary ty aff conf
 
 -- | Takes as input a description of the qubit registry, a description of the parameter
 -- array, and the syntactic representation of a gate. If the gate is valid with respect

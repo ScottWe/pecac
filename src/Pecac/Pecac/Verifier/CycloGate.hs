@@ -9,7 +9,9 @@ module Pecac.Verifier.CycloGate
 -----------------------------------------------------------------------------------------
 -- * Import Section.
 
+import Data.Maybe (fromJust)
 import Data.Ratio ((%))
+import Pecac.Affine (eval)
 import Pecac.Analyzer.Gate
   ( GateConfigs (..)
   , GateSummary (..)
@@ -22,7 +24,6 @@ import Pecac.Analyzer.Revolution
   ( Revolution
   , asRational
   , invert
-  , scale
   )
 import Pecac.Verifier.MatrixGate
   ( addCtrlToMatrix
@@ -244,20 +245,15 @@ gateToMatImpl :: Int -> CycMat -> GateConfigs -> CycMat
 gateToMatImpl n base (GateConfigs _ ctrls qubits) = applyAt n qubits cbase
     where cbase = addCtrls ctrls base
 
--- | Helper method to evaluate integer linear sums of angles, given the coefficients in
--- the sum, and an instantiation for each angle.
-toArg :: [Integer] -> [Revolution] -> Revolution
-toArg []     []     = mempty
-toArg (x:xs) (y:ys) = (scale (x % 1) y) <> (toArg xs ys)
-
 -- | Takes as input the number of qubits in a circuit, an instantiation for each angle in
 -- the circuit, and a gate summary. Returns the cyclotomic operator corresponding to this
 -- gate summary, with respect to the circuit size (qubit count) and angle instantiations.
 gateToMat :: Int -> [Revolution] -> GateSummary -> CycMat
 gateToMat n _ (PlainSummary name confs) = gateToMatImpl n base confs
     where base = makePlain name $ isInverted confs
-gateToMat n thetas (RotSummary name coeffs confs) = gateToMatImpl n base confs
-    where base = makeRot name (isInverted confs) $ toArg coeffs thetas
+gateToMat n thetas (RotSummary name aff confs) = gateToMatImpl n base confs
+    where argv = fromJust $ eval aff thetas
+          base = makeRot name (isInverted confs) argv
 
 -- | Returns a (2^n)-dimensional identity matrix.
 idGate :: Int -> CycMat

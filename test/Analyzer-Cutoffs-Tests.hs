@@ -3,9 +3,13 @@ module Main where
 import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.HUnit
+import Data.Maybe
+import Data.Ratio
+import Pecac.Affine
 import Pecac.Analyzer.Cutoffs
 import Pecac.Analyzer.Gate
 import Pecac.Analyzer.Problem
+import Pecac.Analyzer.Revolution
 
 -----------------------------------------------------------------------------------------
 -- Gate Summary Declarations
@@ -24,36 +28,42 @@ plain3 = PlainSummary GateT $ GateConfigs True [Pos, Pos, Pos] [2, 4, 6, 8]
 -- Rotation Gates (k = 3)
 
 rot1_k3 :: GateSummary
-rot1_k3 = RotSummary RotX [0, 5, -2] $ GateConfigs True [Pos] [2, 5]
--- Lambda: [0, 5, 2]
--- Kappa:  5
+rot1_k3 = RotSummary RotX aff $ GateConfigs True [Pos] [2, 5]
+    where aff = linear [0, 5, -2]
+    -- Lambda: [0, 5, 2]
+    -- Kappa:  5
 
 rot2_k3 :: GateSummary
-rot2_k3 = RotSummary RotZ [-6, 0, 4] $ GateConfigs True [Pos, Neg] [2, 5, 3]
--- Lambda: [6, 0, 4]
--- Kappa:  6
+rot2_k3 = RotSummary RotZ aff $ GateConfigs True [Pos, Neg] [2, 5, 3]
+    where aff = linear [-6, 0, 4]
+    -- Lambda: [6, 0, 4]
+    -- Kappa:  6
 
 rot3_k3 :: GateSummary
-rot3_k3 = RotSummary RotCY [1, 1, 4] $ GateConfigs False [] [2, 5]
--- Lambda: [1, 1, 4]
--- Kappa:  6
+rot3_k3 = RotSummary RotCY aff $ GateConfigs False [] [2, 5]
+    where aff = linear [1, 1, 4]
+    -- Lambda: [1, 1, 4]
+    -- Kappa:  6
 
 -- Rotation Gates (k = 5)
 
 rot1_k5 :: GateSummary
-rot1_k5 = RotSummary RotX [0, 1, 0, -1, 0] $ GateConfigs True [Pos] [2, 5]
--- Lambda: [0, 1, 0, 1, 0]
--- Kappa:  1
+rot1_k5 = RotSummary RotX aff $ GateConfigs True [Pos] [2, 5]
+    where aff = linear [0, 1, 0, -1, 0]
+    -- Lambda: [0, 1, 0, 1, 0]
+    -- Kappa:  1
 
 rot2_k5 :: GateSummary
-rot2_k5 = RotSummary RotZ [-1, -1, 2, 3, -1] $ GateConfigs True [Pos, Neg] [2, 5, 3]
--- Lambda: [1, 1, 2, 3, 1]
--- Kappa:  5
+rot2_k5 = RotSummary RotZ aff $ GateConfigs True [Pos, Neg] [2, 5, 3]
+    where aff = linear [-1, -1, 2, 3, -1]
+    -- Lambda: [1, 1, 2, 3, 1]
+    -- Kappa:  5
 
 rot3_k5 :: GateSummary
-rot3_k5 = RotSummary RotCY [-2, 7, -3, 0, -10] $ GateConfigs False [] [2, 5]
--- Lambda: [2, 7, 3, 0, 10]
--- Kappa:  15
+rot3_k5 = RotSummary RotCY aff $ GateConfigs False [] [2, 5]
+    where aff = linear [-2, 7, -3, 0, -10]
+    -- Lambda: [2, 7, 3, 0, 10]
+    -- Kappa:  15
 
 -----------------------------------------------------------------------------------------
 -- Gate Summary Lists
@@ -89,177 +99,183 @@ pvar_k5 = ParamArr "theta" 5
 -- gatesToAlphas
 
 test1 = TestCase (assertEqual "Empty gate lists have empty alpha lists."
-                              []
+                              (Just [])
                               (gatesToAlphas []))
 
 test2 = TestCase (assertEqual "A single plain gate has an empty alpha list."
-                              []
+                              (Just [])
                               (gatesToAlphas [plain1]))
 
 test3 = TestCase (assertEqual "A list of several plain gates has an empty alpha list."
-                              []
+                              (Just [])
                               (gatesToAlphas plain_list))
 
 test4 = TestCase (assertEqual "A single rot gate has the correct alpha list (1/2)."
-                              [[0, 5, -2]]
+                              (Just res)
                               (gatesToAlphas [rot1_k3]))
+    where res = [[0, 5, -2]]
 
 test5 = TestCase (assertEqual "A single rot gate has the correct alpha list (2/2)."
-                              [[0, 1, 0, -1, 0]]
+                              (Just res)
                               (gatesToAlphas [rot1_k5]))
+    where res = [[0, 1, 0, -1]]
 
 test6 = TestCase (assertEqual "A list of rot gates has the correct alpha list (1/2)."
-                              [[0, 5, -2], [-6, 0, 4], [1, 1, 4]]
+                              (Just res)
                               (gatesToAlphas rot_k3))
+    where res = [[0, 5, -2], [-6, 0, 4], [1, 1, 4]]
 
 test7 = TestCase (assertEqual "A list of rot gates has the correct alpha list (2/2)."
-                              [[0, 1, 0, -1, 0], [-1, -1, 2, 3, -1], [-2, 7, -3, 0, -10]]
+                              (Just res)
                               (gatesToAlphas rot_k5))
+    where res = [[0, 1, 0, -1], [-1, -1, 2, 3, -1], [-2, 7, -3, 0, -10]]
 
 test8 = TestCase (assertEqual "A list of mixed gates has the correct alpha list (1/2)."
-                              [[0, 5, -2], [-6, 0, 4], [1, 1, 4]]
+                              (Just res)
                               (gatesToAlphas mixed_k3))
+    where res = [[0, 5, -2], [-6, 0, 4], [1, 1, 4]]
 
 test9 = TestCase (assertEqual "A list of mixed gates has the correct alpha list (2/2)."
-                              [[0, 1, 0, -1, 0], [-1, -1, 2, 3, -1], [-2, 7, -3, 0, -10]]
+                              (Just res)
                               (gatesToAlphas mixed_k5))
+    where res = [[0, 1, 0, -1], [-1, -1, 2, 3, -1], [-2, 7, -3, 0, -10]]
 
 -----------------------------------------------------------------------------------------
 -- gatesToLambda
 
 test10 = TestCase (assertEqual "gatesToLambda handles empty gate lists (1/2)."
-                               [0, 0, 0]
+                               (Just [0, 0, 0])
                                (gatesToLambda 3 []))
 
 test11 = TestCase (assertEqual "gatesToLambda handles empty gate lists (2/2)."
-                               [0, 0, 0, 0, 0]
+                               (Just [0, 0, 0, 0, 0])
                                (gatesToLambda 5 []))
 
 test12 = TestCase (assertEqual "gatesToLambda handles single plain gates (1/2)."
-                               [0, 0, 0]
+                               (Just [0, 0, 0])
                                (gatesToLambda 3 [plain1]))
 
 test13 = TestCase (assertEqual "gatesToLambda handles single plain gates (2/2)."
-                               [0, 0, 0, 0, 0]
+                               (Just [0, 0, 0, 0, 0])
                                (gatesToLambda 5 [plain1]))
 
 test14 = TestCase (assertEqual "gatesToLambda handles lists of plain gates (1/2)."
-                               [0, 0, 0]
+                               (Just [0, 0, 0])
                                (gatesToLambda 3 plain_list))
 
 test15 = TestCase (assertEqual "gatesToLambda handles lists of plain gates (2/2)."
-                               [0, 0, 0, 0, 0]
+                               (Just [0, 0, 0, 0, 0])
                                (gatesToLambda 5 plain_list))
 
 test16 = TestCase (assertEqual "gatesToLambda handles single rot gates (1/2)."
-                               [0, 5, 2]
+                               (Just [0, 5, 2])
                                (gatesToLambda 3 [rot1_k3]))
 
 test17 = TestCase (assertEqual "gatesToLambda handles single rot gates (2/2)."
-                               [0, 1, 0, 1, 0]
+                               (Just [0, 1, 0, 1, 0])
                                (gatesToLambda 5 [rot1_k5]))
 
 test18 = TestCase (assertEqual "gatesToLambda handles a list of rot gates (1/2)."
-                               [7, 6, 10]
+                               (Just [7, 6, 10])
                                (gatesToLambda 3 rot_k3))
 
 test19 = TestCase (assertEqual "gatesToLambda handles a list of rot gates (2/2)."
-                               [3, 9, 5, 4, 11]
+                               (Just [3, 9, 5, 4, 11])
                                (gatesToLambda 5 rot_k5))
 
 test20 = TestCase (assertEqual "gatesToLambda handles mixed gate lists (1/2)."
-                               [7, 6, 10]
+                               (Just [7, 6, 10])
                                (gatesToLambda 3 mixed_k3))
 
 test21 = TestCase (assertEqual "gatesToLambda handles mixed gate lists (2/2)."
-                               [3, 9, 5, 4, 11]
+                               (Just [3, 9, 5, 4, 11])
                                (gatesToLambda 5 mixed_k5))
 
 -----------------------------------------------------------------------------------------
 -- circToLambda
 
 test22 = TestCase (assertEqual "circToLambda handles empty gate lists (1/2)."
-                               [0, 0, 0]
+                               (Just [0, 0, 0])
                                (circToLambda $ ParamCirc pvar_k3 qvar []))
 
 test23 = TestCase (assertEqual "circToLambda handles empty gate lists (2/2)."
-                               [0, 0, 0, 0, 0]
+                               (Just [0, 0, 0, 0, 0])
                                (circToLambda $ ParamCirc pvar_k5 qvar []))
 
 test24 = TestCase (assertEqual "circToLambda handles mixed gate lists (1/2)."
-                               [7, 6, 10]
+                               (Just [7, 6, 10])
                                (circToLambda $ ParamCirc pvar_k3 qvar mixed_k3))
 
 test25 = TestCase (assertEqual "circToLambda handles mixed gate lists (2/2)."
-                               [3, 9, 5, 4, 11]
+                               (Just [3, 9, 5, 4, 11])
                                (circToLambda $ ParamCirc pvar_k5 qvar mixed_k5))
 
 -----------------------------------------------------------------------------------------
 -- gatesToKappa
 
 test26 = TestCase (assertEqual "gatesToKappa handles empty lists."
-                               0
+                               (Just 0)
                                (gatesToKappa []))
 
 test27 = TestCase (assertEqual "gatesToKappa handles single plain gates"
-                               0
+                               (Just 0)
                                (gatesToKappa [plain1]))
 
 test28 = TestCase (assertEqual "gatesToKappa handles lists of plain gates."
-                               0
+                               (Just 0)
                                (gatesToKappa plain_list))
 
 test29 = TestCase (assertEqual "gatesToKappa handles single rot gates (1/2)."
-                               5
+                               (Just 5)
                                (gatesToKappa [rot1_k3]))
 
 test30 = TestCase (assertEqual "gatesToKappa handles single rot gates (2/2)."
-                               5
+                               (Just 5)
                                (gatesToKappa [rot2_k5]))
 
 test31 = TestCase (assertEqual "gatesToKappa handles lists of rot gates (1/2)."
-                               17
+                               (Just 17)
                                (gatesToKappa rot_k3))
 
 test32 = TestCase (assertEqual "gatesToKappa handles lists of rot gates (2/2)."
-                               21
+                               (Just 21)
                                (gatesToKappa rot_k5))
 
 test33 = TestCase (assertEqual "gatesToKappa handles lists of mixed gates (1/2)."
-                               17
+                               (Just 17)
                                (gatesToKappa mixed_k3))
 
 test34 = TestCase (assertEqual "gatesToKappa handles lists of mixed gates (2/2)."
-                               21
+                               (Just 21)
                                (gatesToKappa mixed_k5))
 
 -----------------------------------------------------------------------------------------
 -- circToKappa
 
 test35 = TestCase (assertEqual "circToKappa handles empty gate lists (1/2)."
-                               0
+                               (Just 0)
                                (circToKappa $ ParamCirc pvar_k3 qvar []))
 
 test36 = TestCase (assertEqual "circToLambda handles empty gate lists (2/2)."
-                               0
+                               (Just 0)
                                (circToKappa $ ParamCirc pvar_k5 qvar []))
 
 test37 = TestCase (assertEqual "circToLambda handles mixed gate lists (1/2)."
-                               17
+                               (Just 17)
                                (circToKappa $ ParamCirc pvar_k3 qvar mixed_k3))
 
 test38 = TestCase (assertEqual "circToLambda handles mixed gate lists (2/2)."
-                               21
+                               (Just 21)
                                (circToKappa $ ParamCirc pvar_k5 qvar mixed_k5))
 
 -----------------------------------------------------------------------------------------
 -- forallElimSize
 
-defaultElim_k3 :: Maybe [Integer]
-defaultElim_k3 = Just $ [1, 1, 1]
+defaultElim_k3 :: CutoffResult [Integer]
+defaultElim_k3 = Result $ [1, 1, 1]
 
-defaultElim_k5 :: Maybe [Integer]
-defaultElim_k5 = Just $ [1, 1, 1, 1, 1]
+defaultElim_k5 :: CutoffResult [Integer]
+defaultElim_k5 = Result $ [1, 1, 1, 1, 1]
 
 test39 = TestCase (assertEqual "forallElimSize handles empty gate lists (1/2)."
                                defaultElim_k3
@@ -292,67 +308,67 @@ test44 = TestCase (assertEqual "forallElimSize handles lists of plain gates (2/2
     where circ = ParamCirc pvar_k5 qvar plain_list
 
 test45 = TestCase (assertEqual "forallElimSize handles single rot gates (1/2)."
-                               (Just [1, 11, 5])
+                               (Result [1, 11, 5])
                                (forallElimSize circ circ))
     where circ = ParamCirc pvar_k3 qvar [rot1_k3]
 
 test46 = TestCase (assertEqual "forallElimSize handles single rot gates (2/2)."
-                               (Just [1, 3, 1, 3, 1])
+                               (Result [1, 3, 1, 3, 1])
                                (forallElimSize circ circ))
     where circ = ParamCirc pvar_k5 qvar [rot1_k5]
 
 test47 = TestCase (assertEqual "forallElimSize handles distinct single rot circs (1/2)."
-                               (Just [13, 11, 9])
+                               (Result [13, 11, 9])
                                (forallElimSize circ1 circ2))
     where circ1 = ParamCirc pvar_k3 qvar [rot1_k3]
           circ2 = ParamCirc pvar_k3 qvar [rot2_k3]
 
 test48 = TestCase (assertEqual "forallElimSize handles distinct single rot circs (2/2)."
-                               (Just [3, 3, 5, 7, 3])
+                               (Result [3, 3, 5, 7, 3])
                                (forallElimSize circ1 circ2))
     where circ1 = ParamCirc pvar_k5 qvar [rot1_k5]
           circ2 = ParamCirc pvar_k5 qvar [rot2_k5]
 
 test49 = TestCase (assertEqual "forallElimSize handles a list of rot gates (1/2)."
-                               (Just [15, 13, 21])
+                               (Result [15, 13, 21])
                                (forallElimSize circ circ))
     where circ = ParamCirc pvar_k3 qvar rot_k3
 
 test50 = TestCase (assertEqual "forallElimSize handles a list of rot gates (2/2)."
-                               (Just [7, 19, 11, 9, 23])
+                               (Result [7, 19, 11, 9, 23])
                                (forallElimSize circ circ))
     where circ = ParamCirc pvar_k5 qvar rot_k5
 
 test51 = TestCase (assertEqual "forallElimSize handles distinct multi-rot circs (1/2)."
-                               (Just [15, 11, 17])
+                               (Result [15, 11, 17])
                                (forallElimSize circ1 circ2))
     where circ1 = ParamCirc pvar_k3 qvar [rot1_k3, rot2_k3]
           circ2 = ParamCirc pvar_k3 qvar [rot2_k3, rot3_k3]
 
 test52 = TestCase (assertEqual "forallElimSize handles distinct multi-rot circs (2/2)."
-                               (Just [7, 17, 11, 9, 23])
+                               (Result [7, 17, 11, 9, 23])
                                (forallElimSize circ1 circ2))
     where circ1 = ParamCirc pvar_k5 qvar [rot1_k5, rot2_k5]
           circ2 = ParamCirc pvar_k5 qvar [rot2_k5, rot3_k5]
 
 test53 = TestCase (assertEqual "forallElimSize handles mixed gate lists (1/2)."
-                               (Just [15, 13, 21])
+                               (Result [15, 13, 21])
                                (forallElimSize circ circ))
     where circ = ParamCirc pvar_k3 qvar mixed_k3
 
 test54 = TestCase (assertEqual "forallElimSize handles mixed gate lists (2/2)."
-                               (Just [7, 19, 11, 9, 23])
+                               (Result [7, 19, 11, 9, 23])
                                (forallElimSize circ circ))
     where circ = ParamCirc pvar_k5 qvar mixed_k5
 
 test55 = TestCase (assertEqual "forallElimSize rejects misaligned sizes (1/2)."
-                               Nothing
+                               ParamMismatch
                                (forallElimSize circ1 circ2))
     where circ1 = ParamCirc pvar_k3 qvar []
           circ2 = ParamCirc pvar_k5 qvar []
 
 test56 = TestCase (assertEqual "forallElimSize rejects misaligned sizes (2/2)."
-                               Nothing
+                               ParamMismatch
                                (forallElimSize circ1 circ2))
     where circ1 = ParamCirc pvar_k3 qvar mixed_k3
           circ2 = ParamCirc pvar_k5 qvar mixed_k5
@@ -361,100 +377,156 @@ test56 = TestCase (assertEqual "forallElimSize rejects misaligned sizes (2/2)."
 -- randomSampleSize
 
 test57 = TestCase (assertEqual "randomSampleSize handles empty gate lists (1/2)."
-                               (Just 0)
+                               (Result 0)
                                (randomSampleSize circ circ))
     where circ = ParamCirc pvar_k3 qvar []
 
 test58 = TestCase (assertEqual "randomSampleSize handles empty gate lists (2/2)."
-                               (Just 0)
+                               (Result 0)
                                (randomSampleSize circ circ))
     where circ = ParamCirc pvar_k5 qvar []
 
 test59 = TestCase (assertEqual "randomSampleSize handles single plain gates (1/2)."
-                               (Just 0)
+                               (Result 0)
                                (randomSampleSize circ circ))
     where circ = ParamCirc pvar_k3 qvar [plain1]
 
 test60 = TestCase (assertEqual "randomSampleSize handles single plain gates (2/2)."
-                               (Just 0)
+                               (Result 0)
                                (randomSampleSize circ circ))
     where circ = ParamCirc pvar_k5 qvar [plain1]
 
 test61 = TestCase (assertEqual "randomSampleSize handles lists of plain gates (1/2)."
-                               (Just 0)
+                               (Result 0)
                                (randomSampleSize circ circ))
     where circ = ParamCirc pvar_k3 qvar plain_list
 
 test62 = TestCase (assertEqual "randomSampleSize handles lists of plain gates (2/2)."
-                               (Just 0)
+                               (Result 0)
                                (randomSampleSize circ circ))
     where circ = ParamCirc pvar_k5 qvar plain_list
 
 test63 = TestCase (assertEqual "randomSampleSize handles single rot gates (1/2)."
-                               (Just 12)
+                               (Result 12)
                                (randomSampleSize circ circ))
     where circ = ParamCirc pvar_k3 qvar [rot1_k3]
 
 test64 = TestCase (assertEqual "randomSampleSize handles single rot gates (2/2)."
-                               (Just 3)
+                               (Result 3)
                                (randomSampleSize circ circ))
     where circ = ParamCirc pvar_k5 qvar [rot1_k5]
 
 test65 = TestCase (assertEqual "randomSampleSize handles distinct single rot circs (1/2)."
-                               (Just 21)
+                               (Result 21)
                                (randomSampleSize circ1 circ2))
     where circ1 = ParamCirc pvar_k3 qvar [rot1_k3]
           circ2 = ParamCirc pvar_k3 qvar [rot2_k3]
 
 test66 = TestCase (assertEqual "randomSampleSize handles distinct single rot circs (2/2)."
-                               (Just 13)
+                               (Result 13)
                                (randomSampleSize circ1 circ2))
     where circ1 = ParamCirc pvar_k5 qvar [rot1_k5]
           circ2 = ParamCirc pvar_k5 qvar [rot2_k5]
 
 test67 = TestCase (assertEqual "randomSampleSize handles a list of rot gates (1/2)."
-                               (Just 40)
+                               (Result 40)
                                (randomSampleSize circ circ))
     where circ = ParamCirc pvar_k3 qvar rot_k3
 
 test68 = TestCase (assertEqual "randomSampleSize handles a list of rot gates (2/2)."
-                               (Just 53)
+                               (Result 53)
                                (randomSampleSize circ circ))
     where circ = ParamCirc pvar_k5 qvar rot_k5
 
 test69 = TestCase (assertEqual "randomSampleSize handles distinct multi-rot circs (1/2)."
-                               (Just 32)
+                               (Result 32)
                                (randomSampleSize circ1 circ2))
     where circ1 = ParamCirc pvar_k3 qvar [rot1_k3, rot2_k3]
           circ2 = ParamCirc pvar_k3 qvar [rot2_k3, rot3_k3]
 
 test70 = TestCase (assertEqual "randomSampleSize handles distinct multi-rot circs (2/2)."
-                               (Just 51)
+                               (Result 51)
                                (randomSampleSize circ1 circ2))
     where circ1 = ParamCirc pvar_k5 qvar [rot1_k5, rot2_k5]
           circ2 = ParamCirc pvar_k5 qvar [rot2_k5, rot3_k5]
 
 test71 = TestCase (assertEqual "randomSampleSize handles mixed gate lists (1/2)."
-                               (Just 40)
+                               (Result 40)
                                (randomSampleSize circ circ))
     where circ = ParamCirc pvar_k3 qvar mixed_k3
 
 test72 = TestCase (assertEqual "randomSampleSize handles mixed gate lists (2/2)."
-                               (Just 53)
+                               (Result 53)
                                (randomSampleSize circ circ))
     where circ = ParamCirc pvar_k5 qvar mixed_k5
 
 test73 = TestCase (assertEqual "randomSampleSize rejects misaligned sizes (1/2)."
-                               Nothing
+                               ParamMismatch
                                (randomSampleSize circ1 circ2))
     where circ1 = ParamCirc pvar_k3 qvar []
           circ2 = ParamCirc pvar_k5 qvar []
 
 test74 = TestCase (assertEqual "randomSampleSize rejects misaligned sizes (2/2)."
-                               Nothing
+                               ParamMismatch
                                (randomSampleSize circ1 circ2))
     where circ1 = ParamCirc pvar_k3 qvar mixed_k3
           circ2 = ParamCirc pvar_k5 qvar mixed_k5
+
+-----------------------------------------------------------------------------------------
+-- Rational coefficients are rejected.
+
+qrot_k3 :: GateSummary
+qrot_k3 = RotSummary RotZ aff $ GateConfigs True [Pos, Neg] [2, 5, 3]
+    where aff = linear [-6, 1 % 7, 5]
+
+qcoeffs :: [GateSummary]
+qcoeffs = [rot1_k3, rot2_k3, qrot_k3, rot3_k3]
+
+test75 = TestCase (assertEqual "gatesToAlphas rejects rational coefficients."
+                               Nothing
+                               (gatesToAlphas qcoeffs))
+
+test76 = TestCase (assertEqual "gatesToLambda rejects rational coefficients."
+                               Nothing
+                               (gatesToLambda 3 qcoeffs))
+
+test77 = TestCase (assertEqual "gatesToKappa rejects rational coefficients."
+                               Nothing
+                               (gatesToKappa qcoeffs))
+
+test78 = TestCase (assertEqual "circToLambda rejects rational coefficients."
+                               Nothing
+                               (circToLambda circ))
+    where circ = ParamCirc pvar_k3 qvar qcoeffs
+
+test79 = TestCase (assertEqual "circToKappa rejects rational coefficients."
+                               Nothing
+                               (circToKappa circ))
+    where circ = ParamCirc pvar_k3 qvar qcoeffs
+
+test80 = TestCase (assertEqual "forallElimSize rejects rational coefficients (lhs)."
+                               RationalCoeff
+                               (forallElimSize circ1 circ2))
+    where circ1 = ParamCirc pvar_k3 qvar qcoeffs
+          circ2 = ParamCirc pvar_k3 qvar []
+
+test81 = TestCase (assertEqual "forallElimSize rejects rational coefficients (rhs)."
+                               RationalCoeff
+                               (forallElimSize circ1 circ2))
+    where circ1 = ParamCirc pvar_k3 qvar []
+          circ2 = ParamCirc pvar_k3 qvar qcoeffs
+
+test82 = TestCase (assertEqual "randomSampleSize rejects rational coefficients (lhs)."
+                               RationalCoeff
+                               (randomSampleSize circ1 circ2))
+    where circ1 = ParamCirc pvar_k3 qvar qcoeffs
+          circ2 = ParamCirc pvar_k3 qvar []
+
+test83 = TestCase (assertEqual "randomSampleSize rejects rational coefficients (rhs)."
+                               RationalCoeff
+                               (randomSampleSize circ1 circ2))
+    where circ1 = ParamCirc pvar_k3 qvar []
+          circ2 = ParamCirc pvar_k3 qvar qcoeffs
 
 -----------------------------------------------------------------------------------------
 -- Orchestrates tests.
@@ -532,7 +604,16 @@ tests = hUnitTestToTests $ TestList [TestLabel "gatesToAlphas_Empty" test1,
                                      TestLabel "randomSampleSize_Mixed_1" test71,
                                      TestLabel "randomSampleSize_Mixed_2" test72,
                                      TestLabel "randomSampleSize_Misaligned_1" test73,
-                                     TestLabel "randomSampleSize_Misaligned_1" test74]
+                                     TestLabel "randomSampleSize_Misaligned_1" test74,
+                                     TestLabel "QCoeffs_gatesToAlphas" test75,
+                                     TestLabel "QCoeffs_gatesToLambda" test76,
+                                     TestLabel "QCoeffs_gatesToKappa" test77,
+                                     TestLabel "QCoeffs_circToLambda" test78,
+                                     TestLabel "QCoeffs_circToKappa" test79,
+                                     TestLabel "QCoeffs_forallElimSize_lhs" test80,
+                                     TestLabel "QCoeffs_forallElimSize_rhs" test81,
+                                     TestLabel "QCoeffs_randomSampleSize_lhs" test82,
+                                     TestLabel "QCoeffs_randomSampleSize_rhs" test83]
 
 main = defaultMain tests
 

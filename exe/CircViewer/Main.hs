@@ -11,6 +11,7 @@ import CircViewer.CmdLn
   )
 import Control.Monad (foldM)
 import PecacExe.IOUtils (readCirc)
+import Pecac.Affine (Affine)
 import Pecac.List (prettyList)
 import Pecac.Analyzer.Gate
   ( GateConfigs (..)
@@ -24,6 +25,7 @@ import Pecac.Analyzer.Problem
   , ParamCirc (..)
   , QubitReg (..)
   )
+import Pecac.Analyzer.Revolution (Revolution)
 
 -----------------------------------------------------------------------------------------
 -- * Circuit Logging.
@@ -49,21 +51,21 @@ formatQubits (x:xs) (c:cs) = formatQubit x c : formatQubits xs cs
 
 -- | Unifies PlainSummary and RotSummary gate formatting, by taking the type of the gate
 -- as a string, and by taking the list of parameter coefficients as an optional list.
-formatGateImpl :: String -> Maybe [Integer] -> GateConfigs -> String
+formatGateImpl :: String -> Maybe (Affine Rational Revolution) -> GateConfigs -> String
 formatGateImpl name Nothing (GateConfigs inv ctrls ops) = full
     where cname = formatName inv name ctrls
           opstr = prettyList id $ formatQubits ops ctrls
           full  = cname ++ " at " ++ opstr
-formatGateImpl name (Just coeffs) confs = full
+formatGateImpl name (Just aff) confs = full
     where base = formatGateImpl name Nothing confs
-          cstr = prettyList show coeffs
+          cstr = show aff
           full = base ++ " with parameters " ++ cstr
 
 -- | Helper function to convert a gate summary to a concise string representation.
 formatGate :: GateSummary -> String
 formatGate (PlainSummary ty conf) = formatGateImpl name Nothing conf
     where name = plainNameToString ty
-formatGate (RotSummary ty coeffs conf) = formatGateImpl name (Just coeffs) conf
+formatGate (RotSummary ty aff conf) = formatGateImpl name (Just aff) conf
     where name = rotNameToString ty
 
 -- | Helper function to display a gate summary to stdout according to formatGate.

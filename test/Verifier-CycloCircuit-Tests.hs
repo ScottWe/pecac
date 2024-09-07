@@ -4,7 +4,9 @@ import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.HUnit
 import Data.Complex.Cyclotomic as Cyclotomic
+import Data.Maybe
 import Data.Ratio ((%))
+import Pecac.Affine
 import Pecac.Analyzer.Gate
 import Pecac.Analyzer.Problem
 import Pecac.Analyzer.Revolution
@@ -138,7 +140,8 @@ test13 = TestCase (assertEqual "circToMat handles rotations."
                                (Just mat_rotx_deg45)
                                (circToMat angles pcirc))
     where angles = map rationalToRev [45%360]
-          gates  = [RotSummary RotX [1] $ GateConfigs False [] [0]]
+          aff    = linear [1]
+          gates  = [RotSummary RotX aff $ GateConfigs False [] [0]]
           pcirc  = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 1) gates
 
 -----------------------------------------------------------------------------------------
@@ -153,9 +156,10 @@ test14 = TestCase (assertEqual "circToMat handles circuits with multiple gates."
                                (Just mat_RxXYZ)
                                (circToMat angles pcirc))
     where angles = map rationalToRev [45%(6*360), 45%(2*360)]
+          aff    = linear [-3, -1]
           gates  = [PlainSummary GateZ $ GateConfigs False [] [0],
                     PlainSummary GateX $ GateConfigs False [] [1],
-                    RotSummary RotX [-3, -1] $ GateConfigs False [] [0],
+                    RotSummary RotX aff $ GateConfigs False [] [0],
                     PlainSummary GateZ $ GateConfigs False [] [0],
                     PlainSummary GateY $ GateConfigs False [] [2],
                     PlainSummary GateZ $ GateConfigs False [] [3]]

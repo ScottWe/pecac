@@ -6,11 +6,12 @@ module Main where
 -- * Import Section.
 
 import CutoffViewer.CmdLn
-  ( ViewTool(..)
+  ( ViewTool (..)
   , getToolArgs
   )
 import Pecac.Analyzer.Cutoffs
-  ( circToKappa
+  ( CutoffResult (..)
+  , circToKappa
   , circToLambda
   , forallElimSize
   , randomSampleSize
@@ -37,23 +38,27 @@ computeCutoffs :: ParamCirc -> ParamCirc -> IO ()
 computeCutoffs circ1 circ2 = do
     putStrLn "[CIRCUIT COMPARISON]"
     case randomSampleSize circ1 circ2 of
-        Nothing   -> putStrLn "Circuits have different numbers of parameters."
-        Just prob -> case forallElimSize circ1 circ2 of
-            Nothing   -> putStrLn "Unexpected failure."
-            Just elim -> do
+        ParamMismatch -> putStrLn "Circuits have different numbers of parameters."
+        RationalCoeff -> putStrLn "Rational coefficients encountered."
+        Result prob   -> case forallElimSize circ1 circ2 of
+            Result elim -> do
                 putStrLn $ "d-value: " ++ show prob
                 printVect "elim" 0 elim
+            _ -> putStrLn "Unexpected failure."
 
 -- | Helper function to print the parameter summaries for a circuit (e.g., the lambda
 -- vector and kappa value). To differentiate between pairs of circuits, a string argument
 -- is also taken, and used to formal the header: [<name> SUMMARY]
 computeSummary :: String -> ParamCirc -> IO ()
-computeSummary name circ = do
-    putStrLn $ "[" ++ name ++ " SUMMARY]"
-    putStrLn $ "Kappa Value: " ++ show kappa
-    printVect "lambda" 0 lambda
-    where kappa  = circToKappa circ
-          lambda = circToLambda circ
+computeSummary name circ =
+    case circToKappa circ of
+        Just kappa -> case circToLambda circ of
+            Just lambda -> do
+                putStrLn $ "[" ++ name ++ " SUMMARY]"
+                putStrLn $ "Kappa Value: " ++ show kappa
+                printVect "lambda" 0 lambda
+            Nothing -> putStrLn "Failed to compute lambda vector."
+        Nothing -> putStrLn "Failed to compute kappa value."
 
 -----------------------------------------------------------------------------------------
 -- * Entry Point.
