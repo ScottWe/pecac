@@ -33,6 +33,7 @@ import Pecac.Parser.Syntax
     '+'             { Token _ TokenPlus }
     '-'             { Token _ TokenMinus }
     '*'             { Token _ TokenStar }
+    '/'             { Token _ TokenSlash }
     '('             { Token _ TokenLParen }
     ')'             { Token _ TokenRParen }
     '['             { Token _ TokenLBrack }
@@ -100,6 +101,7 @@ GateOperand : id                                  { QVar $1 }
 Expr : Expr '+' Expr                              { Plus $1 $3 }
      | Expr '-' Expr                              { Minus $1 $3 }
      | Expr '*' Expr                              { Times $1 $3 }
+     | Expr '/' Expr                              { Div $1 $3 }
      | '(' Expr ')'                               { Brack $2 }
      | '-' Expr %prec NEG                         { Negate $2 }
      | id                                         { VarId $1 }

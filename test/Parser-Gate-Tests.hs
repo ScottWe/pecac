@@ -343,12 +343,25 @@ test51 = TestCase (assertEqual "toCeoffs rejects multiplication by anlges (1/2).
                                        (Times (ConstNat 2) (CellId pvar 1)))
                                  (Times (CellId pvar 6) (ConstNat 7))
 
-test52 = TestCase (assertEqual "toCeoffs rejects multiplication by anlges (1/2)."
+test52 = TestCase (assertEqual "toCeoffs rejects multiplication by anlges (2/2)."
                                (Left $ AngleAsInt "tau")
                                (toCoeffs (ParamArr pvar 8) $ Times lexpr Tau))
     where lexpr = Negate $ Minus (Plus (Times (ConstNat 5) (CellId pvar 3))
                                        (Times (ConstNat 2) (CellId pvar 1)))
                                  (Times (CellId pvar 6) (ConstNat 7))
+
+-----------------------------------------------------------------------------------------
+-- toCeoffs: rationals
+
+test53 = TestCase (assertEqual "toCoeffs handles rational coefficients."
+                               (Right $ linear [0, 5 % 2, 0, 0, 0, 0])
+                               (toCoeffs (ParamArr pvar 6) expr))
+    where expr = Times (CellId pvar 1) (Div (ConstNat 5) (ConstNat 2))
+
+test54 = TestCase (assertEqual "toCoeffs handles dividing angles by rationals."
+                               (Right $ linear [0, 2 % 5, 0, 0, 0, 0])
+                               (toCoeffs (ParamArr pvar 6) expr))
+    where expr = Div (CellId pvar 1) (Div (ConstNat 5) (ConstNat 2))
 
 -----------------------------------------------------------------------------------------
 -- Orchestrates tests.
@@ -404,6 +417,8 @@ tests = hUnitTestToTests $ TestList [TestLabel "Valid_toCoeff_Angle_1" test1,
                                      TestLabel "Valid_toCoeffs_Tau" test49,
                                      TestLabel "Valid_toCoeffs_Affine" test50,
                                      TestLabel "Invalid_toCoeff_AngleAsInt_1" test51,
-                                     TestLabel "Invalid_toCoeff_AngleAsInt_2" test52]
+                                     TestLabel "Invalid_toCoeff_AngleAsInt_2" test52,
+                                     TestLabel "Valid_toCoeffs_Div_1" test53,
+                                     TestLabel "Valid_toCoeffs_Div_2" test54]
 
 main = defaultMain tests

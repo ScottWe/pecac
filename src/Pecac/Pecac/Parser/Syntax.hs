@@ -47,6 +47,7 @@ data Operand = QVar String
 data Expr = Plus Expr Expr
           | Minus Expr Expr
           | Times Expr Expr
+          | Div Expr Expr
           | Brack Expr
           | Negate Expr
           | VarId String

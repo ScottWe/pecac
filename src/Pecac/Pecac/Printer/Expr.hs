@@ -20,6 +20,7 @@ printExpr :: Expr -> String
 printExpr (Plus lhs rhs)  = printBinOp "+" lhs rhs
 printExpr (Minus lhs rhs) = printBinOp "-" lhs rhs
 printExpr (Times lhs rhs) = printBinOp "*" lhs rhs
+printExpr (Div lhs rhs)   = printBinOp "/" lhs rhs
 printExpr (Brack expr)    = "(" ++ printExpr expr ++ ")"
 printExpr (Negate expr)   = "-" ++ printExpr expr
 printExpr (VarId id)      = id

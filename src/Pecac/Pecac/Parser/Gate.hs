@@ -90,6 +90,7 @@ toRat :: Expr -> Either ExprErr Rational
 toRat (Plus lexpr rexpr)  = binOp lexpr rexpr toRat (+)
 toRat (Minus lexpr rexpr) = binOp lexpr rexpr toRat (-)
 toRat (Times lexpr rexpr) = binOp lexpr rexpr toRat (*)
+toRat (Div lexpr rexpr)   = binOp lexpr rexpr toRat (/)
 toRat (Brack expr)        = toRat expr
 toRat (Negate expr)       = unaryOp expr toRat negate
 toRat (VarId name)        = Left $ IntVarUse name
@@ -136,6 +137,16 @@ timesToCoeffs pvar lexpr rexpr =
         Vector vec   -> updateRight (toRat rexpr) $ \n -> scale n vec
         TimesFailure -> Left $ UnknownTimesLHS $ Times lexpr rexpr
 
+-- | Handles the coefficient expansion for division operators. This is a special case,
+-- since the left-hand side must be an angle reference, whereas the right-hand side must
+-- be a rational number. If either requirement fails, then a typing error has occured,
+-- and a special error is raised.
+divToCoeffs :: ParamArr -> Expr -> Expr -> Either ExprErr (Affine Rational Revolution)
+divToCoeffs pvar lexpr rexpr =
+    case toCoeffs pvar lexpr of
+        Right vec -> updateRight (toRat rexpr) $ \r -> scale (1 / r) vec
+        _         -> Left $ UnknownTimesLHS $ Div lexpr rexpr
+
 -- | Takes as input a summary of the parameter arrays (pvar) and the parameter to a
 -- rotation gate. If the expression can be interpreted as an integer linear sum of
 -- entries in <tar>, then the coefficients of this linear sum are returned as an
@@ -146,6 +157,7 @@ toCoeffs :: ParamArr -> Expr -> Either ExprErr (Affine Rational Revolution)
 toCoeffs pvar (Plus lexpr rexpr)  = binOp lexpr rexpr (toCoeffs pvar) (<>)
 toCoeffs pvar (Minus lexpr rexpr) = binOp lexpr rexpr (toCoeffs pvar) (~~)
 toCoeffs pvar (Times lexpr rexpr) = timesToCoeffs pvar lexpr rexpr
+toCoeffs pvar (Div lexpr rexpr)   = divToCoeffs pvar lexpr rexpr
 toCoeffs pvar (Brack expr)        = toCoeffs pvar expr
 toCoeffs pvar (Negate expr)       = unaryOp expr (toCoeffs pvar) invert
 toCoeffs _    (VarId name)        = Left $ UnknownParam name

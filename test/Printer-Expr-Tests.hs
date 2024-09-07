@@ -56,6 +56,12 @@ test11 = TestCase (assertEqual "Can print tau."
                                "tau"
                                (printExpr Tau))
 
+test12 = TestCase (assertEqual "Can print division statements"
+                              "(7 * var[5]) + (pi / 2)"
+                              (printExpr expr))
+    where expr = Plus (Brack (Times (ConstNat 7) (CellId "var" 5)))
+                      (Brack (Div Pi (ConstNat 2)))
+
 -----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 

@@ -196,6 +196,21 @@ test31 = TestCase (assertEqual "Can parse rotation gates with literal tau (2/2).
     where decl = GateStmt $ Gate $ RotGate "rz" Tau [QReg "qs" 1]
 
 -----------------------------------------------------------------------------------------
+-- Parsing Division Expressions
+
+test32 = TestCase (assertEqual "Can parse simple division statements."
+                               (Right $ QASMFile "3" [] [decl])
+                               (runPasmQasm "rz(pi / 2) q;"))
+    where decl = GateStmt $ Gate $ RotGate "rz" (Div Pi $ ConstNat 2) [QVar "q"]
+
+test33 = TestCase (assertEqual "Can parse complex division statements."
+                               (Right $ QASMFile "3" [] [decl])
+                               (runPasmQasm line))
+    where line = "rz((theta[1] + 5 * x + (-2) * rho[5]) / (2 + 3)) q;"
+          expr = Div (Brack complexExpr) (Brack $ Plus (ConstNat 2) (ConstNat 3))
+          decl = GateStmt $ Gate $ RotGate "rz" expr [QVar "q"]
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "Valid_Version_1" test1,
@@ -228,6 +243,8 @@ tests = hUnitTestToTests $ TestList [TestLabel "Valid_Version_1" test1,
                                      TestLabel "Pi_1" test28,
                                      TestLabel "Pi_2" test29,
                                      TestLabel "Tau_1" test30,
-                                     TestLabel "Tau_2" test31]
+                                     TestLabel "Tau_2" test31,
+                                     TestLabel "Valid_Div_1" test32,
+                                     TestLabel "Valid_Div_2" test33]
 
 main = defaultMain tests
