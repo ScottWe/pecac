@@ -230,13 +230,14 @@ toPlainName _       = Nothing
 -- | Converts string representations of rotation gate names to enumerative
 -- representations. If a name is unknown, then nothing is returned.
 toRotName :: String -> Maybe RotName
-toRotName "rx"  = Just RotX
-toRotName "ry"  = Just RotY
-toRotName "rz"  = Just RotZ
-toRotName "crx" = Just RotCX
-toRotName "cry" = Just RotCY
-toRotName "crz" = Just RotCZ
-toRotName _     = Nothing
+toRotName "rx"     = Just RotX
+toRotName "ry"     = Just RotY
+toRotName "rz"     = Just RotZ
+toRotName "crx"    = Just RotCX
+toRotName "cry"    = Just RotCY
+toRotName "crz"    = Just RotCZ
+toRotName "gphase" = Just GPhase
+toRotName _        = Nothing
 
 -----------------------------------------------------------------------------------------
 -- * Gate Abstraction.

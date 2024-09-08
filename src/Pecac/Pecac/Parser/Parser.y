@@ -20,6 +20,7 @@ import Pecac.Parser.Syntax
     ctrl            { Token _ TokenCtrl }
     negctrl         { Token _ TokenNegCtrl }
     inv             { Token _ TokenInv }
+    gphase          { Token _ TokenGPhase }
     qreg            { Token _ TokenQReg }
     qubit           { Token _ TokenQubit }
     angle           { Token _ TokenAngle }
@@ -88,9 +89,13 @@ Nat : nat                                         { (read $1 :: Integer) }
 
 Gate : id GateOperands                            { Gate (PlainGate $1 $2) }
      | id '(' Expr ')' GateOperands               { Gate (RotGate $1 $3 $5) }
+     | gphase '(' Expr ')' OptOperands            { Gate (RotGate "gphase" $3 $5) }
      | ctrl '@' Gate                              { CtrlMod $3 }
      | negctrl '@' Gate                           { NegCtrlMod $3 }
      | inv '@' Gate                               { InvMod $3 }
+
+OptOperands : {- empty -}                         { [] }
+            | GateOperands                        { $1 }
 
 GateOperands : GateOperand                        { [$1] }
              | GateOperand ',' GateOperands       { $1 : $3 }

@@ -225,6 +225,16 @@ mat_IHIXIIZI = Matrix.kroneckerProduct mat_IHIXII mat_ZI
           mat_IHIXII = Matrix.kroneckerProduct mat_IH mat_IXII
           mat_ZI     = Matrix.kroneckerProduct mat_Z $ Matrix.iden 2
 
+mat_scalar_2x2 :: Matrix.Matrix Int
+mat_scalar_2x2 = Matrix.build [[2, 0],
+                               [0, 2]]
+
+mat_scalar_4x4 :: Matrix.Matrix Int
+mat_scalar_4x4 = Matrix.build [[3, 0, 0, 0],
+                               [0, 3, 0, 0],
+                               [0, 0, 3, 0],
+                               [0, 0, 0, 3]]
+
 test26 = TestCase (assertEqual "applyAt can generate all permutations of a gate (1/6)."
                                mat_XZH
                                (applyAt 3 [0, 1, 2] mat_XZH))
@@ -252,6 +262,14 @@ test31 = TestCase (assertEqual "applyAt can generate all permutations of a gate 
 test32 = TestCase (assertEqual "applyAt can apply gates within a larger system."
                                mat_IHIXIIZI
                                (applyAt 8 [3, 6, 1] mat_XZH))
+
+test33 = TestCase (assertEqual "applyAt handles the special case of zero operands (1/2)."
+                               mat_scalar_2x2
+                               (applyAt 1 [] $ Matrix.build [[2]]))
+
+test34 = TestCase (assertEqual "applyAt handles the special case of zero operands (2/2)."
+                               mat_scalar_4x4
+                               (applyAt 2 [] $ Matrix.build [[3]]))
 
 -----------------------------------------------------------------------------------------
 -- Orchestrates tests.
@@ -287,6 +305,8 @@ tests = hUnitTestToTests $ TestList [TestLabel "applyMatrixBetween_n0_m0_1" test
                                      TestLabel "applyAt_NoPad_4" test29,
                                      TestLabel "applyAt_NoPad_5" test30,
                                      TestLabel "applyAt_NoPad_6" test31,
-                                     TestLabel "applyAt_Padded" test32]
+                                     TestLabel "applyAt_Padded" test32,
+                                     TestLabel "applyAt_Scalar_1" test33,
+                                     TestLabel "applyAt_Scalar_1" test34]
 
 main = defaultMain tests

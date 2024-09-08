@@ -31,6 +31,7 @@ printOperands = prettyItems printOperand
 -- rotation gate including its stringified argument), followed by its stringified
 -- operands, where both the instance and operands are given as arguments.
 printGateInst :: String -> [Operand] -> String
+printGateInst inst []  = inst
 printGateInst inst ops = inst ++ " " ++ printOperands ops
 
 -- | Function to print a prettified string represenation of a base gate.

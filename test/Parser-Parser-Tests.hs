@@ -211,6 +211,19 @@ test33 = TestCase (assertEqual "Can parse complex division statements."
           decl = GateStmt $ Gate $ RotGate "rz" expr [QVar "q"]
 
 -----------------------------------------------------------------------------------------
+-- Parsing Global Phase Gates
+
+test34 = TestCase (assertEqual "Can parse global phase gates (zero operands)."
+                               (Right $ QASMFile "3" [] [decl])
+                               (runPasmQasm "gphase(pi);"))
+    where decl = GateStmt $ Gate $ RotGate "gphase" Pi []
+
+test35 = TestCase (assertEqual "Can parse rotation gates (one operand)."
+                               (Right $ QASMFile "3" [] [decl])
+                               (runPasmQasm "ctrl @ gphase(pi) qs[1];"))
+    where decl = GateStmt $ CtrlMod $ Gate $ RotGate "gphase" Pi [QReg "qs" 1]
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "Valid_Version_1" test1,
@@ -245,6 +258,8 @@ tests = hUnitTestToTests $ TestList [TestLabel "Valid_Version_1" test1,
                                      TestLabel "Tau_1" test30,
                                      TestLabel "Tau_2" test31,
                                      TestLabel "Valid_Div_1" test32,
-                                     TestLabel "Valid_Div_2" test33]
+                                     TestLabel "Valid_Div_2" test33,
+                                     TestLabel "GPhase_ZeroOps" test34,
+                                     TestLabel "GPhase_OneOp" test35]
 
 main = defaultMain tests

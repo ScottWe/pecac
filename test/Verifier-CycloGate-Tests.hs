@@ -607,6 +607,57 @@ test63 = TestCase (assertEqual "gateToMat handles constant parameters."
           configs = GateConfigs False [] [0]
 
 -----------------------------------------------------------------------------------------
+-- Global Phase.
+
+mat_gphase_1 :: Matrix.Matrix Cyclotomic.Cyclotomic
+mat_gphase_1 = Matrix.build [[one,  zero],
+                             [zero, one]]
+
+mat_gphase_2 :: Matrix.Matrix Cyclotomic.Cyclotomic
+mat_gphase_2 = Matrix.build [[img,  zero, zero, zero],
+                             [zero, img,  zero, zero],
+                             [zero, zero, img,  zero],
+                             [zero, zero, zero, img]]
+
+mat_gphase_3 :: Matrix.Matrix Cyclotomic.Cyclotomic
+mat_gphase_3 = Matrix.build [[-img, zero, zero, zero, zero, zero, zero, zero],
+                             [zero, -img, zero, zero, zero, zero, zero, zero],
+                             [zero, zero, -img, zero, zero, zero, zero, zero],
+                             [zero, zero, zero, -img, zero, zero, zero, zero],
+                             [zero, zero, zero, zero, -img, zero, zero, zero],
+                             [zero, zero, zero, zero, zero, -img, zero, zero],
+                             [zero, zero, zero, zero, zero, zero, -img, zero],
+                             [zero, zero, zero, zero, zero, zero, zero, -img]]
+
+mat_gphase_4 :: Matrix.Matrix Cyclotomic.Cyclotomic
+mat_gphase_4 = Matrix.build [[one,  zero],
+                             [zero, -img]]
+
+test64 = TestCase (assertEqual "A global phase gate acts as a scalar (1/3)."
+                               mat_gphase_1
+                               (gateToMat 1 angles_90 (RotSummary GPhase params configs)))
+    where params  = lit $ rationalToRev 0
+          configs = GateConfigs False [] []
+
+test65 = TestCase (assertEqual "A global phase gate acts as a scalar (2/3)."
+                               mat_gphase_2
+                               (gateToMat 2 angles_90 (RotSummary GPhase params configs)))
+    where params  = lit $ rationalToRev $ 1 % 4
+          configs = GateConfigs False [] []
+
+test66 = TestCase (assertEqual "A global phase gate acts as a scalar (3/3)."
+                               mat_gphase_3
+                               (gateToMat 3 angles_90 (RotSummary GPhase params configs)))
+    where params  = lit $ rationalToRev $ 3 % 4
+          configs = GateConfigs False [] []
+
+test67 = TestCase (assertEqual "Can add a control to a global phase gate."
+                               mat_gphase_4
+                               (gateToMat 1 angles_90 (RotSummary GPhase params configs)))
+    where params  = lit $ rationalToRev $ 3 % 4
+          configs = GateConfigs False [Pos] [0]
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "gateToMat_NoMod_GateX" test1,
@@ -671,6 +722,10 @@ tests = hUnitTestToTests $ TestList [TestLabel "gateToMat_NoMod_GateX" test1,
                                      TestLabel "idGate_2" test60,
                                      TestLabel "idGate_3" test61,
                                      TestLabel "RationalCoeff" test62,
-                                     TestLabel "ConstantTerm" test63]
+                                     TestLabel "ConstantTerm" test63,
+                                     TestLabel "gateToMat_GPhase_1" test64,
+                                     TestLabel "gateToMat_GPhase_2" test65,
+                                     TestLabel "gateToMat_GPhase_3" test66,
+                                     TestLabel "gateToMat_GPhase_Ctrl" test67]
 
 main = defaultMain tests

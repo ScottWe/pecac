@@ -180,6 +180,10 @@ matRY = makeExponential matY
 matRZ :: Bool -> Revolution -> CycMat
 matRZ = makeExponential matZ
 
+-- | Instantiates makeExponential for global phase gates.
+matGPhase :: Bool -> Revolution -> CycMat
+matGPhase = makeExponential $ Matrix.build [[one]]
+
 -----------------------------------------------------------------------------------------
 -- * Modified Rotation Gates.
 
@@ -226,12 +230,13 @@ makePlain GateCSwap _     = matCSwap
 -- | Converts a rotation gate name to a corresponding cyclotomic operator, taking into
 -- account gate inversion, and the angle of rotation.
 makeRot :: RotName -> Bool -> Revolution -> CycMat
-makeRot RotX  = matRX
-makeRot RotY  = matRY
-makeRot RotZ  = matRZ
-makeRot RotCX = matCRX
-makeRot RotCY = matCRY
-makeRot RotCZ = matCRZ
+makeRot RotX   = matRX
+makeRot RotY   = matRY
+makeRot RotZ   = matRZ
+makeRot RotCX  = matCRX
+makeRot RotCY  = matCRY
+makeRot RotCZ  = matCRZ
+makeRot GPhase = matGPhase
 
 -- | Helper method to add controls to a cyclotomic operator.
 addCtrls :: [Polarity] -> CycMat -> CycMat

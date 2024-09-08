@@ -364,6 +364,23 @@ test54 = TestCase (assertEqual "toCoeffs handles dividing angles by rationals."
     where expr = Div (CellId pvar 1) (Div (ConstNat 5) (ConstNat 2))
 
 -----------------------------------------------------------------------------------------
+-- summarizeGate: gphase
+
+test55 = TestCase (assertEqual "Can summarize a gphase gate without controls."
+                               (Right summ)
+                               (summarizeGate qreg parr gate))
+    where gate = Gate $ RotGate "gphase" Pi []
+          aff  = lit pival
+          summ = RotSummary GPhase aff $ GateConfigs False [] []
+
+test56 = TestCase (assertEqual "Can summarize a gphase gate with a control."
+                               (Right summ)
+                               (summarizeGate qreg parr gate))
+    where gate = CtrlMod $ Gate $ RotGate "gphase" Pi [QReg qvar 0]
+          aff  = lit pival
+          summ = RotSummary GPhase aff $ GateConfigs False [Pos] [0]
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "Valid_toCoeff_Angle_1" test1,
@@ -419,6 +436,8 @@ tests = hUnitTestToTests $ TestList [TestLabel "Valid_toCoeff_Angle_1" test1,
                                      TestLabel "Invalid_toCoeff_AngleAsInt_1" test51,
                                      TestLabel "Invalid_toCoeff_AngleAsInt_2" test52,
                                      TestLabel "Valid_toCoeffs_Div_1" test53,
-                                     TestLabel "Valid_toCoeffs_Div_2" test54]
+                                     TestLabel "Valid_toCoeffs_Div_2" test54,
+                                     TestLabel "Valid_summarizeGate_GPhase" test55,
+                                     TestLabel "Valid_summarizeGate_GPhase_Ctrl" test56]
 
 main = defaultMain tests

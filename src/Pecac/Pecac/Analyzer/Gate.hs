@@ -86,25 +86,28 @@ data RotName = RotX
              | RotCX
              | RotCY
              | RotCZ
+             | GPhase
              deriving (Show, Eq)
 
 -- | Returns the default number of operands to a rotation gate.
 getRotArity :: RotName -> Int
-getRotArity RotX  = 1
-getRotArity RotY  = 1
-getRotArity RotZ  = 1
-getRotArity RotCX = 2
-getRotArity RotCY = 2
-getRotArity RotCZ = 2
+getRotArity RotX   = 1
+getRotArity RotY   = 1
+getRotArity RotZ   = 1
+getRotArity RotCX  = 2
+getRotArity RotCY  = 2
+getRotArity RotCZ  = 2
+getRotArity GPhase = 0
 
 -- | Reverts a rotation name to its string representation.
 rotNameToString :: RotName -> String
-rotNameToString RotX  = "rx"
-rotNameToString RotY  = "ry"
-rotNameToString RotZ  = "rz"
-rotNameToString RotCX = "crx"
-rotNameToString RotCY = "cry"
-rotNameToString RotCZ = "crz"
+rotNameToString RotX   = "rx"
+rotNameToString RotY   = "ry"
+rotNameToString RotZ   = "rz"
+rotNameToString RotCX  = "crx"
+rotNameToString RotCY  = "cry"
+rotNameToString RotCZ  = "crz"
+rotNameToString GPhase = "gphase"
 
 -----------------------------------------------------------------------------------------
 -- * Abstract Gate Description.

@@ -59,6 +59,10 @@ test9 = TestCase (assertEqual "Can print rotation gates with mixed modifiers."
           gate = RotGate "rz" expr [QVar "qvar", QReg "q" 2]
           gmod = InvMod $ CtrlMod $ InvMod $ NegCtrlMod $ Gate gate
 
+test10 = TestCase (assertEqual "Can print a gate without operands."
+                               "gphase(pi)"
+                               (printGate $ Gate $ RotGate "gphase" Pi []))
+
 -----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
@@ -70,6 +74,7 @@ tests = hUnitTestToTests $ TestList [TestLabel "printGate_Plain_1" test1,
                                      TestLabel "printGate_NegCtrlMod" test6,
                                      TestLabel "printGate_InvMod" test7,
                                      TestLabel "printGate_MixedMods" test8,
-                                     TestLabel "printGate_RotMixedMods" test9]
+                                     TestLabel "printGate_RotMixedMods" test9,
+                                     TestLabel "printGate_NoOperands" test10]
 
 main = defaultMain tests

@@ -104,6 +104,7 @@ permuteQs j (q:qs) k mat =
 -- (qubit[j])-th qubit in the total space. This function requires that qubits contains
 -- only unique elements from { 0, 1, ..., k-1 }.
 applyAt :: (Num a) => Int -> [Int] -> Matrix.Matrix a -> Matrix.Matrix a
+applyAt k []     mat = Matrix.kroneckerProduct mat $ Matrix.iden $ 2^k
 applyAt k qubits mat = applyMatrixBetween minq (k - maxq) permuted
     where minq     = foldr min k qubits
           maxq     = 1 + foldr max 0 qubits
