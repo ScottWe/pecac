@@ -280,45 +280,89 @@ test30 = TestCase (assertEqual "Can add non-square matrices."
 -----------------------------------------------------------------------------------------
 -- Function: size.
 
-test31 = TestCase (assertEqual "Can compute the size of a 1x1 matrix"
+test31 = TestCase (assertEqual "Can compute the size of a 1x1 matrix."
                                (1, 1)
                                (PMatrix.size mat1))
 
-test32 = TestCase (assertEqual "Can compute the size of a 2x1 matrix"
+test32 = TestCase (assertEqual "Can compute the size of a 2x1 matrix."
                                (2, 1)
                                (PMatrix.size basis_dim2_Q_2))
 
-test33 = TestCase (assertEqual "Can compute the size of a 2x2 matrix"
+test33 = TestCase (assertEqual "Can compute the size of a 2x2 matrix."
                                (2, 2)
                                (PMatrix.size prod1))
 
-test34 = TestCase (assertEqual "Can compute the size of a 2x3 matrix"
+test34 = TestCase (assertEqual "Can compute the size of a 2x3 matrix."
                                (2, 3)
                                (PMatrix.size mat2))
 
-test35 = TestCase (assertEqual "Can compute the size of a 3x1 matrix"
+test35 = TestCase (assertEqual "Can compute the size of a 3x1 matrix."
                                (3, 1)
                                (PMatrix.size basis_dim3_Q_3))
 
-test36 = TestCase (assertEqual "Can compute the size of a 3x2 matrix"
+test36 = TestCase (assertEqual "Can compute the size of a 3x2 matrix."
                                (3, 2)
                                (PMatrix.size mat3))
 
-test37 = TestCase (assertEqual "Can compute the size of a 3x3 matrix"
+test37 = TestCase (assertEqual "Can compute the size of a 3x3 matrix."
                                (3, 3)
                                (PMatrix.size sum1))
 
-test38 = TestCase (assertEqual "Can compute the size of a 4x3 matrix"
+test38 = TestCase (assertEqual "Can compute the size of a 4x3 matrix."
                                (4, 3)
                                (PMatrix.size prod2))
 
-test39 = TestCase (assertEqual "Can compute the size of a 4x4 matrix"
+test39 = TestCase (assertEqual "Can compute the size of a 4x4 matrix."
                                (4, 4)
                                (PMatrix.size sum2))
 
-test40 = TestCase (assertEqual "Can compute the size of a 4x6 matrix"
+test40 = TestCase (assertEqual "Can compute the size of a 4x6 matrix."
                                (4, 6)
                                (PMatrix.size prod3))
+
+-----------------------------------------------------------------------------------------
+-- Function: findScalar.
+
+mkValidScalarTest s mat j n = TestCase (assertEqual msg (Just s) res)
+    where res = findScalar mat $ PMatrix.scale s mat
+          pos = "(" ++ show j ++ "/" ++ show n ++ ")"
+          msg = "Can determine when matrices are scalar multiples " ++ pos ++ "."
+
+ratio1 :: Rational
+ratio1 = 1 % 2
+
+ratio2 :: Rational
+ratio2 = 5 % 3
+
+test41 = mkValidScalarTest ratio1 basis_dim2_Q_2 1 6
+test42 = mkValidScalarTest ratio1 mat2 2 6
+test43 = mkValidScalarTest ratio1 mat3 3 6
+test44 = mkValidScalarTest ratio1 mat4 3 6
+test45 = mkValidScalarTest ratio2 basis_dim2_Q_2 4 6
+test46 = mkValidScalarTest ratio2 mat2 5 6
+test47 = mkValidScalarTest ratio2 mat3 6 6
+test48 = mkValidScalarTest ratio2 mat4 6 6
+
+test49 = TestCase (assertEqual "findScalar rejects matrices of differing sizes (1/2)."
+                               Nothing
+                               (findScalar basis_dim2_Q_2 mat2))
+
+test50 = TestCase (assertEqual "findScalar rejects matrices of differing sizes (2/2)."
+                               Nothing
+                               (findScalar mat2 mat3))
+
+zero_2x3 :: PMatrix.Matrix Rational
+zero_2x3 = PMatrix.build [[0, 0, 0],
+                          [0, 0, 0]]
+
+test51 = TestCase (assertEqual "findScalar rejects zero multiples (1/2)."
+                               Nothing
+                               (findScalar mat2 zero_2x3))
+    where zero = DMatrix.zero 2 3
+
+test52 = TestCase (assertEqual "findScalar rejects zero multiples (2/2)."
+                               Nothing
+                               (findScalar zero_2x3 mat2))
 
 -----------------------------------------------------------------------------------------
 -- Orchestrates tests.
@@ -362,6 +406,18 @@ tests = hUnitTestToTests $ TestList [TestLabel "build_1x1_basis1" test1,
                                      TestLabel "size_3x3" test37,
                                      TestLabel "size_4x3" test38,
                                      TestLabel "size_4x4" test39,
-                                     TestLabel "size_4x6" test40]
+                                     TestLabel "size_4x6" test40,
+                                     TestLabel "findScalar_Valid_1" test41,
+                                     TestLabel "findScalar_Valid_2" test42,
+                                     TestLabel "findScalar_Valid_3" test43,
+                                     TestLabel "findScalar_Valid_4" test44,
+                                     TestLabel "findScalar_Valid_5" test45,
+                                     TestLabel "findScalar_Valid_6" test46,
+                                     TestLabel "findScalar_Valid_7" test47,
+                                     TestLabel "findScalar_Valid_8" test48,
+                                     TestLabel "findScalar_Invalid_Size_1" test49,
+                                     TestLabel "findScalar_Invalid_Size_2" test50,
+                                     TestLabel "findScalar_Invalid_Zero_1" test51,
+                                     TestLabel "findScalar_Invalid_Zero_2" test52]
 
 main = defaultMain tests

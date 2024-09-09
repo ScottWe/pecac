@@ -6,6 +6,7 @@ module Pecac.Verifier.Matrix
   , build
   , compose
   , directSum
+  , findScalar
   , iden
   , kroneckerProduct
   , prettyShow
@@ -16,6 +17,8 @@ module Pecac.Verifier.Matrix
 
 -----------------------------------------------------------------------------------------
 -- * Import Section.
+
+import Pecac.Maybe (branchJust)
 
 import qualified Data.Matrix as DMatrix
 
@@ -41,6 +44,14 @@ size mat = (DMatrix.nrows mat, DMatrix.ncols mat)
 -- | Returns the 2-qubit swap matrix over an arbitrary ring a.
 swap :: (Num a) => Matrix a
 swap = DMatrix.permMatrix 4 2 3
+
+-----------------------------------------------------------------------------------------
+-- * Utilities.
+
+-- | Computes the valid indices for a matrix.
+toIndices :: Matrix a -> [(Int, Int)]
+toIndices mat = [ (j, k) | j <- [1..n], k <- [1..m] ]
+    where (n, m) = size mat
 
 -----------------------------------------------------------------------------------------
 -- * Matrix Operations.
@@ -85,6 +96,36 @@ compose mat1 mat2 = mat1 * mat2
 -- | Standard matrix addition (viewing (Matrix a) as a ring).
 add :: (Num a) => Matrix a -> Matrix a -> Matrix a
 add mat1 mat2 = mat1 + mat2
+
+-----------------------------------------------------------------------------------------
+-- * Comparison.
+
+-- | Implementation details for findScalar. This function takes as input the matrices,
+-- together with a list of all indices into the matrices. If all of the entries are zero,
+-- then nothing is returned. Likewise, if one of the entries is zero, and the other index
+-- is nonzero, then nothing is returned. Otherwise, there exists an index (j, k) such
+-- that mat1[j,k] and mat2[j,k] are nonzero. In this case, the ratio mat2[j,k]/mat1[j,k]
+-- is returned.
+findScalarImpl :: (Eq a, Fractional a) => [(Int, Int)] -> Matrix a -> Matrix a -> Maybe a
+findScalarImpl []               _    _    = Nothing
+findScalarImpl ((j, k):indices) mat1 mat2
+    | v1 == 0 && v2 == 0 = findScalarImpl indices mat1 mat2
+    | v1 == 0 || v2 == 0 = Nothing
+    | otherwise          = Just $ v2 / v1
+    where v1 = DMatrix.getElem j k mat1
+          v2 = DMatrix.getElem j k mat2
+
+-- | This function takes as input two matrices mat1 and mat2. If there exists a nonzero
+-- multiplier s such that (scale s mat1 == mat2), then s is returned. Otherwise, nothing
+-- is returned.
+findScalar :: (Eq a, Fractional a) => Matrix a -> Matrix a -> Maybe a
+findScalar mat1 mat2 =
+    if size mat1 == size mat2
+    then branchJust (findScalarImpl (toIndices mat1) mat1 mat2) $ \s ->
+        if scale s mat1 == mat2
+        then Just s
+        else Nothing
+    else Nothing
 
 -----------------------------------------------------------------------------------------
 -- * Matrix Accessors.
