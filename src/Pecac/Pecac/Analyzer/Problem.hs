@@ -4,6 +4,7 @@ module Pecac.Analyzer.Problem
   ( ParamArr (..)
   , ParamCirc (..)
   , QubitReg (..)
+  , toParamCount
   ) where
 
 -----------------------------------------------------------------------------------------
@@ -25,3 +26,7 @@ data QubitReg = QubitReg String Int deriving (Show, Eq)
 
 -- | Abstract description of a parameterized OpenQASM circuit.
 data ParamCirc = ParamCirc ParamArr QubitReg [GateSummary] deriving (Show, Eq)
+
+-- | Returns the number of parameters in a circuit.
+toParamCount :: ParamCirc -> Int
+toParamCount (ParamCirc (ParamArr _ n) _ _) = n

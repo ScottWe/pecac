@@ -34,19 +34,16 @@ import Pecac.Analyzer.Gate (GateSummary (..))
 import Pecac.Analyzer.Problem
   ( ParamArr (..)
   , ParamCirc (..)
+  , toParamCount
   )
 import Pecac.Analyzer.Revolution (Revolution)
 
 -----------------------------------------------------------------------------------------
 -- * Helper methods.
 
--- | Returns the number of parameters in a parameterized circuit.
-getSize :: ParamCirc -> Int
-getSize (ParamCirc (ParamArr _ sz) _ _) = sz
-
 -- | Determines if two parameterized circuits have the same parameter space.
 isSameSize :: ParamCirc -> ParamCirc -> Bool
-isSameSize circ1 circ2 = getSize circ1 == getSize circ2
+isSameSize circ1 circ2 = toParamCount circ1 == toParamCount circ2
 
 -- | Returns the gates in a parameterized circuit.
 getGates :: ParamCirc -> [GateSummary]
@@ -94,7 +91,7 @@ gatesToLambda n gates = maybeApply (gatesToAlphas gates) apply
 -- | Computes the lambda vector associated with the gates in a circuit (see gatesToLambda
 -- for more details).
 circToLambda :: ParamCirc -> Maybe [Integer]
-circToLambda circ = gatesToLambda (getSize circ) $ getGates circ
+circToLambda circ = gatesToLambda (toParamCount circ) $ getGates circ
 
 -----------------------------------------------------------------------------------------
 -- * Kappa-Value Calcuation.
