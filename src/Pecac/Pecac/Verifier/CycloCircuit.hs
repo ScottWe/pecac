@@ -1,19 +1,29 @@
 -- | A library for constructing quantum circuits over the cyclotomic numbers.
 
-module Pecac.Verifier.CycloCircuit (circToMat) where
+module Pecac.Verifier.CycloCircuit
+  ( circToMat
+  , findGlobalPhase
+  ) where
 
 -----------------------------------------------------------------------------------------
 -- * Import Section.
 
-import Pecac.Analyzer.Revolution (Revolution)
+import Pecac.Maybe (branchJust)
+import Pecac.List (repeatn)
+import Pecac.Analyzer.Revolution
+  ( Revolution
+  , rationalToRev
+  )
 import Pecac.Analyzer.Problem
   ( ParamArr (..)
   , ParamCirc (..)
   , QubitReg (..)
+  , toParamCount
   )
 import Pecac.Analyzer.Gate (GateSummary (..))
 import Pecac.Verifier.CycloGate
-  ( CycMat
+  ( Cyclotomic
+  , CycMat
   , gateToMat
   , idGate
   )
@@ -21,7 +31,7 @@ import Pecac.Verifier.CycloGate
 import qualified Pecac.Verifier.Matrix as Matrix
 
 -----------------------------------------------------------------------------------------
--- * Circuit to Matrix Conversion
+-- * Circuit to Matrix Conversion.
 
 -- | Takes as input the number of qubits (n), an instantiation for each angle in the gate
 -- list (as a rational degree), and a list of gates. Returns a matrix which corresponds
@@ -43,3 +53,17 @@ circToMat thetas (ParamCirc (ParamArr _ psz) (QubitReg _ qsz) gates) =
     then Just $ gatesToMat qsz thetas gates
     else Nothing
     where len = length thetas
+
+-----------------------------------------------------------------------------------------
+-- * Global Phase Extraction.
+
+-- | Takes as input a pair of parameterized circuit (circ1 and circ2). The two circuits
+-- are compared with respect to the zero parameter. If the two instantiations differ by a
+-- global phase s, then this global phase is returned (specifically, the instantiation of
+-- circ2 is obtained by multiplying circ1 by s). Otherwise, nothing is returned.
+findGlobalPhase :: ParamCirc -> ParamCirc -> Maybe Cyclotomic
+findGlobalPhase circ1 circ2 =
+    branchJust (circToMat theta0 circ1) $ \op1 ->
+        branchJust (circToMat theta0 circ2) (Matrix.findScalar op1)
+    where angle0 = rationalToRev 0
+          theta0 = repeatn angle0 $ toParamCount circ1

@@ -88,10 +88,12 @@ test7 = TestCase (assertEqual "circToMat handles empty 3-qubit, 2-parameter, cir
 -----------------------------------------------------------------------------------------
 -- circToMat: Empty Circuits (Invalid Parameters)
 
+pcirc1 :: ParamCirc
+pcirc1 = ParamCirc (ParamArr "thetas" 3) (QubitReg "qs" 1) []
+
 test8 = TestCase (assertEqual "circToMat rejects too few parameters."
                               Nothing
-                              (circToMat null_2angle pcirc))
-    where pcirc = ParamCirc (ParamArr "thetas" 3) (QubitReg "qs" 1) []
+                              (circToMat null_2angle pcirc1))
 
 test9 = TestCase (assertEqual "circToMat rejects too many parameters."
                               Nothing
@@ -118,17 +120,26 @@ mat_rotx_deg45 :: Matrix.Matrix Cyclotomic.Cyclotomic
 mat_rotx_deg45 = Matrix.build [[one / sqrt2, img / sqrt2],
                                [img / sqrt2, one / sqrt2]]
 
+pcirc2 :: ParamCirc
+pcirc2 = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 1) gates
+    where gates = [PlainSummary GateX $ GateConfigs False [] [0]]
+
+pcirc3 :: ParamCirc
+pcirc3 = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 2) gates
+    where gates = [PlainSummary GateY $ GateConfigs False [] [1]]
+
+pcirc4 :: ParamCirc
+pcirc4 = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 1) gates
+    where aff   = linear [1]
+          gates = [RotSummary RotX aff $ GateConfigs False [] [0]]
+
 test10 = TestCase (assertEqual "circToMat handles 1-qubit single gate circuits."
                                (Just mat_X)
-                               (circToMat null_1angle pcirc))
-    where gates = [PlainSummary GateX $ GateConfigs False [] [0]]
-          pcirc = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 1) gates
+                               (circToMat null_1angle pcirc2))
 
 test11 = TestCase (assertEqual "circToMat handles 2-qubit single gate circuits."
                                (Just $ Matrix.kroneckerProduct mat_I mat_Y)
-                               (circToMat null_1angle pcirc))
-    where gates = [PlainSummary GateY $ GateConfigs False [] [1]]
-          pcirc = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 2) gates
+                               (circToMat null_1angle pcirc3))
 
 test12 = TestCase (assertEqual "circToMat handles 3-qubit single gate circuits."
                                (Just $ Matrix.kroneckerProduct mat_II mat_Z)
@@ -138,11 +149,8 @@ test12 = TestCase (assertEqual "circToMat handles 3-qubit single gate circuits."
 
 test13 = TestCase (assertEqual "circToMat handles rotations."
                                (Just mat_rotx_deg45)
-                               (circToMat angles pcirc))
+                               (circToMat angles pcirc4))
     where angles = map rationalToRev [45%360]
-          aff    = linear [1]
-          gates  = [RotSummary RotX aff $ GateConfigs False [] [0]]
-          pcirc  = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 1) gates
 
 -----------------------------------------------------------------------------------------
 -- circToMat: Multi-Gate Circuits
@@ -166,6 +174,29 @@ test14 = TestCase (assertEqual "circToMat handles circuits with multiple gates."
           pcirc = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 4) gates
 
 -----------------------------------------------------------------------------------------
+-- findGlobalPhase
+
+test15 = TestCase (assertEqual "findGlobalPhase rejects circuits of distinct qubit cts."
+                               Nothing
+                               (findGlobalPhase pcirc2 pcirc3))
+
+test16 = TestCase (assertEqual "findGlobalPhase rejects circuits of distinct param cts."
+                               Nothing
+                               (findGlobalPhase pcirc2 pcirc1))
+
+test17 = TestCase (assertEqual "findGlobalPhase detects circuits differing beyond phase."
+                               Nothing
+                               (findGlobalPhase pcirc2 pcirc4))
+
+test18 = TestCase (assertEqual "findGlobalPhase can compute global phase."
+                               (Just $ -one)
+                               (findGlobalPhase pcirc2 pcirc))
+    where gates = [PlainSummary GateZ $ GateConfigs False [] [0],
+                   PlainSummary GateX $ GateConfigs False [] [0],
+                   PlainSummary GateZ $ GateConfigs False [] [0]]
+          pcirc = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 1) gates
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "circToMat_Empty_Q1_P1" test1,
@@ -181,6 +212,10 @@ tests = hUnitTestToTests $ TestList [TestLabel "circToMat_Empty_Q1_P1" test1,
                                      TestLabel "circToMat_OneGate_Q2" test11,
                                      TestLabel "circToMat_OneGate_Q3" test12,
                                      TestLabel "circToMat_OneRot" test13,
-                                     TestLabel "circToMat_ManyGates" test14]
+                                     TestLabel "circToMat_ManyGates" test14,
+                                     TestLabel "findGlobalPhase_QubitMismatch" test15,
+                                     TestLabel "findGlobalPhase_ParamMismatch" test16,
+                                     TestLabel "findGlobalPhase_NoSolution" test17,
+                                     TestLabel "findGlobalPhase_NoSolution" test18]
 
 main = defaultMain tests

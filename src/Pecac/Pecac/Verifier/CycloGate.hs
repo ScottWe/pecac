@@ -1,7 +1,8 @@
 -- | A library for constructing quantum gates over the cyclotomic numbers.
 
 module Pecac.Verifier.CycloGate
-  ( CycMat
+  ( Cyclotomic.Cyclotomic
+  , CycMat
   , gateToMat
   , idGate
   ) where
