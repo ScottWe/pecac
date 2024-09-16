@@ -77,6 +77,11 @@ common basic-exe-props
                        pecac,
                        pecac-exe
 
+executable pecac_exact
+  import:              basic-exe-props
+  main-is:             Pec/Main.hs
+  other-modules:       Pec.CmdLn
+
 executable pecac_parse
   import:              basic-exe-props
   main-is:             Parser/Main.hs

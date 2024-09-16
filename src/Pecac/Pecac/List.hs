@@ -1,7 +1,8 @@
 -- | General-purpose list manipulation functions not found in Prelude.
 
 module Pecac.List
-  ( mergeWith
+  ( getCombinations
+  , mergeWith
   , prettyList
   , prettyItems
   , prettyNonEmpty
@@ -31,6 +32,18 @@ mergeWith _ v []     []     = []
 mergeWith f v xs     []     = map (\x -> f x v) xs
 mergeWith f v []     ys     = map (f v) ys
 mergeWith f v (x:xs) (y:ys) = f x y : mergeWith f v xs ys
+
+-- | Takes as input a list of lists (say x) of type a. Returns a list of all possible
+-- sequences obtained by selecting one element from each list in x. That is, if x has
+-- length n, then each element in (getCombinations x) will be a list of length n, where
+-- the j-th element is selected from the j-th set in x.
+-- 
+-- Note that repeated values in a set are treated as distinct values. Equivalently, this
+-- function operations on multisets rather than sets.
+getCombinations :: [[a]] -> [[a]]
+getCombinations []         = [[]]
+getCombinations (set:sets) = concat $ map f $ getCombinations sets
+    where f seq = map (:seq) set
 
 -----------------------------------------------------------------------------------------
 -- * List Printing.

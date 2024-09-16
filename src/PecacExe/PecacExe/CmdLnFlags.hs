@@ -4,6 +4,7 @@
 
 module PecacExe.CmdLnFlags
   ( def
+  , gphaseFlag
   , radFlags
   , srcFlags
   ) where
@@ -40,3 +41,8 @@ srcFlags x = x &= help "Input source (defaults to stdin)."
 -- since flags are impure.
 radFlags :: [String] -> [String]
 radFlags x = x &= help "A rational multiple of 2*pi."
+
+-- | Returns the flags for the --gphase argument. The default value is taken as
+-- an argument, since flags are impure.
+gphaseFlag :: Bool -> Bool
+gphaseFlag x = x &= help "Compare circuits upto global phase."

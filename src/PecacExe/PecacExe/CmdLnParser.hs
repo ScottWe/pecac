@@ -5,6 +5,8 @@ module PecacExe.CmdLnParser
   , Typeable
   , addModeAnnotations
   , parseCmdLnArgs
+  , whenLoud
+  , whenNormal
   ) where
 
 -------------------------------------------------------------------------------
@@ -26,6 +28,10 @@ import System.Console.CmdArgs
   , summary
   , verbosityArgs
   , versionArg
+  )
+import System.Console.CmdArgs.Verbosity
+  ( whenLoud
+  , whenNormal
   )
 
 -------------------------------------------------------------------------------
