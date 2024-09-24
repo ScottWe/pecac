@@ -34,6 +34,7 @@ import Pecac.Analyzer.Gate (GateSummary (..))
 import Pecac.Analyzer.Problem
   ( ParamArr (..)
   , ParamCirc (..)
+  , toGates
   , toParamCount
   )
 import Pecac.Analyzer.Revolution (Revolution)
@@ -44,10 +45,6 @@ import Pecac.Analyzer.Revolution (Revolution)
 -- | Determines if two parameterized circuits have the same parameter space.
 isSameSize :: ParamCirc -> ParamCirc -> Bool
 isSameSize circ1 circ2 = toParamCount circ1 == toParamCount circ2
-
--- | Returns the gates in a parameterized circuit.
-getGates :: ParamCirc -> [GateSummary]
-getGates (ParamCirc _ _ gates) = gates
 
 -----------------------------------------------------------------------------------------
 -- * Alpha Extraction.
@@ -91,7 +88,7 @@ gatesToLambda n gates = maybeApply (gatesToAlphas gates) apply
 -- | Computes the lambda vector associated with the gates in a circuit (see gatesToLambda
 -- for more details).
 circToLambda :: ParamCirc -> Maybe [Integer]
-circToLambda circ = gatesToLambda (toParamCount circ) $ getGates circ
+circToLambda circ = gatesToLambda (toParamCount circ) $ toGates circ
 
 -----------------------------------------------------------------------------------------
 -- * Kappa-Value Calcuation.
@@ -123,7 +120,7 @@ gatesToKappa gates = maybeApply (gatesToAlphas gates) (foldl foldKappa 0)
 -- | Computes the kappa vector associated with the gates in a circuit (see gatesToKappa
 -- for more details).
 circToKappa :: ParamCirc -> Maybe Integer
-circToKappa circ = gatesToKappa $ getGates circ
+circToKappa circ = gatesToKappa $ toGates circ
 
 -----------------------------------------------------------------------------------------
 -- * Cutoff Calcuations.

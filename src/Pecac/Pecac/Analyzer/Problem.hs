@@ -4,6 +4,7 @@ module Pecac.Analyzer.Problem
   ( ParamArr (..)
   , ParamCirc (..)
   , QubitReg (..)
+  , toGates
   , toParamCount
   ) where
 
@@ -30,3 +31,7 @@ data ParamCirc = ParamCirc ParamArr QubitReg [GateSummary] deriving (Show, Eq)
 -- | Returns the number of parameters in a circuit.
 toParamCount :: ParamCirc -> Int
 toParamCount (ParamCirc (ParamArr _ n) _ _) = n
+
+-- | Returns the list of gates in the circuit.
+toGates :: ParamCirc -> [GateSummary]
+toGates (ParamCirc _ _ gates) = gates
