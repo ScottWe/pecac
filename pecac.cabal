@@ -23,6 +23,7 @@ library
                        Pecac.Affine
                        Pecac.Analyzer.Cutoffs
                        Pecac.Analyzer.Gate
+                       Pecac.Analyzer.Integrality
                        Pecac.Analyzer.Problem
                        Pecac.Analyzer.Revolution
                        Pecac.Parser.Gate
@@ -124,6 +125,11 @@ test-suite affine-tests
 test-suite analyzer-cutoffs-tests
   import:              basic-unit-test-props
   main-is:             Analyzer-Cutoffs-Tests.hs
+  type:                exitcode-stdio-1.0
+
+test-suite analyzer-integrality-tests
+  import:              basic-unit-test-props
+  main-is:             Analyzer-Integrality-Tests.hs
   type:                exitcode-stdio-1.0
 
 test-suite analyzer-revolution-tests
