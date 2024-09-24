@@ -12,6 +12,7 @@ module Pecac.Affine
   , Semigroup (..)
   , affine
   , cfold
+  , cmap
   , eval
   , linear
   , lit
@@ -146,3 +147,8 @@ eval (Affine coeffs offset) values =
 -- coefficients may be omitted.
 cfold :: (RMod a b) => (a -> c -> c) -> c -> Affine a b -> c
 cfold f v (Affine coeffs _) = foldr f v coeffs
+
+-- | Applies map to the coefficients of an affine linear sum. Note that trailinng zero
+-- coefficients may be omitted.
+cmap :: (RMod a b) => (a -> c) -> Affine a b -> [c]
+cmap f (Affine coeffs _) = map f coeffs
