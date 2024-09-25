@@ -207,6 +207,36 @@ test46 = TestCase (assertEqual "cfold ignores trailing zeros."
     where aff = linear [1, 2, 3, 0, 0, 0] :: AffineZQ
 
 -----------------------------------------------------------------------------------------
+-- * cmap
+
+test47 = TestCase (assertEqual "cmap works."
+                               ([1, 7, 4, -1, 5, 0, 0, 1, 2, 3])
+                               (cmap id aff4))
+
+-----------------------------------------------------------------------------------------
+-- * skew
+
+test48 = TestCase (assertEqual "skew handles with same number of coefficients."
+                               (affine [6, 21] 9)
+                               (skew [2, 3] aff))
+    where aff = affine [3, 7] 9 :: AffineZQ
+
+test49 = TestCase (assertEqual "skew handles with missing coefficients."
+                               (affine [3, 4] 10)
+                               (skew [3, 2] aff))
+    where aff = affine [1, 2, 3] 10 :: AffineZQ
+
+test50 = TestCase (assertEqual "skew handles with extra coefficients."
+                               (affine [3, 4, 3] 11)
+                               (skew [3, 2, 1, 5] aff))
+    where aff = affine [1, 2, 3] 11 :: AffineZQ
+
+test51 = TestCase (assertEqual "skew shrinks affine linear sum."
+                               (affine [3] 72)
+                               (skew [3, 0] aff))
+    where aff = affine [1, 2] 72 :: AffineZQ
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "Compare_var_linear_1" test1,
@@ -254,6 +284,11 @@ tests = hUnitTestToTests $ TestList [TestLabel "Compare_var_linear_1" test1,
                                      TestLabel "EvalMissingArgs" test43,
                                      TestLabel "EvalExtraArgs" test44,
                                      TestLabel "cfold_1" test45,
-                                     TestLabel "cfold_2" test46]
+                                     TestLabel "cfold_2" test46,
+                                     TestLabel "cmap" test47,
+                                     TestLabel "skew_Exact" test48,
+                                     TestLabel "skew_Fewer" test49,
+                                     TestLabel "skew_Extra" test50,
+                                     TestLabel "skew_Shrink" test51]
 
 main = defaultMain tests

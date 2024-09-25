@@ -16,6 +16,7 @@ module Pecac.Affine
   , eval
   , linear
   , lit
+  , skew
   , var
   ) where
 
@@ -127,6 +128,12 @@ instance (RMod a b, Eq a) => RMod a (Affine a b) where
     scale s (Affine c1 o1) = affine coeffs offset
         where coeffs = map (s *) c1
               offset = scale s o1
+
+-- | Allows for scaling each component of the affine linear sum independently. In other
+-- words, this is a skew linear transformation of the affine linear function.
+skew :: (RMod a b, Eq a) => [a] -> Affine a b -> Affine a b
+skew seq (Affine c1 o1) = affine c2 o1
+    where c2 = mergeWith (*) _zero seq c1
 
 -----------------------------------------------------------------------------------------
 -- * Evaluation.
