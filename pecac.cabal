@@ -17,10 +17,11 @@ extra-source-files:  CHANGELOG.md, README.md
 -- Main library.
 
 library
-  exposed-modules:     Pecac.Either
+  exposed-modules:     Pecac.Affine
+                       Pecac.Cyclotomic
+                       Pecac.Either
                        Pecac.List
                        Pecac.Maybe
-                       Pecac.Affine
                        Pecac.Analyzer.Cutoffs
                        Pecac.Analyzer.Gate
                        Pecac.Analyzer.Integrality
@@ -120,6 +121,15 @@ test-suite affine-tests
   import:              basic-unit-test-props
   main-is:             Affine-Tests.hs
   build-depends:       groups
+  type:                exitcode-stdio-1.0
+
+test-suite cyclotomic-tests
+  import:              basic-unit-test-props
+  main-is:             Cyclotomic-Tests.hs
+  build-depends:       cyclotomic,
+                       -- Forces a resolution to a dependency conflict.
+                       vector>=0.12.2.0,
+                       primitive>=0.7.1.0
   type:                exitcode-stdio-1.0
 
 test-suite analyzer-cutoffs-tests
