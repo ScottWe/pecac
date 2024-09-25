@@ -69,10 +69,11 @@ printParamSetImpl j (theta:thetas) = do
     putStrLn ""
     printParamSetImpl (j + 1) thetas
 
--- | A helper method to print all possible parameters to stadnard out, given a set of
--- values for each input angle.
+-- | A helper method to print a list of parameter combinations to standard out. In
+-- particular, the input to this function should be set of sets obtained by applying
+-- combinations to a pset.
 printParamSet :: [[Revolution]] -> IO ()
-printParamSet = printParamSetImpl 0 . getCombinations
+printParamSet = printParamSetImpl 0
 
 -----------------------------------------------------------------------------------------
 -- * Exact Parameterized Equivalence Checking.
@@ -93,7 +94,7 @@ printEqFailure :: [Revolution] -> IO ()
 printEqFailure theta = do
     putStrLn "False."
     whenLoud $ do
-        putStrLn "Circuits disagree on angle theta"
+        putStrLn "Circuits disagree on angle theta."
         printTheta theta
 
 -- | Logs an EqSuccess result to standard out.
@@ -104,8 +105,9 @@ printEqSuccess pset = do
     whenLoud $ do
             putStrLn "The following theta were checked during verification."
             putStrLn ""
-            printParamSet pset
-    where len = length pset
+            printParamSet combs
+    where combs = getCombinations pset
+          len   = length combs
 
 -- | Takes an input an equality function and two circuits. Performs parameterized
 -- equivalence checking using the provided equality function. The results are printed to
