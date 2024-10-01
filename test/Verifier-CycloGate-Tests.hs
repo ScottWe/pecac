@@ -491,18 +491,18 @@ test47 = TestCase (assertEqual "gateToMat handles inverted RotZ gates."
 
 test48 = TestCase (assertEqual "gateToMat handles inverted RotCX gates."
                                mat_inv_rotcx_90deg
-                               (gateToMat 1 angles_90 (RotSummary RotCX param1 configs)))
-    where configs = GateConfigs True [] [0]
+                               (gateToMat 2 angles_90 (RotSummary RotCX param1 configs)))
+    where configs = GateConfigs True [] [0, 1]
 
 test49 = TestCase (assertEqual "gateToMat handles inverted RotCY gates."
                                mat_inv_rotcy_90deg
-                               (gateToMat 1 angles_90 (RotSummary RotCY param1 configs)))
-    where configs = GateConfigs True [] [0]
+                               (gateToMat 2 angles_90 (RotSummary RotCY param1 configs)))
+    where configs = GateConfigs True [] [0, 1]
 
 test50 = TestCase (assertEqual "gateToMat handles inverted RotCZ gates."
                                mat_inv_rotcz_90deg
-                               (gateToMat 1 angles_90 (RotSummary RotCZ param1 configs)))
-    where configs = GateConfigs True [] [0]
+                               (gateToMat 2 angles_90 (RotSummary RotCZ param1 configs)))
+    where configs = GateConfigs True [] [0, 1]
 
 -----------------------------------------------------------------------------------------
 -- gateToMat: Linear Sums of Angles
@@ -568,8 +568,8 @@ test56 = TestCase (assertEqual "gateToMat handles negative controls."
 
 test57 = TestCase (assertEqual "gateToMat handles mixed controls."
                                mat_CNX
-                               (gateToMat 1 angles_45_90 (PlainSummary GateX configs)))
-    where configs = GateConfigs False [Pos, Neg] [0]
+                               (gateToMat 3 angles_45_90 (PlainSummary GateX configs)))
+    where configs = GateConfigs False [Pos, Neg] [0, 1, 2]
 
 test58 = TestCase (assertEqual "gateToMat can permute inputs to controlled gates."
                                (Matrix.compose mat_ISwp $ Matrix.compose mat_CCX mat_ISwp)

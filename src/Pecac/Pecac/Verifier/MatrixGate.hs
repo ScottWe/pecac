@@ -104,9 +104,19 @@ permuteQs j (q:qs) k mat =
 -- (qubit[j])-th qubit in the total space. This function requires that qubits contains
 -- only unique elements from { 0, 1, ..., k-1 }.
 applyAt :: (Num a) => Int -> [Int] -> Matrix.Matrix a -> Matrix.Matrix a
-applyAt k []     mat = Matrix.kroneckerProduct mat $ Matrix.iden $ 2^k
-applyAt k qubits mat = applyMatrixBetween minq (k - maxq) permuted
-    where minq     = foldr min k qubits
+applyAt k [] mat
+    | n /= m    = error "applyAt requires a square matrix: mat."
+    | n /= 1    = error "applyAt requires that dimension of mat matches qubit count."
+    | otherwise = Matrix.kroneckerProduct mat $ Matrix.iden $ 2^k
+    where (n, m) = Matrix.size mat
+applyAt k qubits mat
+    | n /= m        = error "applyAt requires a square matrix: mat."
+    | n /= 2^qcount = error "applyAt requires that dimension of mat matches qubit count."
+    | qcount > k    = error "applyAt requires qubits do not exceed system size (k)."
+    | otherwise     = applyMatrixBetween minq (k - maxq) permuted
+    where (n, m)   = Matrix.size mat
+          qcount   = length qubits
+          minq     = foldr min k qubits
           maxq     = 1 + foldr max 0 qubits
           local    = map (\x -> x - minq) qubits
           permuted = permuteQs 0 local (maxq - minq) mat
