@@ -185,6 +185,10 @@ matRZ = makeExponential matZ
 matGPhase :: Bool -> Revolution -> CycMat
 matGPhase = makeExponential $ Matrix.build [[one]]
 
+-- | Instantiates makeExponential for controlled global phase gates
+matP :: Bool -> Revolution -> CycMat
+matP inv = addCtrlToMatrix . matGPhase inv
+
 -----------------------------------------------------------------------------------------
 -- * Modified Rotation Gates.
 
@@ -199,6 +203,10 @@ matCRY inv = addCtrlToMatrix . matRY inv
 -- | A controlled version of matRZ.
 matCRZ :: Bool -> Revolution -> CycMat
 matCRZ inv = addCtrlToMatrix . matRZ inv
+
+-- | Instantiates makeExponential for doubly-controlled global phase gates
+matCP :: Bool -> Revolution -> CycMat
+matCP inv = addCtrlToMatrix . matP inv
 
 -----------------------------------------------------------------------------------------
 -- * Modified Rotation Gates.
@@ -238,6 +246,8 @@ makeRot RotCX  = matCRX
 makeRot RotCY  = matCRY
 makeRot RotCZ  = matCRZ
 makeRot GPhase = matGPhase
+makeRot RotP   = matP
+makeRot RotCP  = matCP
 
 -- | Helper method to add controls to a cyclotomic operator.
 addCtrls :: [Polarity] -> CycMat -> CycMat

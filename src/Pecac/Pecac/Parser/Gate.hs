@@ -237,6 +237,8 @@ toRotName "crx"    = Just RotCX
 toRotName "cry"    = Just RotCY
 toRotName "crz"    = Just RotCZ
 toRotName "gphase" = Just GPhase
+toRotName "p"      = Just RotP
+toRotName "cp"     = Just RotCP
 toRotName _        = Nothing
 
 -----------------------------------------------------------------------------------------

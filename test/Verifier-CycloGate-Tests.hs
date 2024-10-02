@@ -658,6 +658,27 @@ test67 = TestCase (assertEqual "Can add a control to a global phase gate."
           configs = GateConfigs False [Pos] [0]
 
 -----------------------------------------------------------------------------------------
+-- P-Gates.
+
+mat_gphase_5 :: Matrix.Matrix Cyclotomic.Cyclotomic
+mat_gphase_5 = Matrix.build [[one,  zero, zero, zero],
+                             [zero, one,  zero, zero],
+                             [zero, zero, one,  zero],
+                             [zero, zero, zero, -img]]
+
+test68 = TestCase (assertEqual "The P-gate agrees with the controlled phase."
+                               mat_gphase_4
+                               (gateToMat 1 angles_90 (RotSummary RotP params configs)))
+    where params  = lit $ rationalToRev $ 3 % 4
+          configs = GateConfigs False [] [0]
+
+test69 = TestCase (assertEqual "The CP-gate agrees with the controlled phase."
+                               mat_gphase_5
+                               (gateToMat 2 angles_90 (RotSummary RotCP params configs)))
+    where params  = lit $ rationalToRev $ 3 % 4
+          configs = GateConfigs False [] [0, 1]
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "gateToMat_NoMod_GateX" test1,
@@ -726,6 +747,8 @@ tests = hUnitTestToTests $ TestList [TestLabel "gateToMat_NoMod_GateX" test1,
                                      TestLabel "gateToMat_GPhase_1" test64,
                                      TestLabel "gateToMat_GPhase_2" test65,
                                      TestLabel "gateToMat_GPhase_3" test66,
-                                     TestLabel "gateToMat_GPhase_Ctrl" test67]
+                                     TestLabel "gateToMat_GPhase_Ctrl" test67,
+                                     TestLabel "gateToMat_RotP" test68,
+                                     TestLabel "gateToMat_RotCP" test69]
 
 main = defaultMain tests
