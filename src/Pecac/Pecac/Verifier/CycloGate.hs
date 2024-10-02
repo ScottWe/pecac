@@ -25,6 +25,7 @@ import Pecac.Analyzer.Revolution
   ( Revolution
   , asRational
   , invert
+  , scale
   )
 import Pecac.Verifier.MatrixGate
   ( addCtrlToMatrix
@@ -169,17 +170,23 @@ makeExponential mat False rev = Matrix.add cosmat sinmat
           sinmat = Matrix.scale (img * Cyclotomic.sinRev theta) mat
 makeExponential mat True rev = makeExponential mat False $ invert rev
 
+-- | Specializes makeExponential to the OpenQASM 3 parameterization of a rotation, that
+-- is, where all angles are scaled by (-1/2).
+makeQasmExponential :: CycMat -> Bool -> Revolution -> CycMat
+makeQasmExponential mat inv = makeExponential mat inv . scale factor
+    where factor = -1 % 2 :: Rational
+
 -- | Instantiates makeExponential for the Pauli-X operator.
 matRX :: Bool -> Revolution -> CycMat
-matRX = makeExponential matX
+matRX = makeQasmExponential matX
 
 -- | Instantiates makeExponential for the Pauli-Y operator.
 matRY :: Bool -> Revolution -> CycMat
-matRY = makeExponential matY
+matRY = makeQasmExponential matY
 
 -- | Instantiates makeExponential for the Pauli-Z operator.
 matRZ :: Bool -> Revolution -> CycMat
-matRZ = makeExponential matZ
+matRZ = makeQasmExponential matZ
 
 -- | Instantiates makeExponential for global phase gates.
 matGPhase :: Bool -> Revolution -> CycMat

@@ -50,10 +50,11 @@ type EquivFun a = a -> a -> Bool
 type CircFun a = [Revolution] -> Maybe a
 
 -- | Takes as input the cutoff value for a specific parameter, and returns a sufficient
--- number of distinct rational multiples of pi from [0, 2), such that parameterized
+-- number of distinct rational multiples of pi from [0, 4), such that parameterized
 -- equivalence can be determined.
 cutoffToParamSet :: Integer -> [Revolution]
-cutoffToParamSet n = map (\j -> rationalToRev $ toInteger j % n) [0 .. (n - 1)]
+cutoffToParamSet n = map f [0 .. (n - 1)]
+    where f j = rationalToRev $ 2 * toInteger j % n
 
 -- | Takes as input a list of rational degrees and the evaluation functions for two
 -- patameterized curcits. If the circuits cannot be evaluated with respect to these

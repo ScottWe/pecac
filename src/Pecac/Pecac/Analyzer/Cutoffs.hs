@@ -30,7 +30,10 @@ import Pecac.Maybe
   ( branchJust
   , maybeApply
   )
-import Pecac.Analyzer.Gate (GateSummary (..))
+import Pecac.Analyzer.Gate
+  ( GateSummary (..)
+  , RotName (..)
+  )
 import Pecac.Analyzer.Problem
   ( ParamArr (..)
   , ParamCirc (..)
@@ -49,26 +52,38 @@ isSameSize circ1 circ2 = toParamCount circ1 == toParamCount circ2
 -----------------------------------------------------------------------------------------
 -- * Alpha Extraction.
 
--- | Takes as input a rational number, and maybe a list of integers. If the rational
--- number corresponds to an integer and a list of integers is provided, and the integer
--- is prepended to the list. Otherwise, nothing is returned.
-extractIntegral :: Rational -> Maybe [Integer] -> Maybe [Integer]
-extractIntegral _  Nothing    = Nothing
-extractIntegral aj (Just seq) =
+-- | Takes as input a boolean flag, a rational number, and maybe a list of integers. If
+-- the rational number corresponds to an integer and a list of integers is provided, and
+-- the integer is prepended to the list. If the flag is set, then this integer is the
+-- coefficient of a half-cycle gate, and should be multiplied by two. Otherwise, nothing
+-- is returned.
+extractIntegral :: Bool -> Rational -> Maybe [Integer] -> Maybe [Integer]
+extractIntegral isHalf _  Nothing    = Nothing
+extractIntegral isHalf aj (Just seq) =
     if denominator aj == 1
-    then Just $ numerator aj : seq
+    then Just $ mult * base : seq
     else Nothing
+    where mult = if isHalf then 2 else 1
+          base = numerator aj
+
+-- | Returns true if a gate has a period of 2pi (as opposed to 4pi).
+isHalfCycle :: RotName -> Bool
+isHalfCycle GPhase = True
+isHalfCycle RotP   = True
+isHalfCycle RotCP  = True
+isHalfCycle _      = False
 
 -- | Returns the list of alpha vectors associated with a list of gates. For each rotation
 -- gate, there is a element in the list of alpha vectors. This element corresponds to the
 -- coefficient vector of the rotation (i.e., the coefficients of the angle parameters in
 -- the integer linear sum of parameters).
 gatesToAlphas :: [GateSummary] -> Maybe [[Integer]]
-gatesToAlphas []                         = Just []
-gatesToAlphas (PlainSummary _ _:gates)   = gatesToAlphas gates
-gatesToAlphas (RotSummary _ aff _:gates) =
-    branchJust (cfold extractIntegral (Just []) aff) $
+gatesToAlphas []                            = Just []
+gatesToAlphas (PlainSummary _ _:gates)      = gatesToAlphas gates
+gatesToAlphas (RotSummary name aff _:gates) =
+    branchJust (cfold f (Just []) aff) $
         \alpha -> maybeApply (gatesToAlphas gates) (alpha:)
+    where f = extractIntegral (isHalfCycle name)
 
 -----------------------------------------------------------------------------------------
 -- * Lambda-Value Calcuation.

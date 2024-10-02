@@ -150,7 +150,7 @@ test12 = TestCase (assertEqual "circToMat handles 3-qubit single gate circuits."
 test13 = TestCase (assertEqual "circToMat handles rotations."
                                (Just mat_rotx_deg45)
                                (circToMat angles pcirc4))
-    where angles = map rationalToRev [45%360]
+    where angles = map rationalToRev [-2 * 45 % 360]
 
 -----------------------------------------------------------------------------------------
 -- circToMat: Multi-Gate Circuits
@@ -163,7 +163,7 @@ mat_RxXYZ = Matrix.kroneckerProduct mat_RxX mat_YZ
 test14 = TestCase (assertEqual "circToMat handles circuits with multiple gates."
                                (Just mat_RxXYZ)
                                (circToMat angles pcirc))
-    where angles = map rationalToRev [45%(6*360), 45%(2*360)]
+    where angles = map rationalToRev [-2 * 45 % (6 * 360), -2 * 45 % (2 * 360)]
           aff    = linear [-3, -1]
           gates  = [PlainSummary GateZ $ GateConfigs False [] [0],
                     PlainSummary GateX $ GateConfigs False [] [1],

@@ -37,6 +37,13 @@ mat_I :: Matrix.Matrix Cyclotomic.Cyclotomic
 mat_I = Matrix.iden 2
 
 -----------------------------------------------------------------------------------------
+-- Parameter Correction.
+
+toQasmAngle :: [Rational] -> [Revolution]
+toQasmAngle = map (Pecac.Analyzer.Revolution.scale factor . rationalToRev)
+    where factor = -2 :: Rational
+
+-----------------------------------------------------------------------------------------
 -- gateToMat: Unmodified Plain Gates and Placement
 
 mat_X :: Matrix.Matrix Cyclotomic.Cyclotomic
@@ -154,19 +161,19 @@ test1 = TestCase (assertEqual "gateToMat handles modifier-free Pauli-X gates."
 test2 = TestCase (assertEqual "gateToMat handles modifier-free Pauli-Y gates."
                               mat_IIYI
                               (gateToMat 4 angles (PlainSummary GateY configs)))
-    where angles  = map rationalToRev [5%1]
+    where angles  = toQasmAngle [5%1]
           configs = GateConfigs False [] [2]
 
 test3 = TestCase (assertEqual "gateToMat handles modifier-free Pauli-Z gates."
                               mat_IZI
                               (gateToMat 3 angles (PlainSummary GateZ configs)))
-    where angles  = map rationalToRev [5%2]
+    where angles  = toQasmAngle [5%2]
           configs = GateConfigs False [] [1]
 
 test4 = TestCase (assertEqual "gateToMat handles modifier-free Hadamard gates."
                               mat_IIIIH
                               (gateToMat 5 angles (PlainSummary GateH configs)))
-    where angles  = map rationalToRev [4%2]
+    where angles  = toQasmAngle [4%2]
           configs = GateConfigs False [] [4]
 
 test5 = TestCase (assertEqual "gateToMat handles modifier-free S gates."
@@ -244,25 +251,25 @@ test17 = TestCase (assertEqual "gateToMat handles inverse Pauli-X gates."
 test18 = TestCase (assertEqual "gateToMat handles inverse Pauli-Y gates."
                                mat_IIYI
                                (gateToMat 4 angles (PlainSummary GateY configs)))
-    where angles  = map rationalToRev [5%1]
+    where angles  = toQasmAngle [5%1]
           configs = GateConfigs True [] [2]
 
 test19 = TestCase (assertEqual "gateToMat handles inverse Pauli-Z gates."
                                mat_IZI
                                (gateToMat 3 angles (PlainSummary GateZ configs)))
-    where angles  = map rationalToRev [5%2]
+    where angles  = toQasmAngle [5%2]
           configs = GateConfigs True [] [1]
 
 test20 = TestCase (assertEqual "gateToMat handles inverse Hadamard gates."
                                mat_IIIIH
                                (gateToMat 5 angles (PlainSummary GateH configs)))
-    where angles  = map rationalToRev [4%2]
+    where angles  = toQasmAngle [4%2]
           configs = GateConfigs True [] [4]
 
 test21 = TestCase (assertEqual "gateToMat handles inverse S gates."
                                 mat_IIISdg
                                (gateToMat 4 angles (PlainSummary GateS configs)))
-    where angles  = map rationalToRev [4%2]
+    where angles  = toQasmAngle [4%2]
           configs = GateConfigs True [] [3]
 
 test22 = TestCase (assertEqual "gateToMat handles inverse Sdg gates."
@@ -373,10 +380,10 @@ mat_II_rotx :: Matrix.Matrix Cyclotomic.Cyclotomic
 mat_II_rotx = Matrix.kroneckerProduct (Matrix.iden 4) mat_rotx_90deg
 
 angles_45 :: [Revolution]
-angles_45 = map rationalToRev [45%360]
+angles_45 = toQasmAngle [45%360]
 
 angles_90 :: [Revolution]
-angles_90 = map rationalToRev [90%360]
+angles_90 = toQasmAngle [90%360]
 
 param1 :: Affine Rational Revolution
 param1 = linear [1]
@@ -510,27 +517,27 @@ test50 = TestCase (assertEqual "gateToMat handles inverted RotCZ gates."
 test51 = TestCase (assertEqual "gateToMat handles linear sums of angles for plain gates."
                                mat_X
                                (gateToMat 1 angles (PlainSummary GateX configs)))
-    where angles  = map rationalToRev [45%1, 90%1]
+    where angles  = toQasmAngle [45%1, 90%1]
           configs = GateConfigs False [] [0]
 
 test52 = TestCase (assertEqual "gateToMat handles linear sums of angles on rots (1/3)."
                                mat_roty_45deg
                                (gateToMat 1 angles (RotSummary RotY coeffs configs)))
-    where angles  = map rationalToRev [25%360, 25%(2*360), 5%360]
+    where angles  = toQasmAngle [25%360, 25%(2*360), 5%360]
           coeffs  = linear [1, 2, -1]
           configs = GateConfigs False [] [0]
 
 test53 = TestCase (assertEqual "gateToMat handles modifier-free RotY gates (2/3)."
                                mat_roty_90deg
                                (gateToMat 1 angles (RotSummary RotY coeffs configs)))
-    where angles  = map rationalToRev [-110%360, 20%(11*360)]
+    where angles  = toQasmAngle [-110%360, 20%(11*360)]
           coeffs  = linear [-1, -11]
           configs = GateConfigs False [] [0]
 
 test54 = TestCase (assertEqual "gateToMat handles modifier-free RotY gates (3/3)."
                                mat_I
                                (gateToMat 1 angles (RotSummary RotY coeffs configs)))
-    where angles  = map rationalToRev [1%(11*360), 1%(7*360), 3%(11*360), 3%(7*360)]
+    where angles  = toQasmAngle [1%(11*360), 1%(7*360), 3%(11*360), 3%(7*360)]
           coeffs  = linear [3, 6, -1, -2]
           configs = GateConfigs False [] [0]
 
@@ -554,7 +561,7 @@ mat_CNX = Matrix.build [[one,  zero, zero, zero, zero, zero, zero, zero],
                         [zero, zero, zero, zero, zero, zero, zero, one]]
 
 angles_45_90 :: [Revolution]
-angles_45_90 = map rationalToRev [45%1, 90%1]
+angles_45_90 = toQasmAngle [45%1, 90%1]
 
 test55 = TestCase (assertEqual "gateToMat handles positive controls."
                                mat_CX
@@ -603,7 +610,7 @@ test62 = TestCase (assertEqual "gateToMat handles rational coefficients."
 test63 = TestCase (assertEqual "gateToMat handles constant parameters."
                                mat_roty_45deg
                                (gateToMat 1 angles_90 (RotSummary RotY params configs)))
-    where params  = lit $ rationalToRev $ 1 % 8
+    where params  = lit $ rationalToRev $ -2 % 8
           configs = GateConfigs False [] [0]
 
 -----------------------------------------------------------------------------------------
@@ -633,27 +640,30 @@ mat_gphase_4 :: Matrix.Matrix Cyclotomic.Cyclotomic
 mat_gphase_4 = Matrix.build [[one,  zero],
                              [zero, -img]]
 
+actual_90 :: [Revolution]
+actual_90 = map rationalToRev [90%360]
+
 test64 = TestCase (assertEqual "A global phase gate acts as a scalar (1/3)."
                                mat_gphase_1
-                               (gateToMat 1 angles_90 (RotSummary GPhase params configs)))
+                               (gateToMat 1 actual_90 (RotSummary GPhase params configs)))
     where params  = lit $ rationalToRev 0
           configs = GateConfigs False [] []
 
 test65 = TestCase (assertEqual "A global phase gate acts as a scalar (2/3)."
                                mat_gphase_2
-                               (gateToMat 2 angles_90 (RotSummary GPhase params configs)))
+                               (gateToMat 2 actual_90 (RotSummary GPhase params configs)))
     where params  = lit $ rationalToRev $ 1 % 4
           configs = GateConfigs False [] []
 
 test66 = TestCase (assertEqual "A global phase gate acts as a scalar (3/3)."
                                mat_gphase_3
-                               (gateToMat 3 angles_90 (RotSummary GPhase params configs)))
+                               (gateToMat 3 actual_90 (RotSummary GPhase params configs)))
     where params  = lit $ rationalToRev $ 3 % 4
           configs = GateConfigs False [] []
 
 test67 = TestCase (assertEqual "Can add a control to a global phase gate."
                                mat_gphase_4
-                               (gateToMat 1 angles_90 (RotSummary GPhase params configs)))
+                               (gateToMat 1 actual_90 (RotSummary GPhase params configs)))
     where params  = lit $ rationalToRev $ 3 % 4
           configs = GateConfigs False [Pos] [0]
 
@@ -668,13 +678,13 @@ mat_gphase_5 = Matrix.build [[one,  zero, zero, zero],
 
 test68 = TestCase (assertEqual "The P-gate agrees with the controlled phase."
                                mat_gphase_4
-                               (gateToMat 1 angles_90 (RotSummary RotP params configs)))
+                               (gateToMat 1 actual_90 (RotSummary RotP params configs)))
     where params  = lit $ rationalToRev $ 3 % 4
           configs = GateConfigs False [] [0]
 
 test69 = TestCase (assertEqual "The CP-gate agrees with the controlled phase."
                                mat_gphase_5
-                               (gateToMat 2 angles_90 (RotSummary RotCP params configs)))
+                               (gateToMat 2 actual_90 (RotSummary RotCP params configs)))
     where params  = lit $ rationalToRev $ 3 % 4
           configs = GateConfigs False [] [0, 1]
 

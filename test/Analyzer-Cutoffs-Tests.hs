@@ -529,6 +529,36 @@ test83 = TestCase (assertEqual "randomSampleSize rejects rational coefficients (
           circ2 = ParamCirc pvar_k3 qvar qcoeffs
 
 -----------------------------------------------------------------------------------------
+-- gatesToAlphas: Phase Gates
+
+phase1_k3 :: GateSummary
+phase1_k3 = RotSummary GPhase aff $ GateConfigs True [Pos] [2]
+    where aff = linear [0, 5, -2]
+
+phase2_k3 :: GateSummary
+phase2_k3 = RotSummary RotP aff $ GateConfigs True [Pos, Neg] [2, 5, 3]
+    where aff = linear [-6, 0, 4]
+
+phase3_k3 :: GateSummary
+phase3_k3 = RotSummary RotCP aff $ GateConfigs False [] [2, 5]
+    where aff = linear [1, 1, 4]
+
+test84 = TestCase (assertEqual "A gphase gate has the correct alpha list."
+                              (Just res)
+                              (gatesToAlphas [phase1_k3]))
+    where res = [[0, 10, -4]]
+
+test85 = TestCase (assertEqual "A P gate has the correct alpha list."
+                              (Just res)
+                              (gatesToAlphas [phase2_k3]))
+    where res = [[-12, 0, 8]]
+
+test86 = TestCase (assertEqual "A CP gate has the correct alpha list."
+                              (Just res)
+                              (gatesToAlphas [phase3_k3]))
+    where res = [[2, 2, 8]]
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "gatesToAlphas_Empty" test1,
@@ -613,7 +643,10 @@ tests = hUnitTestToTests $ TestList [TestLabel "gatesToAlphas_Empty" test1,
                                      TestLabel "QCoeffs_forallElimSize_lhs" test80,
                                      TestLabel "QCoeffs_forallElimSize_rhs" test81,
                                      TestLabel "QCoeffs_randomSampleSize_lhs" test82,
-                                     TestLabel "QCoeffs_randomSampleSize_rhs" test83]
+                                     TestLabel "QCoeffs_randomSampleSize_rhs" test83,
+                                     TestLabel "gatesToAlphas_GPhase" test84,
+                                     TestLabel "gatesToAlphas_RotP" test85,
+                                     TestLabel "gatesToAlphas_RotCP" test86]
 
 main = defaultMain tests
 
