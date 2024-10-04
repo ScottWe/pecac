@@ -1,6 +1,9 @@
 -- | Functiosn to convert gate summaries to syntactic objects.
 
-module Pecac.Printer.GateSummary (coeffsToExpr) where
+module Pecac.Printer.GateSummary
+  ( coeffsToExpr
+  , summaryToBaseGate
+  ) where
 
 -----------------------------------------------------------------------------------------
 -- * Import Section.
@@ -14,11 +17,26 @@ import Pecac.Affine
   , cmap
   , getOffset
   )
+import Pecac.Analyzer.Gate
+  ( GateConfigs (..)
+  , GateSummary (..)
+  , Polarity (..)
+  , plainNameToString
+  , rotNameToString
+  )
+import Pecac.Analyzer.Problem
+  ( ParamArr (..)
+  , QubitReg (..)
+  )
 import Pecac.Analyzer.Revolution
   ( Revolution
   , asRational
   )
-import Pecac.Parser.Syntax (Expr (..))
+import Pecac.Parser.Syntax
+  ( BaseGate (..)
+  , Expr (..)
+  , Operand (..)
+  )
 
 -----------------------------------------------------------------------------------------
 -- * Expression Conversion.
@@ -86,3 +104,30 @@ coeffsToExpr pvar aff =
             Nothing     -> ConstNat 0
     where maybeCoeffs = expandCoeffs pvar $ cmap id aff
           maybeOffset = extractOffset aff
+
+-----------------------------------------------------------------------------------------
+-- * Base Gate Conversion.
+
+-- | Implementation details for confsToOps, which expects the operand field of the gate
+-- configurations, rather than the entire gate configuration record.
+confsToOpsImpl :: String -> [Int] -> [Operand]
+confsToOpsImpl _    []     = []
+confsToOpsImpl qvar (q:qs) = QReg qvar q : confsToOpsImpl qvar qs
+
+-- | Converts a gate configuration into a list of operands. A string is taken as input,
+-- to designate the qubit array.
+confsToOps :: String -> GateConfigs -> [Operand]
+confsToOps qvar (GateConfigs _ _ ops) = confsToOpsImpl qvar ops
+
+-- | Converts a gate summary to the corresponding base gate. The parameter array and the
+-- qubit register are taken as inputs, to designate the correct variables to use.
+summaryToBaseGate :: ParamArr -> QubitReg -> GateSummary -> BaseGate
+summaryToBaseGate _ (QubitReg qvar _) (PlainSummary name conf) = gate
+    where nstr = plainNameToString name
+          ops  = confsToOps qvar conf
+          gate = PlainGate nstr ops
+summaryToBaseGate (ParamArr pvar _) (QubitReg qvar _) (RotSummary name aff conf) = gate
+    where nstr = rotNameToString name
+          expr = coeffsToExpr pvar aff
+          ops  = confsToOps qvar conf
+          gate = RotGate nstr expr ops
