@@ -14,6 +14,7 @@ module Pecac.Affine
   , cfold
   , cmap
   , eval
+  , getOffset
   , linear
   , lit
   , skew
@@ -159,3 +160,7 @@ cfold f v (Affine coeffs _) = foldr f v coeffs
 -- coefficients may be omitted.
 cmap :: (RMod a b) => (a -> c) -> Affine a b -> [c]
 cmap f (Affine coeffs _) = map f coeffs
+
+-- | Returns the offset of the affine combination.
+getOffset :: (RMod a b) => Affine a b -> b
+getOffset (Affine _ offset) = offset

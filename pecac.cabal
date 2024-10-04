@@ -34,6 +34,7 @@ library
                        Pecac.Parser.Syntax
                        Pecac.Printer.Expr
                        Pecac.Printer.Gate
+                       Pecac.Printer.GateSummary
                        Pecac.Printer.General
                        Pecac.Printer.Stmt
                        Pecac.Verifier.CycloCircuit
@@ -175,6 +176,11 @@ test-suite printer-expr-tests
 test-suite printer-gate-tests
   import:              basic-unit-test-props
   main-is:             Printer-Gate-Tests.hs
+  type:                exitcode-stdio-1.0
+
+test-suite printer-gatesummary-tests
+  import:              basic-unit-test-props
+  main-is:             Printer-GateSummary-Tests.hs
   type:                exitcode-stdio-1.0
 
 test-suite printer-stmt-tests
