@@ -265,8 +265,8 @@ addCtrls (Neg:ctrls) mat = addNegCtrlToMatrix $ addCtrls ctrls mat
 -- | Implementation details for gateToMat. This method strips away the gate specific
 -- information, taking instead the base matrix and the gate configurations.
 gateToMatImpl :: Int -> CycMat -> GateConfigs -> CycMat
-gateToMatImpl n base (GateConfigs _ ctrls qubits) = applyAt n qubits cbase
-    where cbase = addCtrls ctrls base
+gateToMatImpl n base confs = applyAt n (operands confs) cbase
+    where cbase = addCtrls (controls confs) base
 
 -- | Takes as input the number of qubits in a circuit, an instantiation for each angle in
 -- the circuit, and a gate summary. Returns the cyclotomic operator corresponding to this
