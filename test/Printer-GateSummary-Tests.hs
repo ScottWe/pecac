@@ -8,6 +8,7 @@ import Pecac.Affine
 import Pecac.Analyzer.Gate
 import Pecac.Analyzer.Problem
 import Pecac.Analyzer.Revolution
+import Pecac.Parser.Gate
 import Pecac.Parser.Syntax
 import Pecac.Printer.GateSummary
 
@@ -81,6 +82,9 @@ pvar1 = ParamArr "pvar" 100
 pvar2 :: ParamArr
 pvar2 = ParamArr "ps" 150
 
+pvar3 :: ParamArr
+pvar3 = ParamArr "params" 22
+
 qreg1 :: QubitReg
 qreg1 = QubitReg "qvar" 100
 
@@ -116,7 +120,7 @@ plainmod1 :: GateSummary
 plainmod1 = PlainSummary GateCX $ GateConfigs False [Neg] [1, 2, 3]
 
 plainmod2 :: GateSummary
-plainmod2 = PlainSummary GateSX $ GateConfigs True [Pos] [0, 1, 2]
+plainmod2 = PlainSummary GateSX $ GateConfigs True [Pos] [0, 2]
 
 plainmod3 :: GateSummary
 plainmod3 = PlainSummary GateY $ GateConfigs True [Pos, Neg, Pos] [2, 4, 6, 8]
@@ -125,7 +129,7 @@ base_plainmod1 :: String -> BaseGate
 base_plainmod1 var = PlainGate "cx" [QReg var 1, QReg var 2, QReg var 3]
 
 base_plainmod2 :: String -> BaseGate
-base_plainmod2 var = PlainGate "sx" [QReg var 0, QReg var 1, QReg var 2]
+base_plainmod2 var = PlainGate "sx" [QReg var 0, QReg var 2]
 
 base_plainmod3 :: String -> BaseGate
 base_plainmod3 var = PlainGate "y" [QReg var 2, QReg var 4, QReg var 6, QReg var 8]
@@ -175,35 +179,35 @@ base_rotmod3 pvar qvar = RotGate "rz" (expr8 pvar) [QReg qvar 2, QReg qvar 4, QR
 
 test1 = TestCase (assertEqual "coeffsToExpr handles single params without coeffs (1/2)."
                               (expr1 "pvar")
-                              (coeffsToExpr "pvar" aff1))
+                              (coeffsToExpr pvar1 aff1))
 
 test2 = TestCase (assertEqual "coeffsToExpr handles single params without coeffs (2/2)."
                               (expr2 "params")
-                              (coeffsToExpr "params" aff2))
+                              (coeffsToExpr pvar3 aff2))
 
 test3 = TestCase (assertEqual "coeffsToExpr handles constant expressions (1/3)."
                               expr3
-                              (coeffsToExpr "pvar" aff3))
+                              (coeffsToExpr pvar1 aff3))
 
 test4 = TestCase (assertEqual "coeffsToExpr handles constant expressions (2/3)."
                               expr4
-                              (coeffsToExpr "params" aff4))
+                              (coeffsToExpr pvar3 aff4))
 
 test5 = TestCase (assertEqual "coeffsToExpr handles constant expressions (3/3)."
                               expr5
-                              (coeffsToExpr "ps" aff5))
+                              (coeffsToExpr pvar2 aff5))
 
 test6 = TestCase (assertEqual "coeffsToExpr handles sums of expressions."
                               (expr6 "ps")
-                              (coeffsToExpr "ps" aff6))
+                              (coeffsToExpr pvar2 aff6))
 
 test7 = TestCase (assertEqual "coeffsToExpr handles multiple parameters with coeffients."
                               (expr7 "pvar")
-                              (coeffsToExpr "pvar" aff7))
+                              (coeffsToExpr pvar1 aff7))
 
 test8 = TestCase (assertEqual "coeffsToExpr handles expressions with all types of terms."
                               (expr8 "ps")
-                              (coeffsToExpr "ps" aff8))
+                              (coeffsToExpr pvar2 aff8))
 
 -----------------------------------------------------------------------------------------
 -- summaryToBaseGate: Plain Gates.
@@ -260,6 +264,96 @@ test20 = TestCase (assertEqual "summaryToBaseGate handles modified rot gates (3/
                                (summaryToBaseGate pvar1 qreg1 rotmod3))
 
 -----------------------------------------------------------------------------------------
+-- summaryToBaseGate: Plain Gates.
+
+test21 = TestCase (assertEqual "summaryToGate handles plain unmodified gates (1/3)."
+                               (Gate $ base_plain1 "qvar")
+                               (summaryToGate pvar1 qreg1 plain1))
+
+test22 = TestCase (assertEqual "summaryToGate handles plain unmodified gates (2/3)."
+                               (Gate $ base_plain2 "qs")
+                               (summaryToGate pvar1 qreg2 plain2))
+
+test23 = TestCase (assertEqual "summaryToGate handles plain unmodified gates (3/3)."
+                               (Gate $ base_plain3 "qvar")
+                               (summaryToGate pvar2 qreg1 plain3))
+
+test24 = TestCase (assertEqual "summaryToGate handles plain modified gates (1/3)."
+                               (NegCtrlMod $ Gate $ base_plainmod1 "qs")
+                               (summaryToGate pvar2 qreg2 plainmod1))
+
+test25 = TestCase (assertEqual "summaryToGate handles plain modified gates (2/3)."
+                               (InvMod $ CtrlMod $ Gate $ base_plainmod2 "qvar")
+                               (summaryToGate pvar1 qreg1 plainmod2))
+
+test26 = TestCase (assertEqual "summaryToGate handles plain modified gates (3/3)."
+                               (InvMod $ CtrlMod $ NegCtrlMod $ CtrlMod $ base)
+                               (summaryToGate pvar1 qreg1 plainmod3))
+    where base = Gate $ base_plainmod3 "qvar"
+
+-----------------------------------------------------------------------------------------
+-- summaryToGate: Rotation Gates.
+
+test27 = TestCase (assertEqual "summaryToGate handles unmodified rot gates (1/3)."
+                               (Gate $ base_rot1 "pvar")
+                               (summaryToGate pvar1 qreg1 rot1))
+
+test28 = TestCase (assertEqual "summaryToGate handles unmodified rot gates (2/3)."
+                               (Gate $ base_rot2 "pvar" "qs")
+                               (summaryToGate pvar1 qreg2 rot2))
+
+test29 = TestCase (assertEqual "summaryToGate handles unmodified rot gates (3/3)."
+                               (Gate $ base_rot3 "ps" "qvar")
+                               (summaryToGate pvar2 qreg1 rot3))
+
+test30 = TestCase (assertEqual "summaryToGate handles modified rot gates (1/3)."
+                               (NegCtrlMod $ Gate $ base_rotmod1 "ps" "qs")
+                               (summaryToGate pvar2 qreg2 rotmod1))
+
+test31 = TestCase (assertEqual "summaryToGate handles modified rot gates (2/3)."
+                               (InvMod $ CtrlMod $ Gate $ base_rotmod2 "pvar" "qvar")
+                               (summaryToGate pvar1 qreg1 rotmod2))
+
+test32 = TestCase (assertEqual "summaryToGate handles modified rot gates (3/3)."
+                               (InvMod $ CtrlMod $ NegCtrlMod $ base)
+                               (summaryToGate pvar1 qreg1 rotmod3))
+    where base = Gate $ base_rotmod3 "pvar" "qvar"
+
+-----------------------------------------------------------------------------------------
+-- Semantic Sanity Test.
+
+testGates :: [Gate]
+testGates = [Gate $ base_plain1 "qvar",
+             Gate $ base_plain2 "qvar",
+             Gate $ base_plain3 "qvar",
+             NegCtrlMod $ Gate $ base_plainmod1 "qvar",
+             InvMod $ CtrlMod $ Gate $ base_plainmod2 "qvar",
+             InvMod $ CtrlMod $ NegCtrlMod $ CtrlMod $ Gate $ base_plainmod3 "qvar",
+             Gate $ base_rot1 "pvar",
+             Gate $ base_rot2 "pvar" "qvar",
+             Gate $ base_rot3 "pvar" "qvar",
+             NegCtrlMod $ Gate $ base_rotmod1 "pvar" "qvar",
+             InvMod $ CtrlMod $ Gate $ base_rotmod2 "pvar" "qvar",
+             InvMod $ CtrlMod $ NegCtrlMod $ Gate $ base_rotmod3 "pvar" "qvar"]
+
+testReps :: [GateSummary]
+testReps = [plain1, plain2, plain3, plainmod1, plainmod2, plainmod3,
+            rot1, rot2, rot3, rotmod1, rotmod2, rotmod3]
+
+semTestImpl n []        []          = pure ()
+semTestImpl n (g:gates) (expt:reps) = do
+    case summarizeGate qreg1 pvar1 g of
+        Left err  -> assertFailure $ errmsg err
+        Right act -> assertEqual semmsg expt act
+    semTestImpl (n + 1) gates reps
+    where errmsg err = "Parse failure for gate " ++ show n ++ ": " ++ show err
+          semmsg     = "Incorrect semantic value for gate " ++ show n ++ "."
+
+semTest gates reps = semTestImpl 0 gates reps
+
+test33 = TestCase $ semTest testGates testReps
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "coeffsToExpr_OneVar_1" test1,
@@ -281,6 +375,19 @@ tests = hUnitTestToTests $ TestList [TestLabel "coeffsToExpr_OneVar_1" test1,
                                      TestLabel "summaryToBaseGate_Rot_3" test17,
                                      TestLabel "summaryToBaseGate_Rot_Mod_1" test18,
                                      TestLabel "summaryToBaseGate_Rot_Mod_2" test19,
-                                     TestLabel "summaryToBaseGate_Rot_Mod_3" test20]
+                                     TestLabel "summaryToBaseGate_Rot_Mod_3" test20,
+                                     TestLabel "summaryToGate_Plain_1" test21,
+                                     TestLabel "summaryToGate_Plain_2" test22,
+                                     TestLabel "summaryToGate_Plain_3" test23,
+                                     TestLabel "summaryToGate_Plain_Mod_1" test24,
+                                     TestLabel "summaryToGate_Plain_Mod_2" test25,
+                                     TestLabel "summaryToGate_Plain_Mod_3" test26,
+                                     TestLabel "summaryToGate_Rot_1" test27,
+                                     TestLabel "summaryToGate_Rot_2" test28,
+                                     TestLabel "summaryToGate_Rot_3" test29,
+                                     TestLabel "summaryToGate_Rot_Mod_1" test30,
+                                     TestLabel "summaryToGate_Rot_Mod_2" test31,
+                                     TestLabel "summaryToGate_Rot_Mod_3" test32,
+                                     TestLabel "SemanticValidation" test33]
 
 main = defaultMain tests

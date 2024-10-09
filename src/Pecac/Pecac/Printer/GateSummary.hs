@@ -3,6 +3,7 @@
 module Pecac.Printer.GateSummary
   ( coeffsToExpr
   , summaryToBaseGate
+  , summaryToGate
   ) where
 
 -----------------------------------------------------------------------------------------
@@ -21,6 +22,8 @@ import Pecac.Analyzer.Gate
   ( GateConfigs (..)
   , GateSummary (..)
   , Polarity (..)
+  , getConfigs
+  , isInverted
   , plainNameToString
   , rotNameToString
   )
@@ -35,6 +38,7 @@ import Pecac.Analyzer.Revolution
 import Pecac.Parser.Syntax
   ( BaseGate (..)
   , Expr (..)
+  , Gate (..)
   , Operand (..)
   )
 
@@ -93,8 +97,8 @@ extractOffset aff
 
 -- | Takes as input the name of the parameter array, and an affine sums. Returns the
 -- simplest expression which would evaluate to the given affine sum.
-coeffsToExpr :: String -> Affine Rational Revolution -> Expr
-coeffsToExpr pvar aff =
+coeffsToExpr :: ParamArr -> Affine Rational Revolution -> Expr
+coeffsToExpr (ParamArr pvar _) aff =
     case maybeCoeffs of
         Just coeffs -> case maybeOffset of
             Just offset -> Plus coeffs offset
@@ -116,18 +120,39 @@ confsToOpsImpl qvar (q:qs) = QReg qvar q : confsToOpsImpl qvar qs
 
 -- | Converts a gate configuration into a list of operands. A string is taken as input,
 -- to designate the qubit array.
-confsToOps :: String -> GateConfigs -> [Operand]
-confsToOps qvar (GateConfigs _ _ ops) = confsToOpsImpl qvar ops
+confsToOps :: QubitReg -> GateConfigs -> [Operand]
+confsToOps (QubitReg qvar _) confs = confsToOpsImpl qvar $ operands confs
 
 -- | Converts a gate summary to the corresponding base gate. The parameter array and the
 -- qubit register are taken as inputs, to designate the correct variables to use.
 summaryToBaseGate :: ParamArr -> QubitReg -> GateSummary -> BaseGate
-summaryToBaseGate _ (QubitReg qvar _) (PlainSummary name conf) = gate
+summaryToBaseGate _ qreg (PlainSummary name conf) = gate
     where nstr = plainNameToString name
-          ops  = confsToOps qvar conf
+          ops  = confsToOps qreg conf
           gate = PlainGate nstr ops
-summaryToBaseGate (ParamArr pvar _) (QubitReg qvar _) (RotSummary name aff conf) = gate
+summaryToBaseGate parr qreg (RotSummary name aff conf) = gate
     where nstr = rotNameToString name
-          expr = coeffsToExpr pvar aff
-          ops  = confsToOps qvar conf
+          expr = coeffsToExpr parr aff
+          ops  = confsToOps qreg conf
           gate = RotGate nstr expr ops
+
+-----------------------------------------------------------------------------------------
+-- * Gate Conversion.
+
+-- | Converts a list of polarities to a decorator which applies the corresponding control
+-- modifiers to a gate.
+addCtrlsToGate :: [Polarity] -> Gate -> Gate
+addCtrlsToGate []          gate = gate
+addCtrlsToGate (Pos:ctrls) gate = CtrlMod $ addCtrlsToGate ctrls gate
+addCtrlsToGate (Neg:ctrls) gate = NegCtrlMod $ addCtrlsToGate ctrls gate
+
+-- | Converts a gate summary to a syntactic syntactic representation. The parameter array
+-- and qubit register are taken as inputs.
+summaryToGate :: ParamArr -> QubitReg -> GateSummary -> Gate
+summaryToGate pvar qvar sum =
+    if isInverted configs
+    then InvMod ctrlGate
+    else ctrlGate
+    where configs  = getConfigs sum
+          baseGate = Gate $ summaryToBaseGate pvar qvar sum
+          ctrlGate = addCtrlsToGate (controls configs) baseGate
