@@ -45,7 +45,7 @@ test2 = TestCase (assertEqual "cycOrder computes the order of a sum of roots of 
 -- einv
 
 einvGenTestCase n m z = assertEqual msg (Just exp) act
-    where exp = m % n
+    where exp = if m == 0 then 0 else n % m
           act = einv z
           msg = "Obtained " ++ show act ++ " from einv instead of: " ++ show exp
 
@@ -59,7 +59,7 @@ einvGenTest n = do
     einvGenExpand n 1 $ Cyclotomic.e n
     einvGenTest $ n - 1
 
-test3 = TestCase $ cycOrderGenTest 150
+test3 = TestCase $ einvGenTest 150
 
 test4 = TestCase (assertEqual "einv handles zero."
                               Nothing
