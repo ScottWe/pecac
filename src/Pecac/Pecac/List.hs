@@ -4,6 +4,7 @@ module Pecac.List
   ( getCombinations
   , mergeWith
   , prettyList
+  , prettyIntercalate
   , prettyItems
   , prettyNonEmpty
   , repeatn
@@ -48,11 +49,16 @@ getCombinations (set:sets) = concat $ map f $ getCombinations sets
 -----------------------------------------------------------------------------------------
 -- * List Printing.
 
--- | Takes as input a function to display elements of type a, and a list of type a.
--- Returns a comma-deliminated string, obtained by displaying the elements in the list.
--- Spaces are included between commas and elements to improve readability.
+-- | Takes as input a deliminator string, a function to display elements of type a, and a
+-- list of type a. Returns a deliminated string, obtained by displaying the elements in
+-- the list.
+prettyIntercalate :: String -> (a -> String) -> [a] -> String
+prettyIntercalate tok f = intercalate tok . map f
+
+-- | Specializes prettyIntercalate to comma deliminated lists. Spaces are included
+-- between commas and elements to improve readability.
 prettyItems :: (a -> String) -> [a] -> String
-prettyItems f = intercalate ", " . map f
+prettyItems = prettyIntercalate ", "
 
 -- | Same as prettyItems, but with square brackets surrounding the list.
 prettyList :: (a -> String) -> [a] -> String

@@ -36,6 +36,7 @@ library
                        Pecac.Printer.Gate
                        Pecac.Printer.GateSummary
                        Pecac.Printer.General
+                       Pecac.Printer.Problem
                        Pecac.Printer.Stmt
                        Pecac.Verifier.CycloCircuit
                        Pecac.Verifier.CycloGate
@@ -181,6 +182,11 @@ test-suite printer-gate-tests
 test-suite printer-gatesummary-tests
   import:              basic-unit-test-props
   main-is:             Printer-GateSummary-Tests.hs
+  type:                exitcode-stdio-1.0
+
+test-suite printer-problem-tests
+  import:              basic-unit-test-props
+  main-is:             Printer-Problem-Tests.hs
   type:                exitcode-stdio-1.0
 
 test-suite printer-stmt-tests

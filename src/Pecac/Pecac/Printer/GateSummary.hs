@@ -1,4 +1,4 @@
--- | Functiosn to convert gate summaries to syntactic objects.
+-- | Functions to convert gate summaries to syntactic objects.
 
 module Pecac.Printer.GateSummary
   ( coeffsToExpr
