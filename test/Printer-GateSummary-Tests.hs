@@ -52,7 +52,7 @@ expr3 :: Expr
 expr3 = Times (ConstNat 3) Tau
 
 expr4 :: Expr
-expr4 = Times (ConstNat $ -3) Tau
+expr4 = Times (Brack $ ConstNat $ -3) Tau
 
 expr5 :: Expr
 expr5 = Div (Times (ConstNat 3) Tau) (ConstNat 4)
@@ -64,7 +64,7 @@ expr7 :: String -> Expr
 expr7 pvar = Plus term1 $ Plus term2 term3
     where term1 = Div (CellId pvar 0) (ConstNat 2)
           term2 = Div (Times (ConstNat 2) (CellId pvar 1)) (ConstNat 3)
-          term3 = Times (ConstNat $ -5) (CellId pvar 3)
+          term3 = Times (Brack $ ConstNat $ -5) (CellId pvar 3)
 
 expr8 :: String -> Expr
 expr8 pvar = Plus (Plus term1 (Plus term2 term3)) const
@@ -354,6 +354,26 @@ semTest gates reps = semTestImpl 0 gates reps
 test33 = TestCase $ semTest testGates testReps
 
 -----------------------------------------------------------------------------------------
+-- Negative Parameters.
+
+negAff :: Affine Rational Revolution
+negAff = skew [1%2, (-2)%3, 0, 5%1, 0, (-1)%7] base
+    where base = var 0 <> var 1 <> var 3 <> var 5
+
+negAffExpr :: Expr
+negAffExpr = Plus term1 $ Plus term2 $ Plus term3 term4
+    where term1 = Div (CellId "pvar" 0) (ConstNat 2)
+          term2 = Div (Times (Brack $ ConstNat $ -2) (CellId "pvar" 1)) (ConstNat 3)
+          term3 = Times (ConstNat 5) (CellId "pvar" 3)
+          term4 = Div (Times (Brack $ ConstNat $ -1) (CellId "pvar" 5)) (ConstNat 7)
+
+test34 = TestCase (assertEqual "summaryToBaseGate handles negative parameters."
+                               val
+                               (summaryToBaseGate pvar1 qreg1 rot))
+    where rot = RotSummary GPhase negAff $ GateConfigs False [] []
+          val = RotGate "gphase" negAffExpr []
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "coeffsToExpr_OneVar_1" test1,
@@ -388,6 +408,7 @@ tests = hUnitTestToTests $ TestList [TestLabel "coeffsToExpr_OneVar_1" test1,
                                      TestLabel "summaryToGate_Rot_Mod_1" test30,
                                      TestLabel "summaryToGate_Rot_Mod_2" test31,
                                      TestLabel "summaryToGate_Rot_Mod_3" test32,
-                                     TestLabel "SemanticValidation" test33]
+                                     TestLabel "SemanticValidation" test33,
+                                     TestLabel "summaryToBaseGate_NegAff" test34]
 
 main = defaultMain tests

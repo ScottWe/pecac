@@ -45,6 +45,14 @@ import Pecac.Parser.Syntax
 -----------------------------------------------------------------------------------------
 -- * Expression Conversion.
 
+-- | 
+makeIntegralLit :: Integer -> Expr
+makeIntegralLit num =
+    if num < 0
+    then Brack lit
+    else lit
+    where lit = ConstNat num
+
 -- | Constructs the integral portion of a parameter reference with coeffients. The name
 -- of the parameter array, the index into the array, and the integer coefficient are
 -- taken as inputs.
@@ -52,7 +60,7 @@ makeIntegralExpr :: String -> Int -> Integer -> Expr
 makeIntegralExpr pvar j num =
     if num == 1
     then var
-    else Times (ConstNat num) var
+    else Times (makeIntegralLit num) var
     where var = CellId pvar j 
 
 -- | Constructs a parameter reference with coeffients. The name of the parameter array,
@@ -82,7 +90,7 @@ expandCoeffs pvar coeffs = Just $ expandCoeffsImpl pvar 0 coeffs
 -- | Extracts the integral portion of the constant term from an affine sum.
 extractIntegralOffset :: Integer -> Expr
 extractIntegralOffset 1   = Tau
-extractIntegralOffset num = Times (ConstNat num) Tau
+extractIntegralOffset num = Times (makeIntegralLit num) Tau
 
 -- | Extracts the constant term from an affine sum. If the offset is zero, then nothing
 -- is returned.
