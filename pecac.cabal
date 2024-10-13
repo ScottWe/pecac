@@ -107,6 +107,11 @@ executable pecac_cycloinst
   main-is:             CycloInst/Main.hs
   other-modules:       CycloInst.CmdLn
 
+executable pecac_reparam
+  import:              basic-exe-props
+  main-is:             Reparam/Main.hs
+  other-modules:       Reparam.CmdLn
+
 -----------------------------------------------------------------------------------------
 -- Unit Testing.
 
