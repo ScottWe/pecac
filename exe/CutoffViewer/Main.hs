@@ -17,19 +17,13 @@ import Pecac.Analyzer.Cutoffs
   , randomSampleSize
   )
 import Pecac.Analyzer.Problem (ParamCirc)
-import PecacExe.IOUtils (readCirc)
+import PecacExe.IOUtils
+  ( logShowableVect
+  , readCirc
+  )
 
 -----------------------------------------------------------------------------------------
 -- * Summarization Routines.
-
--- | Helper function to log a vector to stdout. Takes as input a string identifier for
--- the vector (id), the first index of the array (j), and the list. Logs each element to
--- stdout, such that the j-th line is: <id>[<j>]: <elem(j)>
-printVect :: String -> Int -> [Integer] -> IO ()
-printVect _  _ []       = return ()
-printVect id j (x_j:xs) = do
-    putStrLn $ id ++ "[" ++ show j ++ "]: " ++ show x_j
-    printVect id (j + 1) xs
 
 -- | Helper function to print the cutoff bounds (e.g, forallElimSize value) for a pair of
 -- circuits to stdout. If the circuits have different numbers of arguments, then an error
@@ -43,7 +37,7 @@ computeCutoffs circ1 circ2 = do
         Result prob   -> case forallElimSize circ1 circ2 of
             Result elim -> do
                 putStrLn $ "d-value: " ++ show prob
-                printVect "elim" 0 elim
+                logShowableVect "elim" elim
             _ -> putStrLn "Unexpected failure."
 
 -- | Helper function to print the parameter summaries for a circuit (e.g., the lambda
@@ -56,7 +50,7 @@ computeSummary name circ =
             Just lambda -> do
                 putStrLn $ "[" ++ name ++ " SUMMARY]"
                 putStrLn $ "Kappa Value: " ++ show kappa
-                printVect "lambda" 0 lambda
+                logShowableVect "lambda" lambda
             Nothing -> putStrLn "Failed to compute lambda vector."
         Nothing -> putStrLn "Failed to compute kappa value."
 

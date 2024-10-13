@@ -1,7 +1,10 @@
 -- | Utility methods to read source files and output files.
 
 module PecacExe.IOUtils
-  ( readCirc
+  ( logList
+  , logShowableVect
+  , logVect
+  , readCirc
   , readRevs
   , readSrc
   ) where
@@ -76,3 +79,34 @@ readRevs strs f =
     case readRevsImpl strs of
         Left err   -> putStrLn $ "Failed to parse angle: " ++ err
         Right revs -> f revs
+
+-------------------------------------------------------------------------------
+-- * List Formatting.
+
+-- | Recursive implementation details for logList. Takes, as a first argument,
+-- the current index into the list.
+logListImpl :: Int -> (Int -> a -> String) -> [a] -> IO ()
+logListImpl _ _       []     = return ()
+logListImpl n display (x:xs) = do
+    putStrLn $ display n x
+    logListImpl (n + 1) display xs
+
+-- | Helper method to print the contents of a list. A formatting function is
+-- taken as the first input. A list is taken as the second input, on which the
+-- formatting function is used to print each element to stdout.
+logList :: (Int -> a -> String) -> [a] -> IO ()
+logList = logListImpl 0
+
+-- | A specialization of logList, which formats each element of the list as an
+-- index into an array, that is:
+--      <var>[<index>]: <value>
+-- The variable name is taken as the first input, and a function which converts
+-- each element to a string is taken as the second input.
+logVect :: String -> (a -> String) -> [a] -> IO ()
+logVect var format = logList display
+    where display n v = var ++ "[" ++ show n ++ "]: " ++ format v
+
+-- | A specialization of logVect, in which each element of the list is showable
+-- and the corresponding show function is used to stringify each element.
+logShowableVect :: (Show a) => String -> [a] -> IO ()
+logShowableVect var = logVect var show

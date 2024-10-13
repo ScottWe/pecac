@@ -29,33 +29,20 @@ import Pecac.Verifier.PEC
   , Side (..)
   , pec
   )
-import PecacExe.IOUtils (readCirc)
+import PecacExe.IOUtils
+  ( logShowableVect
+  , readCirc
+  )
 
 import Pecac.Verifier.Matrix as Matrix
 
 -----------------------------------------------------------------------------------------
 -- * Formatting Utilities.
 
--- | Implementation details for printTheta. Takes as input the current index into the
--- list of values (i.e., on iteration k, the index should be k - 1), a placeholder name
--- for the parameter (e.g., theta or thetaj), and the parameter vector given as a list of
--- revolution values. Prints each component to standard out, using the provided name.
-printThetaImpl :: Int -> String -> [Revolution] -> IO ()
-printThetaImpl _ _    []        = return ()
-printThetaImpl j pvar (v:theta) = do
-    putStrLn $ pvar ++ "[" ++ show j ++ "] = " ++ show v
-    printThetaImpl (j + 1) pvar theta
-
--- | Prints a circuit parameter to standard out. The parameter vector is given as a list
--- of rotation values. Each component of the vector is printed to a newline, using theta
--- as a placeholder name for the parameter variable.
-printTheta :: [Revolution] -> IO ()
-printTheta = printThetaImpl 0 "theta"
-
 -- | Formats a specific angle obtained by expanding out a parameter set. The integer
 -- input is used to distinguish different parameters (i.e., thetaj rather than theta).
 printParamSetElem :: Int -> [Revolution] -> IO ()
-printParamSetElem j = printThetaImpl 0 $ "theta" ++ show j
+printParamSetElem j = logShowableVect $ "theta" ++ show j
 
 -- | Implementation details for printParamSet. This function takes as input a list of all
 -- possible parameters. For each parameter, the component values are listed, with proper
@@ -87,7 +74,7 @@ sideToString RHS = "right-hand"
 printEvalFailure :: Side -> [Revolution] -> IO ()
 printEvalFailure side theta = do
     putStrLn $ "Failed to evaluate " ++ sideToString side ++ " side at theta."
-    printTheta theta
+    logShowableVect "theta" theta
 
 -- | Logs an EqFail result to standard out.
 printEqFailure :: [Revolution] -> IO ()
@@ -95,7 +82,7 @@ printEqFailure theta = do
     putStrLn "False."
     whenLoud $ do
         putStrLn "Circuits disagree on angle theta."
-        printTheta theta
+        logShowableVect "theta" theta
 
 -- | Logs an EqSuccess result to standard out.
 printEqSuccess :: [[Revolution]] -> IO ()
