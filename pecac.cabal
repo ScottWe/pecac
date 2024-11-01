@@ -54,7 +54,7 @@ library
                        filepath,
                        groups,
                        matrix,
-                       random,
+                       tf-random,
                        -- Forces a resolution to a dependency conflict.
                        vector>=0.12.2.0,
                        primitive>=0.7.1.0,
@@ -87,6 +87,12 @@ executable pecac_exact
   import:              basic-exe-props
   main-is:             Pec/Main.hs
   other-modules:       Pec.CmdLn
+
+executable pecac_prob
+  import:              basic-exe-props
+  main-is:             PPec/Main.hs
+  other-modules:       PPec.CmdLn
+  build-depends:       tf-random
 
 executable pecac_parse
   import:              basic-exe-props
@@ -233,5 +239,5 @@ test-suite verifier-matrixgate-tests
 test-suite verifier-pec-tests
   import:              basic-unit-test-props
   main-is:             Verifier-PEC-Tests.hs
+  build-depends:       tf-random
   type:                exitcode-stdio-1.0
-  build-depends:       random

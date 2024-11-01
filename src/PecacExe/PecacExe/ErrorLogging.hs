@@ -6,6 +6,7 @@ module PecacExe.ErrorLogging
   , logGateErr
   , logOperandErr
   , logStmtErr
+  , sideToString
   ) where
 
 -----------------------------------------------------------------------------------------
@@ -29,6 +30,7 @@ import Pecac.Printer.Stmt
   ( printParamDecl
   , printQubitDecl
   )
+import Pecac.Verifier.PEC (Side (..))
 
 import qualified Data.List.NonEmpty as NonEmpty
 
@@ -124,3 +126,9 @@ logCircErr (MissingIncludes incls) = [msg]
 logCircErr (UnsupportedIncludes incls) = [msg]
     where msg = "Unsupported include files: " ++ prettyNonEmpty show incls ++ "."
 logCircErr (InvalidStmt err) = logStmtErr err
+
+-- | Returns a textual representation of Side values.
+sideToString :: Side -> String
+sideToString LHS = "left-hand"
+sideToString RHS = "right-hand"
+

@@ -1,7 +1,8 @@
 -- | A library for parameterized equivalence checking.
 
 module Pecac.Verifier.PEC
-  ( PECRes (..)
+  ( EquivFun
+  , PECRes (..)
   , Side (..)
   , pec
   , ppec
@@ -26,10 +27,8 @@ import Pecac.Analyzer.Revolution
   ( Revolution
   , rationalToRev
   )
-import System.Random
-  ( RandomGen
-  , randomR
-  )
+import System.Random.TF.Gen (RandomGen)
+import System.Random.TF.Instances (randomR)
 
 -----------------------------------------------------------------------------------------
 -- * Data Types to Communicate Results

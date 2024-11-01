@@ -3,6 +3,7 @@
 module Pecac.Verifier.CycloCircuit
   ( circToMat
   , findGlobalPhase
+  , phaseEquiv
   ) where
 
 -----------------------------------------------------------------------------------------
@@ -67,3 +68,15 @@ findGlobalPhase circ1 circ2 =
         branchJust (circToMat theta0 circ2) (Matrix.findScalar op1)
     where angle0 = rationalToRev 0
           theta0 = repeatn angle0 $ toParamCount circ1
+
+-- | For each cyclotomic number s, returns a equivalence relation which states that x is
+-- related to y whenever x and y differ by a global phase of s.
+--
+-- Note: This function actually relates x to y whenever s*x = y, which is not equivalent
+-- to s*y = x, except for when s is 1 or (-1). This means that (phaseEquiv s) is not
+-- truly an equivalence relation. Indeed, it fails reflexivity, symmetry, and
+-- transitivity. However, it does witness the equivalence between x and y by the phase
+-- equivalence relation, if one already knows that the phase must be s. Moreover, if x
+-- and y are not equivalent up to global phase, then no such s exists.
+phaseEquiv :: Cyclotomic -> CycMat -> CycMat -> Bool
+phaseEquiv s x y = Matrix.scale s x == y

@@ -12,7 +12,7 @@ import Pecac.Analyzer.Problem
 import Pecac.Analyzer.Revolution
 import Pecac.Verifier.CycloCircuit
 import Pecac.Verifier.PEC
-import System.Random
+import System.Random.TF
 
 -----------------------------------------------------------------------------------------
 -- Helper Functions.
@@ -50,8 +50,8 @@ checkInvalid circ1 circ2 =
 -----------------------------------------------------------------------------------------
 -- Helper Functions (Probabilistic).
 
-rgen :: StdGen
-rgen = mkStdGen 101
+rgen :: TFGen
+rgen = mkTFGen 101
 
 cycloPPec :: ParamCirc -> ParamCirc -> PECRes
 cycloPPec circ1 circ2 = snd $ ppec rgen (1 % 2) circ1 circ2 circToMat (==)

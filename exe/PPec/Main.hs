@@ -5,15 +5,12 @@ module Main where
 -----------------------------------------------------------------------------------------
 -- * Import Section.
 
-import Pec.CmdLn
-  ( PecTool (..)
+import Data.Ratio ((%))
+import PPec.CmdLn
+  ( PPecTool (..)
   , getToolArgs
   )
-import PecacExe.CmdLnParser
-  ( whenLoud
-  , whenNormal
-  )
-import Pecac.List (getCombinations)
+import PecacExe.CmdLnParser (whenLoud)
 import Pecac.Analyzer.Problem (ParamCirc)
 import Pecac.Analyzer.Revolution (Revolution)
 import Pecac.Verifier.CycloGate
@@ -29,41 +26,20 @@ import Pecac.Verifier.PEC
   ( EquivFun
   , PECRes (..)
   , Side
-  , pec
+  , ppec
   )
 import PecacExe.ErrorLogging (sideToString)
 import PecacExe.IOUtils
   ( logShowableVect
   , readCirc
   )
+import System.Random.TF (TFGen)
+import System.Random.TF.Init
+  ( initTFGen
+  , mkTFGen
+  )
 
 import Pecac.Verifier.Matrix as Matrix
-
------------------------------------------------------------------------------------------
--- * Formatting Utilities.
-
--- | Formats a specific angle obtained by expanding out a parameter set. The integer
--- input is used to distinguish different parameters (i.e., thetaj rather than theta).
-printParamSetElem :: Int -> [Revolution] -> IO ()
-printParamSetElem j = logShowableVect $ "theta" ++ show j
-
--- | Implementation details for printParamSet. This function takes as input a list of all
--- possible parameters. For each parameter, the component values are listed, with proper
--- formatting (i.e., a newline between each parameter). The integer parameter to this
--- function is used to assign a unique index to parameter (i.e., theta0, theta1, ...).
-printParamSetImpl :: Int -> [[Revolution]] -> IO ()
-printParamSetImpl _ []             = return ()
-printParamSetImpl j [theta]        = printParamSetElem j theta
-printParamSetImpl j (theta:thetas) = do
-    printParamSetElem j theta
-    putStrLn ""
-    printParamSetImpl (j + 1) thetas
-
--- | A helper method to print a list of parameter combinations to standard out. In
--- particular, the input to this function should be set of sets obtained by applying
--- combinations to a pset.
-printParamSet :: [[Revolution]] -> IO ()
-printParamSet = printParamSetImpl 0
 
 -----------------------------------------------------------------------------------------
 -- * Exact Parameterized Equivalence Checking.
@@ -86,24 +62,20 @@ printEqFailure theta = do
 printEqSuccess :: [[Revolution]] -> IO ()
 printEqSuccess pset = do
     putStrLn "True."
-    whenNormal $ putStrLn $ "Checked " ++ show len ++ " parameters."
     whenLoud $ do
-            putStrLn "The following theta were checked during verification."
-            putStrLn ""
-            printParamSet combs
-    where combs = getCombinations pset
-          len   = length combs
+            putStrLn "Circuits agree on angle theta."
+            logShowableVect "theta" $ map (\x -> x !! 0) pset
 
 -- | Takes an input an equality function and two circuits. Performs parameterized
 -- equivalence checking using the provided equality function. The results are printed to
 -- standard out.
-runExactPec :: EquivFun CycMat -> ParamCirc -> ParamCirc -> IO ()
-runExactPec eq lhs rhs =
-    case pec lhs rhs circToMat eq of
-        BadCutoff           -> putStrLn "Failed to compute cutoff."
-        EvalFail side theta -> printEvalFailure side theta
-        EqFail theta        -> printEqFailure theta
-        EqSuccess pset      -> printEqSuccess pset
+runExactPPec :: TFGen -> Rational -> EquivFun CycMat -> ParamCirc -> ParamCirc -> IO ()
+runExactPPec rgen prob eq lhs rhs =
+    case ppec rgen prob lhs rhs circToMat eq of
+        (_, BadCutoff)           -> putStrLn "Failed to compute cutoff."
+        (_, EvalFail side theta) -> printEvalFailure side theta
+        (_, EqFail theta)        -> printEqFailure theta
+        (_, EqSuccess pset)      -> printEqSuccess pset
 
 -----------------------------------------------------------------------------------------
 -- * Parameterized Equivalence Checking Upto Global Phase.
@@ -111,10 +83,10 @@ runExactPec eq lhs rhs =
 -- | Harness setup for equivalence checking upto global phase. This function takes as
 -- input the two circuits, and then calls runExactPec with equivalence-upto-global-phase
 -- as the equality function.
-runPhasePec :: ParamCirc -> ParamCirc -> IO ()
-runPhasePec lhs rhs =
+runPhasePPec :: TFGen -> Rational -> ParamCirc -> ParamCirc -> IO ()
+runPhasePPec rgen prob lhs rhs =
     case findGlobalPhase lhs rhs of
-        Just s  -> runExactPec (phaseEquiv s) lhs rhs
+        Just s  -> runExactPPec rgen prob (phaseEquiv s) lhs rhs
         Nothing -> do
             putStrLn "False."
             whenLoud $ putStrLn "Failed to find candidate phase using all zero angles."
@@ -122,15 +94,21 @@ runPhasePec lhs rhs =
 -----------------------------------------------------------------------------------------
 -- * Entry Point.
 
+-- | Helper method to initialize random number generator.
+seedGen :: Maybe Int -> IO TFGen
+seedGen Nothing  = initTFGen
+seedGen (Just n) = return $ mkTFGen n
+
 -- | Unwraps the src files, and parses their contents as circuits. The circuits are then
 -- passed along to the relevant verification.
-processArgs :: PecTool -> IO ()
-processArgs (PecTool src1 src2 gphase) =
+processArgs :: PPecTool -> IO ()
+processArgs (PPecTool prob src1 src2 gphase seed) = do
+    rgen <- seedGen seed
     readCirc src1 $ \circ1 ->
         readCirc src2 $ \circ2 ->
             if gphase
-            then runPhasePec circ1 circ2
-            else runExactPec (==) circ1 circ2
+            then runPhasePPec rgen prob circ1 circ2
+            else runExactPPec rgen prob (==) circ1 circ2
 
 main :: IO ()
 main = do
