@@ -22,6 +22,7 @@ library
                        Pecac.Either
                        Pecac.List
                        Pecac.Maybe
+                       Pecac.Rational
                        Pecac.Analyzer.Cutoffs
                        Pecac.Analyzer.Gate
                        Pecac.Analyzer.Integrality
@@ -53,6 +54,7 @@ library
                        filepath,
                        groups,
                        matrix,
+                       random,
                        -- Forces a resolution to a dependency conflict.
                        vector>=0.12.2.0,
                        primitive>=0.7.1.0,
@@ -232,3 +234,4 @@ test-suite verifier-pec-tests
   import:              basic-unit-test-props
   main-is:             Verifier-PEC-Tests.hs
   type:                exitcode-stdio-1.0
+  build-depends:       random
