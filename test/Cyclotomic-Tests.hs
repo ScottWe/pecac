@@ -45,7 +45,7 @@ test2 = TestCase (assertEqual "cycOrder computes the order of a sum of roots of 
 -- einv
 
 einvGenTestCase n m z = assertEqual msg (Just exp) act
-    where exp = if m == 0 then 0 else n % m
+    where exp = if m == 0 then 0 else m % n
           act = einv z
           msg = "Obtained " ++ show act ++ " from einv instead of: " ++ show exp
 
@@ -89,6 +89,11 @@ test8 = TestCase (assertEqual "einv handles elements off the unit circle (2/2)."
           e3 = Cyclotomic.e 8
           z  = 5 * e1 - 7 * e2 + 22 * e3
 
+test9 = TestCase (assertEqual "einv handles a specific value."
+                              (Just $ 2 % 9)
+                              (einv z))
+    where z = (Cyclotomic.e 9)^2
+
 -----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
@@ -99,6 +104,7 @@ tests = hUnitTestToTests $ TestList [TestLabel "cycOrder_PrimitiveRoots" test1,
                                      TestLabel "einv_IrrUnit_1" test5,
                                      TestLabel "einv_IrrUnit_2" test6,
                                      TestLabel "einv_NonUnit_1" test7,
-                                     TestLabel "einv_NonUnit_2" test8]
+                                     TestLabel "einv_NonUnit_2" test8,
+                                     TestLabel "einv_Specific" test9]
 
 main = defaultMain tests

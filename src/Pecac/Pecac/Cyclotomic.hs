@@ -66,6 +66,6 @@ einvOrder z = if even ord then ord else ord * 2
 -- z = e^(i*(p/q)*2*pi). Otherwise, nothing is returned.
 einv :: Cyclotomic.Cyclotomic -> Maybe Rational
 einv 1 = Just 0
-einv z = maybeApply (einvSearch (z, prim) prim) ((%) ord)
+einv z = maybeApply (einvSearch (z, prim) prim) $ \r -> r % ord
     where ord  = einvOrder z
           prim = Cyclotomic.e ord
