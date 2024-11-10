@@ -1,16 +1,31 @@
 -- | A library for constructing quantum circuits over the cyclotomic numbers.
 
 module Pecac.Verifier.CycloCircuit
-  ( circToMat
+  ( GPhaseResult (..)
+  , circToMat
   , findGlobalPhase
+  , findLinearPhase
   , phaseEquiv
   ) where
 
 -----------------------------------------------------------------------------------------
 -- * Import Section.
 
-import Pecac.Maybe (branchJust)
+import Data.Ratio
+  ( (%)
+  , denominator
+  , numerator
+  )
+import Pecac.Cyclotomic (einv)
+import Pecac.Maybe
+  ( branchJust
+  , maybeApply
+  )
 import Pecac.List (repeatn)
+import Pecac.Analyzer.Cutoffs
+  ( CutoffResult (..)
+  , getLambda
+  )
 import Pecac.Analyzer.Revolution
   ( Revolution
   , rationalToRev
@@ -80,3 +95,76 @@ findGlobalPhase circ1 circ2 =
 -- and y are not equivalent up to global phase, then no such s exists.
 phaseEquiv :: Cyclotomic -> CycMat -> CycMat -> Bool
 phaseEquiv s x y = Matrix.scale s x == y
+
+-----------------------------------------------------------------------------------------
+-- * Linear Phase Extraction.
+
+-- | Either indicates the reason global phase analysis fails, or returns the coefficients
+-- obtained through the global phase analysis.
+data GPhaseResult = CutoffFailure
+                  | InferenceFailure
+                  | LinearCoeffs [Rational]
+                  deriving (Eq, Show)
+
+-- | Helper type to associate a pair of circuits with their candidate global phase.
+type GPhaseEquiv = (Cyclotomic, ParamCirc, ParamCirc)
+
+-- | Returns a list of n angles, such that the k-th angle is (1 / bound) revolutions, and
+-- all other angles are zero.
+toScaledIndicator :: Integer -> Int -> Int -> [Revolution]
+toScaledIndicator bound k n = lhs ++ (angle1 : rhs)
+    where angle1 = rationalToRev $ 1 % bound
+          angle0 = rationalToRev 0
+          lhs    = repeatn angle0 k
+          rhs    = repeatn angle0 $ n - k - 1
+
+-- | Takes as input the cutoff bound (4*lambda_j+1) together with the rational inverse of
+-- e^(i*alpha_j/(4*lambda_j+1)*pi). Returns the value of alpha_j.
+extractCoeff :: Integer -> Rational -> Rational
+extractCoeff bound q = bound * x % d
+    where r = numerator q
+          d = denominator q
+          x = if (2 * r) <= d then r else r - d
+
+-- Takes as inpute a pair of circuits which have been equated up to constant global
+-- phase, the cutoff bound for parameter j, and the corresponding index j. If there
+-- exists a rational number q such that q could be the coefficient of the k-th parameter
+-- in some affine linear global phase equation, then q is returned. Otherwise, nothing is
+-- returned.
+findLinearPhaseCoeff :: GPhaseEquiv -> Integer -> Int -> Maybe Rational
+findLinearPhaseCoeff (gphase, circ1, circ2) bound k =
+    branchJust (circToMat indicator circ1) $ \op1 ->
+        branchJust (circToMat indicator circ2) $ \op2 ->
+            branchJust (Matrix.findScalar op1 op2) $ \z ->
+                maybeApply (einv $ z / gphase) (extractCoeff bound)
+    where indicator = toScaledIndicator bound k $ toParamCount circ1
+
+-- | Implementation details for findLinearPhase. This functions requires that the
+-- constant global phase and lambda values have already been computed. Given this data,
+-- this function iterates over the parameters, and then solves for each rational
+-- coefficient. If this fails, then nothing is returned. Otherwise, the coefficients from
+-- k up to the last parameter are returned.
+findLinearPhaseImpl :: GPhaseEquiv -> [Integer] -> Int -> Maybe [Rational]
+findLinearPhaseImpl _     []      _ = Just []
+findLinearPhaseImpl equiv (cj:cs) j =
+    branchJust (findLinearPhaseCoeff equiv bound j) $ \coeff ->
+        maybeApply (findLinearPhaseImpl equiv cs $ j + 1) (coeff :)
+    where bound = cj + 1
+
+-- | Takes as input a pair of quantum circuits. If the two circuits could differ by an
+-- affine linear global phase, with all linear terms rational, then returns the rational
+-- coefficients. Otherwise, nothing is returned.
+--
+-- Note that this function assumes that the circuits differ by an affine linear global
+-- phase, and then solves for the rational coefficients. To validate these results, the
+-- first circuit must be modified to include the rational linear phase, and then the two
+-- circuits must then be equated up to constant global phase.
+findLinearPhase :: ParamCirc -> ParamCirc -> GPhaseResult
+findLinearPhase circ1 circ2 =
+    case getLambda circ1 circ2 of
+        Result cutoffs -> case findGlobalPhase circ1 circ2 of
+            Just gphase -> case findLinearPhaseImpl (gphase, circ1, circ2) cutoffs 0 of
+                Just coeffs -> LinearCoeffs coeffs
+                Nothing     -> InferenceFailure
+            Nothing -> InferenceFailure
+        _ -> CutoffFailure

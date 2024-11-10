@@ -176,6 +176,12 @@ test14 = TestCase (assertEqual "circToMat handles circuits with multiple gates."
 -----------------------------------------------------------------------------------------
 -- findGlobalPhase
 
+pcirc5 :: ParamCirc
+pcirc5 = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 1) gates
+    where gates = [PlainSummary GateZ $ GateConfigs False [] [0],
+                   PlainSummary GateX $ GateConfigs False [] [0],
+                   PlainSummary GateZ $ GateConfigs False [] [0]]
+
 test15 = TestCase (assertEqual "findGlobalPhase rejects circuits of distinct qubit cts."
                                Nothing
                                (findGlobalPhase pcirc2 pcirc3))
@@ -188,13 +194,103 @@ test17 = TestCase (assertEqual "findGlobalPhase detects circuits differing beyon
                                Nothing
                                (findGlobalPhase pcirc2 pcirc4))
 
-test18 = TestCase (assertEqual "findGlobalPhase can compute global phase."
+test18 = TestCase (assertEqual "findGlobalPhase handles equal circuits."
+                               (Just $ one)
+                               (findGlobalPhase pcirc2 pcirc2))
+
+test19 = TestCase (assertEqual "findGlobalPhase can compute global phase."
                                (Just $ -one)
-                               (findGlobalPhase pcirc2 pcirc))
-    where gates = [PlainSummary GateZ $ GateConfigs False [] [0],
-                   PlainSummary GateX $ GateConfigs False [] [0],
-                   PlainSummary GateZ $ GateConfigs False [] [0]]
-          pcirc = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 1) gates
+                               (findGlobalPhase pcirc2 pcirc5))
+
+-----------------------------------------------------------------------------------------
+-- findLinearPhase
+
+pcirc6 :: ParamCirc
+pcirc6 = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 3) gates
+    where const = lit $ rationalToRev $ 7 % 11
+          gates = [RotSummary GPhase (linear [3, 0]) $ GateConfigs False [] [],
+                   RotSummary GPhase (linear [0, 1]) $ GateConfigs False [] [],
+                   RotSummary GPhase const $ GateConfigs False [] []]
+
+pcirc7 :: ParamCirc
+pcirc7 = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 3) gates
+    where const = lit $ rationalToRev $ 7 % 11
+          gates = [RotSummary GPhase (linear [7]) $ GateConfigs False [] [],
+                   PlainSummary GateX $ GateConfigs False [] [1],
+                   RotSummary GPhase const $ GateConfigs False [] []]
+
+pcirc8 :: ParamCirc
+pcirc8 = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 3) gates
+    where const = lit $ rationalToRev $ 7 % 11
+          gates = [RotSummary GPhase (linear [10]) $ GateConfigs False [] [],
+                   PlainSummary GateX $ GateConfigs False [] [1],
+                   RotSummary GPhase const $ GateConfigs False [] []]
+
+pcirc9 :: ParamCirc
+pcirc9 = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 3) gates
+    where const = lit $ rationalToRev $ 7 % 11
+          gates = [RotSummary GPhase (linear [-5, 0]) $ GateConfigs False [] [],
+                   RotSummary GPhase (linear [0, -12]) $ GateConfigs False [] [],
+                   RotSummary GPhase const $ GateConfigs False [] []]
+
+pcirc10 :: ParamCirc
+pcirc10 = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 3) gates
+    where const = lit $ rationalToRev $ 7 % 11
+          gates = [RotSummary GPhase (linear [35, 0]) $ GateConfigs False [] [],
+                   RotSummary GPhase (linear [-2, 0]) $ GateConfigs False [] [],
+                   RotSummary GPhase (linear [0, -6]) $ GateConfigs False [] [],
+                   RotSummary RotX (linear [-3, -1]) $ GateConfigs False [] [0],
+                   RotSummary GPhase const $ GateConfigs False [] []]
+
+pcirc11 :: ParamCirc
+pcirc11 = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 3) gates
+    where const = lit $ rationalToRev $ 7 % 11
+          gates = [RotSummary GPhase const $ GateConfigs False [] [],
+                   RotSummary RotX (linear [-3, -1]) $ GateConfigs False [] [0]]
+
+test20 = TestCase (assertEqual "findLinearPhase rejects circuits of distinct qubit cts."
+                               InferenceFailure
+                               (findLinearPhase pcirc2 pcirc3))
+
+test21 = TestCase (assertEqual "findLinearPhase rejects circuits of distinct param cts."
+                               CutoffFailure
+                               (findLinearPhase pcirc2 pcirc1))
+
+test22 = TestCase (assertEqual "findLinearPhase detects circuits differing beyond phase."
+                               InferenceFailure
+                               (findLinearPhase pcirc2 pcirc4))
+
+test23 = TestCase (assertEqual "findLinearPhase handles 1 parameter, equal circuits."
+                               (LinearCoeffs [0])
+                               (findLinearPhase pcirc2 pcirc2))
+
+test24 = TestCase (assertEqual "findLinearPhase handles 2 parameter, equal circuits."
+                               (LinearCoeffs [0, 0])
+                               (findLinearPhase pcirc pcirc))
+    where pcirc = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 1) []
+
+test25 = TestCase (assertEqual "findLinearPhase handles 1 parameter, constant phase."
+                               (LinearCoeffs [0])
+                               (findLinearPhase pcirc2 pcirc5))
+
+test26 = TestCase (assertEqual "findLinearPhase handles 2 parameter, pos linear phase."
+                               (LinearCoeffs [3, 1])
+                               (findLinearPhase pcirc pcirc6))
+    where pcirc = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 3) []
+
+test27 = TestCase (assertEqual "findLinearPhase handles 1 parameter, pos linear phase."
+                               (LinearCoeffs [3])
+                               (findLinearPhase pcirc7 pcirc8))
+
+test28 = TestCase (assertEqual "findLinearPhase handles 2 parameter, neg linear phase."
+                               (LinearCoeffs [-5, -12])
+                               (findLinearPhase pcirc pcirc9))
+    where pcirc = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 3) []
+
+test29 = TestCase (assertEqual "findLinearPhase handles 2 parameter, mixed linear phase."
+                               (LinearCoeffs [33, -6])
+                               (findLinearPhase pcirc11 pcirc10))
+    where pcirc = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 3) []
 
 -----------------------------------------------------------------------------------------
 -- Orchestrates tests.
@@ -216,6 +312,17 @@ tests = hUnitTestToTests $ TestList [TestLabel "circToMat_Empty_Q1_P1" test1,
                                      TestLabel "findGlobalPhase_QubitMismatch" test15,
                                      TestLabel "findGlobalPhase_ParamMismatch" test16,
                                      TestLabel "findGlobalPhase_NoSolution" test17,
-                                     TestLabel "findGlobalPhase_NoSolution" test18]
+                                     TestLabel "findGlobalPhase_EqualCircs" test18,
+                                     TestLabel "findGlobalPhase_ConstPhase" test19,
+                                     TestLabel "findLinearPhase_QubitMismatch" test20,
+                                     TestLabel "findLinearPhase_ParamMismatch" test21,
+                                     TestLabel "findLinearPhase_NoSolution" test22,
+                                     TestLabel "findLinearPhase_OneParam_Equal" test23,
+                                     TestLabel "findLinearPhase_TwoParam_Equal" test24,
+                                     TestLabel "findLinearPhase_OneParam_Const" test25,
+                                     TestLabel "findLinearPhase_TwoParam_Affine" test26,
+                                     TestLabel "findLinearPhase_OneParam_Affine" test27,
+                                     TestLabel "findLinearPhase_TwoParam_Neg" test28,
+                                     TestLabel "findLinearPhase_TwoParam_Mixed" test29]
 
 main = defaultMain tests
