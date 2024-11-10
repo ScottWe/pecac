@@ -8,6 +8,7 @@ module Pecac.Analyzer.Cutoffs
   , gatesToAlphas
   , gatesToKappa
   , gatesToLambda
+  , getLambda
   , randomSampleSize
   ) where
 
@@ -142,7 +143,10 @@ circToKappa circ = gatesToKappa $ toGates circ
 
 -- | Either indicates the reason cutoff analysis fails, or returns the results of the
 -- cutoff analysis.
-data CutoffResult a = ParamMismatch | RationalCoeff | Result a deriving (Eq, Show)
+data CutoffResult a = ParamMismatch
+                    | RationalCoeff
+                    | Result a
+                    deriving (Eq, Show)
 
 -- | Returns the component-wise maximum for the lambda values from a pair of circuits.
 getMaxLambda :: ParamCirc -> ParamCirc -> Maybe [Integer]
@@ -150,15 +154,22 @@ getMaxLambda circ1 circ2 =
     branchJust (circToLambda circ1) $
         \lambda1 -> maybeApply (circToLambda circ2) (zipWith max lambda1)
 
+-- | Computes the lambda value for a pair of circuits.
+getLambda :: ParamCirc -> ParamCirc -> CutoffResult [Integer]
+getLambda circ1 circ2 =
+    if isSameSize circ1 circ2
+    then case getMaxLambda circ1 circ2 of
+        Just maxl -> Result maxl
+        _         -> RationalCoeff
+    else ParamMismatch
+
 -- | Computes the number of instantiations needed for each parameter, such that PEC
 -- reduces to the parameter-free case.
 forallElimSize :: ParamCirc -> ParamCirc -> CutoffResult [Integer]
 forallElimSize circ1 circ2 =
-    if isSameSize circ1 circ2
-    then case getMaxLambda circ1 circ2 of
-        Just maxl -> Result $ map lambdaToElimSize maxl
-        _         -> RationalCoeff
-    else ParamMismatch
+    case getLambda circ1 circ2 of
+        Result lambda -> Result $ map lambdaToElimSize lambda
+        err           -> err
     where lambdaToElimSize lambda_j = 2 * lambda_j + 1
 
 -- | Computes the kappa term in the random sample cutoff size.

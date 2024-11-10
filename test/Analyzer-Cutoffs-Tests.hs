@@ -272,10 +272,10 @@ test38 = TestCase (assertEqual "circToLambda handles mixed gate lists (2/2)."
 -- forallElimSize
 
 defaultElim_k3 :: CutoffResult [Integer]
-defaultElim_k3 = Result $ [1, 1, 1]
+defaultElim_k3 = Result [1, 1, 1]
 
 defaultElim_k5 :: CutoffResult [Integer]
-defaultElim_k5 = Result $ [1, 1, 1, 1, 1]
+defaultElim_k5 = Result [1, 1, 1, 1, 1]
 
 test39 = TestCase (assertEqual "forallElimSize handles empty gate lists (1/2)."
                                defaultElim_k3
@@ -559,6 +559,24 @@ test86 = TestCase (assertEqual "A CP gate has the correct alpha list."
     where res = [[2, 2, 8]]
 
 -----------------------------------------------------------------------------------------
+-- getLambda
+
+test87 = TestCase (assertEqual "getLambda handles empty gate lists."
+                               (Result [0, 0, 0])
+                               (getLambda circ circ))
+    where circ = ParamCirc pvar_k3 qvar []
+
+test88 = TestCase (assertEqual "getLambda handles lists of plain gates."
+                               (Result [0, 0, 0, 0, 0])
+                               (getLambda circ circ))
+    where circ = ParamCirc pvar_k5 qvar plain_list
+
+test89 = TestCase (assertEqual "getLambda handles single rot gates."
+                               (Result [0, 5, 2])
+                               (getLambda circ circ))
+    where circ = ParamCirc pvar_k3 qvar [rot1_k3]
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "gatesToAlphas_Empty" test1,
@@ -646,7 +664,10 @@ tests = hUnitTestToTests $ TestList [TestLabel "gatesToAlphas_Empty" test1,
                                      TestLabel "QCoeffs_randomSampleSize_rhs" test83,
                                      TestLabel "gatesToAlphas_GPhase" test84,
                                      TestLabel "gatesToAlphas_RotP" test85,
-                                     TestLabel "gatesToAlphas_RotCP" test86]
+                                     TestLabel "gatesToAlphas_RotCP" test86,
+                                     TestLabel "getLambda_Empty" test87,
+                                     TestLabel "getLambda_Plain" test88,
+                                     TestLabel "getLambda_Rots" test89]
 
 main = defaultMain tests
 
