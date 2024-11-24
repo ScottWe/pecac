@@ -99,11 +99,12 @@ printEqSuccess pset = do
 -- standard out.
 runExactPec :: EquivFun CycMat -> ParamCirc -> ParamCirc -> IO ()
 runExactPec eq lhs rhs =
-    case pec lhs rhs circToMat eq of
+    case pec lhs rhs evalFn eq of
         BadCutoff           -> putStrLn "Failed to compute cutoff."
         EvalFail side theta -> printEvalFailure side theta
         EqFail theta        -> printEqFailure theta
         EqSuccess pset      -> printEqSuccess pset
+    where evalFn x y = circToMat y x
 
 -----------------------------------------------------------------------------------------
 -- * Parameterized Equivalence Checking Upto Global Phase.
@@ -114,7 +115,9 @@ runExactPec eq lhs rhs =
 runPhasePec :: ParamCirc -> ParamCirc -> IO ()
 runPhasePec lhs rhs =
     case findGlobalPhase lhs rhs of
-        Just s  -> runExactPec (phaseEquiv s) lhs rhs
+        Just s -> do
+          whenLoud $ putStrLn $ "Global phase: " ++ show s
+          runExactPec (phaseEquiv s) lhs rhs
         Nothing -> do
             putStrLn "False."
             whenLoud $ putStrLn "Failed to find candidate phase using all zero angles."

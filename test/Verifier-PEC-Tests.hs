@@ -26,14 +26,15 @@ checkParamSets (c:cs) (pset:psets) =
     then checkParamSets cs psets
     else False
 
-toyEval :: [Revolution] -> ParamCirc -> Maybe ()
-toyEval _ (ParamCirc (ParamArr v _) _ _) = if v == "bad" then Nothing else Just ()
+toyEval :: ParamCirc -> [Revolution] -> Maybe ()
+toyEval (ParamCirc (ParamArr v _) _ _) _ = if v == "bad" then Nothing else Just ()
 
 -----------------------------------------------------------------------------------------
 -- Helper Functions (Deterministic).
 
 cycloPec :: ParamCirc -> ParamCirc -> PECRes
-cycloPec circ1 circ2 = pec circ1 circ2 circToMat (==)
+cycloPec circ1 circ2 = pec circ1 circ2 evalFn (==)
+    where evalFn x y = circToMat y x
 
 checkValid :: [Int] -> ParamCirc -> ParamCirc -> Bool
 checkValid cutoffs circ1 circ2 =
@@ -54,7 +55,8 @@ rgen :: TFGen
 rgen = mkTFGen 101
 
 cycloPPec :: ParamCirc -> ParamCirc -> PECRes
-cycloPPec circ1 circ2 = snd $ ppec rgen (1 % 2) circ1 circ2 circToMat (==)
+cycloPPec circ1 circ2 = snd $ ppec rgen (1 % 2) circ1 circ2 evalFn (==)
+    where evalFn x y = circToMat y x
 
 checkValidProb :: ParamCirc -> ParamCirc -> Bool
 checkValidProb circ1 circ2 =

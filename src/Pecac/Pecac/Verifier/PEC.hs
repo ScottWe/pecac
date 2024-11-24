@@ -54,7 +54,7 @@ indexToRev n j = rationalToRev $ 2 * toInteger j % n
 
 -- | A function which takes a list of angles and a circuit, and if the angles are valid,
 -- returns a circuit representation of type a.
-type EvalFun a = [Revolution] -> ParamCirc -> Maybe a
+type EvalFun a = ParamCirc -> [Revolution] -> Maybe a
 
 -- | A function which takes a pair of circuit evaluations, and returns whether they are
 -- equivalent or not.
@@ -108,11 +108,10 @@ pecRun (pset:psets) thetas lhsFn rhsFn eq = foldl f Nothing pset
 -- many instances (as described in pec), with results produced accordingly.
 pecSetup :: [Integer] -> ParamCirc -> ParamCirc -> EvalFun a -> EquivFun a -> PECRes
 pecSetup cutoffs circ1 circ2 eval eq =
-    case pecRun (reverse paramSet) [] (circFn circ1) (circFn circ2) eq of
+    case pecRun (reverse paramSet) [] (eval circ1) (eval circ2) eq of
         Nothing  -> EqSuccess paramSet
         Just res -> res
     where paramSet = map cutoffToParamSet cutoffs
-          circFn x y = eval y x
 
 -- | Takes as input a pair of parameterized circuits, and a function which faithfully
 -- evaluates each circuit, given a choice of angles (i.e., the representation of two
@@ -153,13 +152,12 @@ sampleParams rgen0 k sz = (rgen2, param : params)
 ppecSetup :: RandomGen g => g -> Rational -> Integer -> ParamCirc -> ParamCirc
                               -> EvalFun a -> EquivFun a -> (g, PECRes)
 ppecSetup rgen0 prob cutoff circ1 circ2 eval eq =
-    case pecCase params (circFn circ1) (circFn circ2) eq of
+    case pecCase params (eval circ1) (eval circ2) eq of
         Nothing  -> (rgen1, EqSuccess $ map (: []) params)
         Just res -> (rgen1, res)
     where k               = toParamCount circ1
           sz              = qceil $ (cutoff % 1) / prob
           (rgen1, params) = sampleParams rgen0 k sz
-          circFn x y      = eval y x
 
 -- | Takes as input a random generator, a desired probability, a pair of parameterized
 -- circuits, and a function which faithfully evaluates each circuit, given a choice of

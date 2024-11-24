@@ -71,11 +71,12 @@ printEqSuccess pset = do
 -- standard out.
 runExactPPec :: TFGen -> Rational -> EquivFun CycMat -> ParamCirc -> ParamCirc -> IO ()
 runExactPPec rgen prob eq lhs rhs =
-    case ppec rgen prob lhs rhs circToMat eq of
+    case ppec rgen prob lhs rhs evalFn eq of
         (_, BadCutoff)           -> putStrLn "Failed to compute cutoff."
         (_, EvalFail side theta) -> printEvalFailure side theta
         (_, EqFail theta)        -> printEqFailure theta
         (_, EqSuccess pset)      -> printEqSuccess pset
+    where evalFn x y = circToMat y x
 
 -----------------------------------------------------------------------------------------
 -- * Parameterized Equivalence Checking Upto Global Phase.
