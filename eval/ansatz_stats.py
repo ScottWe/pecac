@@ -2,12 +2,13 @@
 
 import xlsxwriter
 
-from qiskit import transpile
 from qiskit.circuit.library import RealAmplitudes
 from qiskit.circuit.library import EfficientSU2
 from qiskit.circuit.library import TwoLocal
 from qiskit.circuit.library import ExcitationPreserving
 from qiskit.providers.fake_provider import GenericBackendV2
+
+from ansatz_setup import make_ansatz
 
 # Bounds for the ansatz summary.
 MIN_QUBITS = 1
@@ -50,18 +51,8 @@ for i in range(0, len(ansatz)):
     for n in range(MIN_QUBITS, MAX_QUBITS):
         for e in entanglement:
             for r in range(MIN_REPS, MAX_REPS):
-                # Prepares the ansatz parameters, including ansatz specific parameters.
-                params = dict()
-                params["num_qubits"]   = n
-                params["entanglement"] = e
-                params["reps"]         = r
-                params["flatten"]      = True
-                if ansatz[i] == TwoLocal:
-                    params["rotation_blocks"] = ["ry"]
-
-                # Generates the circuit, and its hardware transpiled representation.
-                qc1 = ansatz[i](**params)
-                qc2 = transpile(qc1, backend)
+                # Generates the pair of circuits.
+                qc1, qc2 = make_ansatz(ansatz[i], n, e, r, backend)
 
                 # Logs the circuit metrics to the workbook.
                 worksheet.write(row, 0, names[i])

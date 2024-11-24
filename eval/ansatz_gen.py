@@ -5,13 +5,14 @@
 import os
 import sys
 
-from qiskit import transpile
 from qiskit.circuit.library import RealAmplitudes
 from qiskit.circuit.library import EfficientSU2
 from qiskit.circuit.library import TwoLocal
 from qiskit.circuit.library import ExcitationPreserving
 from qiskit.providers.fake_provider import GenericBackendV2
 from qiskit.qasm3 import dumps
+
+from ansatz_setup import make_ansatz
 
 # Bounds for the ansatz repetitions.
 MIN_REPS = 1
@@ -83,10 +84,10 @@ qnum = int(sys.argv[1])
 # Generates fake backend.
 sz = qnum
 if sz == 1: sz = 2
-backend = GenericBackendV2(sz)
+backend = GenericBackendV2(num_qubits=sz)
 
 # Creates the test directory.
-dest = "ansatz"
+dest = "ansatz/q" + str(qnum)
 if not os.path.exists(dest):
     os.makedirs(dest)
 
@@ -99,18 +100,8 @@ if qnum <= 2:
 for i in range(0, len(ansatz)):
     for e in strategies:
         for r in range(MIN_REPS, MAX_REPS):
-            # Prepares the ansatz parameters, including ansatz specific parameters.
-            params = dict()
-            params["num_qubits"]   = qnum
-            params["entanglement"] = e
-            params["reps"]         = r
-            params["flatten"]      = True
-            if ansatz[i] == TwoLocal:
-                params["rotation_blocks"] = ["ry"]
-
-            # Generates the circuit, and its hardware transpiled representation.
-            qc1 = ansatz[i](**params)
-            qc2 = transpile(qc1, backend)
+            # Generates the pair of circuits.
+            qc1, qc2 = make_ansatz(ansatz[i], qnum, e, r, backend)
 
             # Logs the circuits to the specified files.
             bname = names[i] + "_" + e + "_q" + str(qnum) + "_r" + str(r)
