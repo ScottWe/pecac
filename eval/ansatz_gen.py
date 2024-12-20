@@ -73,6 +73,7 @@ def pecac_dumps(qnum, circ):
     text = dumps(circ)
     text = lift_registers(qnum, text)
     text = fix_parameters(text)
+    text = text.replace(" + ", "+")
     return text + "\n"
 
 # Argument parsing.
