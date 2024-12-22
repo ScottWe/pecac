@@ -9,6 +9,7 @@ module Pecac.Analyzer.Gate
   , getConfigs
   , getPlainArity
   , getRotArity
+  , isParameterized
   , plainNameToString
   , rotNameToString
   ) where
@@ -16,7 +17,10 @@ module Pecac.Analyzer.Gate
 -----------------------------------------------------------------------------------------
 -- * Import Section.
 
-import Pecac.Affine (Affine)
+import Pecac.Affine
+  ( Affine
+  , isConstant
+  )
 import Pecac.Analyzer.Revolution (Revolution)
 
 -----------------------------------------------------------------------------------------
@@ -136,6 +140,12 @@ data GateConfigs = GateConfigs { isInverted :: Bool
 data GateSummary = PlainSummary PlainName GateConfigs
                  | RotSummary RotName (Affine Rational Revolution) GateConfigs
                  deriving (Show, Eq)
+
+-- | Returns true if a summarized gate is parameterized. Note that a rotation gate with
+-- a constant parameterization is not considered to be a parameterized gate.
+isParameterized :: GateSummary -> Bool
+isParameterized (PlainSummary _ _)      = False
+isParameterized (RotSummary _ coeffs _) = not $ isConstant coeffs
 
 -- | Extracts the configurations from a gate summary.
 getConfigs :: GateSummary -> GateConfigs

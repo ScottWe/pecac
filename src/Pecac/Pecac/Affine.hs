@@ -15,6 +15,7 @@ module Pecac.Affine
   , cmap
   , eval
   , getOffset
+  , isConstant
   , linear
   , lit
   , skew
@@ -164,3 +165,7 @@ cmap f (Affine coeffs _) = map f coeffs
 -- | Returns the offset of the affine combination.
 getOffset :: (RMod a b) => Affine a b -> b
 getOffset (Affine _ offset) = offset
+
+-- | Returns true if the affine linear transformation is constant.
+isConstant :: (RMod a b) => Affine a b -> Bool
+isConstant (Affine coeffs _) = null coeffs
