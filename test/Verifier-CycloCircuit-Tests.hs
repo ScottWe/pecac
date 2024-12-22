@@ -293,6 +293,96 @@ test29 = TestCase (assertEqual "findLinearPhase handles 2 parameter, mixed linea
     where pcirc = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 3) []
 
 -----------------------------------------------------------------------------------------
+-- precomputeMat: Empty Circuits (Valid Parameters)
+
+test30 = TestCase (assertEqual "precomputeMat handles empty 1-qubit, 1-param, circuits."
+                               (Just mat_I)
+                               (precomputeMat pcirc null_1angle))
+    where pcirc = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 1) []
+
+test31 = TestCase (assertEqual "precomputeMat handles empty 1-qubit, 2-param, circuits."
+                               (Just mat_I)
+                               (precomputeMat pcirc null_2angle))
+    where pcirc = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 1) []
+
+test32 = TestCase (assertEqual "precomputeMat handles empty 1-qubit, 3-param, circuits."
+                               (Just mat_I)
+                               (precomputeMat pcirc angles))
+    where angles = map rationalToRev [0%1, 0%1, 0%1]
+          pcirc  = ParamCirc (ParamArr "thetas" 3) (QubitReg "qs" 1) []
+
+test33 = TestCase (assertEqual "precomputeMat handles empty 2-qubit, 1-param, circuits."
+                               (Just mat_II)
+                               (precomputeMat pcirc null_1angle))
+    where pcirc = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 2) []
+
+test34 = TestCase (assertEqual "precomputeMat handles empty 2-qubit, 2-param, circuits."
+                               (Just mat_II)
+                               (precomputeMat pcirc null_2angle))
+    where pcirc = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 2) []
+
+test35 = TestCase (assertEqual "precomputeMat handles empty 3-qubit, 1-param, circuits."
+                               (Just mat_III)
+                               (precomputeMat pcirc null_1angle))
+    where pcirc = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 3) []
+
+test36 = TestCase (assertEqual "precomputeMat handles empty 3-qubit, 2-param, circuits."
+                               (Just mat_III)
+                               (precomputeMat pcirc null_2angle))
+    where pcirc = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 3) []
+
+-----------------------------------------------------------------------------------------
+-- precomputeMat: Empty Circuits (Invalid Parameters)
+
+test37 = TestCase (assertEqual "precomputeMat rejects too few parameters."
+                               Nothing
+                               (precomputeMat pcirc1 null_2angle))
+
+test38 = TestCase (assertEqual "precomputeMat rejects too many parameters."
+                               Nothing
+                               (precomputeMat pcirc angles))
+    where angles = map rationalToRev [0%1, 0%1, 0%1, 0%1]
+          pcirc  = ParamCirc (ParamArr "thetas" 3) (QubitReg "qs" 1) []
+
+-----------------------------------------------------------------------------------------
+-- precomputeMat: Single Gate Circuits
+
+test39 = TestCase (assertEqual "precomputeMat handles 1-qubit single gate circuits."
+                               (Just mat_X)
+                               (precomputeMat pcirc2 null_1angle))
+
+test40 = TestCase (assertEqual "precomputeMat handles 2-qubit single gate circuits."
+                               (Just $ Matrix.kroneckerProduct mat_I mat_Y)
+                               (precomputeMat pcirc3 null_1angle))
+
+test41 = TestCase (assertEqual "precomputeMat handles 3-qubit single gate circuits."
+                               (Just $ Matrix.kroneckerProduct mat_II mat_Z)
+                               (precomputeMat pcirc null_1angle))
+    where gates = [PlainSummary GateZ $ GateConfigs False [] [2]]
+          pcirc = ParamCirc (ParamArr "thetas" 1) (QubitReg "qs" 3) gates
+
+test42 = TestCase (assertEqual "precomputeMat handles rotations."
+                               (Just mat_rotx_deg45)
+                               (precomputeMat pcirc4 angles))
+    where angles = map rationalToRev [-2 * 45 % 360]
+
+-----------------------------------------------------------------------------------------
+-- precomputeMat: Multi-Gate Circuits
+
+test43 = TestCase (assertEqual "precomputeMat handles circuits with multiple gates."
+                               (Just mat_RxXYZ)
+                               (precomputeMat pcirc angles))
+    where angles = map rationalToRev [-2 * 45 % (6 * 360), -2 * 45 % (2 * 360)]
+          aff    = linear [-3, -1]
+          gates  = [PlainSummary GateZ $ GateConfigs False [] [0],
+                    PlainSummary GateX $ GateConfigs False [] [1],
+                    RotSummary RotX aff $ GateConfigs False [] [0],
+                    PlainSummary GateZ $ GateConfigs False [] [0],
+                    PlainSummary GateY $ GateConfigs False [] [2],
+                    PlainSummary GateZ $ GateConfigs False [] [3]]
+          pcirc = ParamCirc (ParamArr "thetas" 2) (QubitReg "qs" 4) gates
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "circToMat_Empty_Q1_P1" test1,
@@ -323,6 +413,20 @@ tests = hUnitTestToTests $ TestList [TestLabel "circToMat_Empty_Q1_P1" test1,
                                      TestLabel "findLinearPhase_TwoParam_Affine" test26,
                                      TestLabel "findLinearPhase_OneParam_Affine" test27,
                                      TestLabel "findLinearPhase_TwoParam_Neg" test28,
-                                     TestLabel "findLinearPhase_TwoParam_Mixed" test29]
+                                     TestLabel "findLinearPhase_TwoParam_Mixed" test29,
+                                     TestLabel "precomputeMat_Empty_Q1_P1" test30,
+                                     TestLabel "precomputeMat_Empty_Q1_P2" test31,
+                                     TestLabel "precomputeMat_Empty_Q1_P3" test32,
+                                     TestLabel "precomputeMat_Empty_Q2_P1" test33,
+                                     TestLabel "precomputeMat_Empty_Q2_P2" test34,
+                                     TestLabel "precomputeMat_Empty_Q3_P1" test35,
+                                     TestLabel "precomputeMat_Empty_Q3_P2" test36,
+                                     TestLabel "precomputeMat_TooFewParams" test37,
+                                     TestLabel "precomputeMat_TooManyParams" test38,
+                                     TestLabel "precomputeMat_OneGate_Q1" test39,
+                                     TestLabel "precomputeMat_OneGate_Q2" test40,
+                                     TestLabel "precomputeMat_OneGate_Q3" test41,
+                                     TestLabel "precomputeMat_OneRot" test42,
+                                     TestLabel "precomputeMat_ManyGates" test43]
 
 main = defaultMain tests

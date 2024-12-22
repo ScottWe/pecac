@@ -5,6 +5,7 @@ module Pecac.Verifier.CycloCircuit
   , circToMat
   , findGlobalPhase
   , findLinearPhase
+  , precomputeMat
   , phaseEquiv
   ) where
 
@@ -36,7 +37,10 @@ import Pecac.Analyzer.Problem
   , QubitReg (..)
   , toParamCount
   )
-import Pecac.Analyzer.Gate (GateSummary (..))
+import Pecac.Analyzer.Gate
+  ( GateSummary (..)
+  , isParameterized
+  )
 import Pecac.Verifier.CycloGate
   ( Cyclotomic
   , CycMat
@@ -49,15 +53,25 @@ import qualified Pecac.Verifier.Matrix as Matrix
 -----------------------------------------------------------------------------------------
 -- * Circuit to Matrix Conversion.
 
+-- | Composes pairs of adjacent matrices in a divide-and-conqure strategy.
+composeMatsImpl :: [CycMat] -> [CycMat]
+composeMatsImpl []           = []
+composeMatsImpl [m]          = [m]
+composeMatsImpl (m1:m2:mats) = (Matrix.compose m2 m1) : composeMatsImpl mats
+
+-- | Takes as input the number of qubits (n), and a sequence of cyclotomic operators.
+-- Multiplies the sequence in a divide-and-conqure strategy.
+composeMats :: Int -> [CycMat] -> CycMat
+composeMats n []   = idGate n
+composeMats n [m]  = m
+composeMats n mats = composeMats n $ composeMatsImpl mats
+
 -- | Takes as input the number of qubits (n), an instantiation for each angle in the gate
 -- list (as a rational degree), and a list of gates. Returns a matrix which corresponds
 -- to applying each gate of the list, in order, to an n-qubit system, with all rotations
 -- instantiated according to the angles.
 gatesToMat :: Int -> [Revolution] -> [GateSummary] -> CycMat
-gatesToMat n thetas []           = idGate n
-gatesToMat n thetas (gate:gates) = Matrix.compose cmat gmat
-    where cmat = gatesToMat n thetas gates
-          gmat = gateToMat n thetas gate
+gatesToMat n thetas gates = composeMats n $ map (gateToMat n thetas) gates
 
 -- | Takes as input a list of rational degrees and a parameterized circuit. If the length
 -- of the list of angles is equal to the number of parameters in the circuit, then a
@@ -69,6 +83,72 @@ circToMat thetas (ParamCirc (ParamArr _ psz) (QubitReg _ qsz) gates) =
     then Just $ gatesToMat qsz thetas gates
     else Nothing
     where len = length thetas
+
+-----------------------------------------------------------------------------------------
+-- * Circuit to Matrix Precomputation.
+
+-- | Internal data-type used to represent a partially evaluated circuit. Each precomputed
+-- value is either the summary for a parameterized gate, or the cyclotomic operator
+-- corresponding to 1 or more parameter-free gates.
+type Precomputed = Either GateSummary CycMat
+
+-- | Takes as input the number of qubits (n) and a list of gates. Returns an equivalent
+-- list of precomputed values such: (1) the length of the precomputed value list is the
+-- same length as the gate list; (2) each gate summary in the list corresponds to a
+-- parameterized gate in the circuit.
+precomputeGates :: Int -> [GateSummary] -> [Precomputed]
+precomputeGates n []           = []
+precomputeGates n (gate:gates) =
+    if isParameterized gate
+    then Left gate : precomputeGates n gates
+    else (Right $ gateToMat n [] gate) : precomputeGates n gates
+
+-- | Takes as input a list of recomputed circuit values. Returns a minimal and equivalent
+-- sequence of precomputed gates, such that all adjacent cyclotomic matrices have been
+-- composed via matrix multiplication.
+reduceGates :: [Precomputed] -> [Precomputed]
+reduceGates l@[]                 = l
+reduceGates l@[_]                = l
+reduceGates l@(Left _:_)         = l
+reduceGates l@(Right _:Left _:_) = l
+reduceGates (Right x:Right y:l)  = reduceGates $ Right mat : l
+    where mat = Matrix.compose x y
+
+-- | Takes as input input the number of qubits (n), a list of rational degrees and a
+-- precomputed value. Returns a cyclotomic matrix operator which corresponds to the
+-- precomputed value, given the rational parameters. In particular, if the precomputed
+-- value is a cyclotomic operator, then the operator is returned, otherwise the gate
+-- summary is evaluated with respect to the rational parameters.
+evalPrecomputed :: Int -> [Revolution] -> Precomputed -> CycMat
+evalPrecomputed n thetas (Left g)  = gateToMat n thetas g
+evalPrecomputed _ _      (Right m) = m
+
+-- Implementation details for computeMat.
+computeMatImpl :: Int -> [Precomputed] -> [Revolution] -> CycMat
+computeMatImpl n ps thetas = composeMats n $ map (evalPrecomputed n thetas) ps
+
+-- | Implementation details for precomputeMat. The function takes the qubit count,
+-- parameter count, and reduced precomputed gate list from the parameterized circuit,
+-- and returns the function described by precomputeMat.
+--
+-- Note: the reduced precomputed gate list is: reduceGates $ precomputeGates qsz gates.
+computeMat :: Int -> Int -> [Precomputed] -> [Revolution] -> Maybe CycMat
+computeMat qsz psz circ thetas =
+    if len == psz
+    then Just $ computeMatImpl qsz circ thetas
+    else Nothing
+    where len = length thetas
+
+-- | Takes as input a parameterized circuit. Returns a function which take a choice of
+-- parameters, and either returns nothing (if the circuit is invalid), or the cyclotomic
+-- operation corresponding to the parameterization otherwise. Note that the function will
+-- precompute portions of the circuit up-front (regardless of the parameterization), to
+-- minimize the time spent evaluating the circuit for each parameterization.
+--
+-- Note: if the circuit will be evaluated once, then circToMat should be used instead.
+precomputeMat :: ParamCirc -> ([Revolution] -> Maybe CycMat)
+precomputeMat (ParamCirc (ParamArr _ psz) (QubitReg _ qsz) gates) =
+    computeMat qsz psz $ reduceGates $ precomputeGates qsz gates
 
 -----------------------------------------------------------------------------------------
 -- * Global Phase Extraction.
