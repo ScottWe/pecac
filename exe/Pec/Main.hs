@@ -21,7 +21,7 @@ import Pecac.Verifier.CycloGate
   , CycMat
   )
 import Pecac.Verifier.CycloCircuit
-  ( circToMat
+  ( precomputeMat
   , findGlobalPhase
   , phaseEquiv
   )
@@ -99,12 +99,11 @@ printEqSuccess pset = do
 -- standard out.
 runExactPec :: EquivFun CycMat -> ParamCirc -> ParamCirc -> IO ()
 runExactPec eq lhs rhs =
-    case pec lhs rhs evalFn eq of
+    case pec lhs rhs precomputeMat eq of
         BadCutoff           -> putStrLn "Failed to compute cutoff."
         EvalFail side theta -> printEvalFailure side theta
         EqFail theta        -> printEqFailure theta
         EqSuccess pset      -> printEqSuccess pset
-    where evalFn x y = circToMat y x
 
 -----------------------------------------------------------------------------------------
 -- * Parameterized Equivalence Checking Upto Global Phase.
