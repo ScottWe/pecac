@@ -83,7 +83,11 @@ pecCase thetas lhsFn rhsFn eq =
 -- number of distinct rational multiples of pi from [0, 4), such that parameterized
 -- equivalence can be determined.
 cutoffToParamSet :: Integer -> [Revolution]
-cutoffToParamSet n = map (indexToRev n) [0 .. (n - 1)]
+cutoffToParamSet n =
+    if n <= 2 * denom
+    then map (indexToRev denom) [0 .. (n - 1)]
+    else error $ "Internal error: cutoffToParamSet exceeded two periods."
+    where denom = qceil $ n % 2
 
 -- | Takes as input a list of parameter sets, a list of rational angles, and the
 -- evaluation functions for two parameterized circuits. The purpose of this function is

@@ -27,7 +27,7 @@ expand x = (quot n d, rem n d)
 qfloor :: Rational -> Integer
 qfloor = fst . expand
 
--- | Returns the ceiling of a natural number.
+-- | Returns the ceiling of a rational number.
 qceil :: Rational -> Integer
 qceil x = if r == 0 then q else q + 1
     where (q, r) = expand x
