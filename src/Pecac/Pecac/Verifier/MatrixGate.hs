@@ -26,6 +26,7 @@ applyMatrixBetween n m mat
     | n == 0 && m == 0 = mat
     | n > 0 && m == 0  = Matrix.kroneckerProduct lhs mat
     | n == 0 && m > 0  = Matrix.kroneckerProduct mat rhs
+    | n < m            = Matrix.kroneckerProduct (Matrix.kroneckerProduct lhs mat) rhs
     | otherwise        = Matrix.kroneckerProduct lhs $ Matrix.kroneckerProduct mat rhs
     where lhs    = Matrix.iden $ 2^n
           rhs    = Matrix.iden $ 2^m
