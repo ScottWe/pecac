@@ -60,6 +60,7 @@ library
                        primitive>=0.7.1.0,
   hs-source-dirs:      src/Pecac
   default-language:    Haskell2010
+  ghc-options:         -fllvm
 
 -----------------------------------------------------------------------------------------
 -- Executables.
@@ -75,6 +76,7 @@ library pecac-exe
                        pecac
   hs-source-dirs:      src/PecacExe
   default-language:    Haskell2010
+  ghc-options:         -fllvm
 
 common basic-exe-props
   hs-source-dirs:      exe
@@ -82,6 +84,7 @@ common basic-exe-props
   build-depends:       base,
                        pecac,
                        pecac-exe
+  ghc-options:         -fllvm
 
 executable pecac_exact
   import:              basic-exe-props
