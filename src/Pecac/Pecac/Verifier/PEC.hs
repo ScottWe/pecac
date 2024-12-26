@@ -5,6 +5,7 @@ module Pecac.Verifier.PEC
   , PECRes (..)
   , Side (..)
   , pec
+  , pec'
   , ppec
   ) where
 
@@ -52,9 +53,13 @@ indexToRev n j = rationalToRev $ 2 * toInteger j % n
 -----------------------------------------------------------------------------------------
 -- * Parameterized Equivalence Checking.
 
--- | A function which takes a list of angles and a circuit, and if the angles are valid,
--- returns a circuit representation of type a.
-type EvalFun a = ParamCirc -> [Revolution] -> Maybe a
+-- | A function which takes a circuit, and precomputes a summary to speed up circuit
+-- evaluation. If no precomputation is necessary, then this should be the identity.
+type PrecompFun a = ParamCirc -> a
+
+-- | A function which takes a list of angles and a precomputed circuit summary, and if
+-- the angles are valid, returns a circuit representation of type a.
+type EvalFun a b = a -> [Revolution] -> Maybe b
 
 -- | A function which takes a pair of circuit evaluations, and returns whether they are
 -- equivalent or not.
@@ -106,12 +111,19 @@ pecRun (pset:psets) thetas lhsFn rhsFn eq = foldl f Nothing pset
 -- circuits, and a function which faithfully evaluates each circuit, given a choice of
 -- angles. Using these cutoff results, the circuits will be evaluated on sufficiently
 -- many instances (as described in pec), with results produced accordingly.
-pecSetup :: [Integer] -> ParamCirc -> ParamCirc -> EvalFun a -> EquivFun a -> PECRes
+pecSetup :: [Integer] -> a -> a -> EvalFun a b -> EquivFun b -> PECRes
 pecSetup cutoffs circ1 circ2 eval eq =
     case pecRun (reverse paramSet) [] (eval circ1) (eval circ2) eq of
         Nothing  -> EqSuccess paramSet
         Just res -> res
     where paramSet = map cutoffToParamSet cutoffs
+
+-- | Extends pec to support precomputation.
+pec' :: ParamCirc -> ParamCirc -> PrecompFun a -> EvalFun a b -> EquivFun b -> PECRes
+pec' circ1 circ2 precomp eval eq =
+    case forallElimSize circ1 circ2 of
+        Result cutoffs -> pecSetup cutoffs (precomp circ1) (precomp circ2) eval eq
+        _              -> BadCutoff
 
 -- | Takes as input a pair of parameterized circuits, and a function which faithfully
 -- evaluates each circuit, given a choice of angles (i.e., the representation of two
@@ -123,11 +135,8 @@ pecSetup cutoffs circ1 circ2 eval eq =
 -- instantiation of the parameters witnessing this inequivalence is returned. If the
 -- evaluation fails at any point, then an error result which summarizes the failure is
 -- returned.
-pec :: ParamCirc -> ParamCirc -> EvalFun a -> EquivFun a -> PECRes
-pec circ1 circ2 eval eq =
-    case forallElimSize circ1 circ2 of
-        Result cutoffs -> pecSetup cutoffs circ1 circ2 eval eq
-        _              -> BadCutoff
+pec :: ParamCirc -> ParamCirc -> EvalFun ParamCirc a -> EquivFun a -> PECRes
+pec circ1 circ2 eval eq = pec' circ1 circ2 id eval eq
 
 -----------------------------------------------------------------------------------------
 -- * Probabilistic Equivalence Checking.
@@ -150,7 +159,7 @@ sampleParams rgen0 k sz = (rgen2, param : params)
 -- parameter from a sufficiently large sample space (as described in ppec), with results
 -- produced accordingly.
 ppecSetup :: RandomGen g => g -> Rational -> Integer -> ParamCirc -> ParamCirc
-                              -> EvalFun a -> EquivFun a -> (g, PECRes)
+                              -> EvalFun ParamCirc a -> EquivFun a -> (g, PECRes)
 ppecSetup rgen0 prob cutoff circ1 circ2 eval eq =
     case pecCase params (eval circ1) (eval circ2) eq of
         Nothing  -> (rgen1, EqSuccess $ map (: []) params)
@@ -174,8 +183,8 @@ ppecSetup rgen0 prob cutoff circ1 circ2 eval eq =
 --
 -- Remark: This function has a false positive rate (claiming circuits are equivalent when
 -- they are not) bounded by the provided probability, and a false negative rate of zero.
-ppec :: RandomGen g => g -> Rational -> ParamCirc -> ParamCirc -> EvalFun a -> EquivFun a
-                         -> (g, PECRes)
+ppec :: RandomGen g => g -> Rational -> ParamCirc -> ParamCirc -> EvalFun ParamCirc a
+                         -> EquivFun a -> (g, PECRes)
 ppec rgen prob circ1 circ2 eval eq =
     case randomSampleSize circ1 circ2 of
         Result cutoff -> ppecSetup rgen prob cutoff circ1 circ2 eval eq
