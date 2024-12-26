@@ -32,19 +32,24 @@ toyEval (ParamCirc (ParamArr v _) _ _) _ = if v == "bad" then Nothing else Just 
 -----------------------------------------------------------------------------------------
 -- Helper Functions (Deterministic).
 
-cycloPec :: ParamCirc -> ParamCirc -> PECRes
+type PecWrapper = ParamCirc -> ParamCirc -> PECRes
+
+cycloPec :: PecWrapper
 cycloPec circ1 circ2 = pec circ1 circ2 evalFn (==)
     where evalFn x y = circToMat y x
 
-checkValid :: [Int] -> ParamCirc -> ParamCirc -> Bool
-checkValid cutoffs circ1 circ2 =
-    case cycloPec circ1 circ2 of
+cycloPec' :: PecWrapper
+cycloPec' circ1 circ2 = pec' circ1 circ2 precomputeCirc evaluateCirc (==)
+
+checkValid :: PecWrapper -> [Int] -> ParamCirc -> ParamCirc -> Bool
+checkValid f cutoffs circ1 circ2 =
+    case f circ1 circ2 of
         EqSuccess psets -> checkParamSets cutoffs psets
         _               -> False
 
-checkInvalid :: ParamCirc -> ParamCirc -> Bool
-checkInvalid circ1 circ2 =
-    case cycloPec circ1 circ2 of
+checkInvalid :: PecWrapper -> ParamCirc -> ParamCirc -> Bool
+checkInvalid f circ1 circ2 =
+    case f circ1 circ2 of
         EqFail theta -> circToMat theta circ1 /= circToMat theta circ2
         _            -> False
 
@@ -204,10 +209,10 @@ pneqCirc3b = ParamCirc (ParamArr "pvar" 3) (QubitReg "qs" 3) gates
 -- pec: Parameter-Free Case
 
 test1 = TestCase (assertBool "pec handles equivalent parameter-free circuits."
-                             (checkValid [1, 1] eqCirc1 eqCirc2))
+                             (checkValid cycloPec [1, 1] eqCirc1 eqCirc2))
 
 test2 = TestCase (assertBool "pec handles inequivalent parameter-free circuits."
-                             (checkInvalid neqCirc1 neqCirc2))
+                             (checkInvalid cycloPec neqCirc1 neqCirc2))
 
 -----------------------------------------------------------------------------------------
 -- pec: Error Cases
@@ -244,25 +249,25 @@ test6 = TestCase (assertBool "pec identifies failed evaluations on the rhs."
 -- pec: Equivalent Parameterized Circuits
 
 test7 = TestCase (assertBool "pec verifies RX commutes with Pauli-X (cutoff 3)."
-                             (checkValid [3] peqCirc1a peqCirc1b))
+                             (checkValid cycloPec [3] peqCirc1a peqCirc1b))
 
 test8 = TestCase (assertBool "pec verifies the standard C(RZ) decomposition (cutoff 5)."
-                             (checkValid [5] peqCirc2a peqCirc2b))
+                             (checkValid cycloPec [5] peqCirc2a peqCirc2b))
 
 test9 = TestCase (assertBool "pec verifies a multi-parameter circuit."
-                             (checkValid [1, 3, 5] peqCirc3a peqCirc3b))
+                             (checkValid cycloPec [1, 3, 5] peqCirc3a peqCirc3b))
 
 -----------------------------------------------------------------------------------------
 -- pec: Inequivalent Parameterized Circuits
 
 test10 = TestCase (assertBool "pec shows RX does not commute with Pauli-Z (cutoff 3)."
-                              (checkInvalid pneqCirc1a pneqCirc1b))
+                              (checkInvalid cycloPec pneqCirc1a pneqCirc1b))
 
 test11 = TestCase (assertBool "pec catches error in a C(RZ) decomposition (cutoff 5)."
-                              (checkInvalid pneqCirc2a pneqCirc2b))
+                              (checkInvalid cycloPec pneqCirc2a pneqCirc2b))
 
 test12 = TestCase (assertBool "pec refutes a multi-parameter circuit equivalence."
-                              (checkInvalid pneqCirc3a pneqCirc3b))
+                              (checkInvalid cycloPec pneqCirc3a pneqCirc3b))
 
 -----------------------------------------------------------------------------------------
 -- pec: Rejects Rational Coefficients
@@ -341,6 +346,15 @@ test25 = TestCase (assertBool "ppec may refute a multi-parameter circuit equival
                               (checkProb pneqCirc3a pneqCirc3b))
 
 -----------------------------------------------------------------------------------------
+-- pec': Equivalence Checking with Precomputation
+
+test26 = TestCase (assertBool "pec verifies a multi-parameter circuit."
+                              (checkValid cycloPec' [1, 3, 5] peqCirc3a peqCirc3b))
+
+test27 = TestCase (assertBool "pec' refutes a multi-parameter circuit equivalence."
+                              (checkInvalid cycloPec' pneqCirc3a pneqCirc3b))
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "pec_Cyclo_ParamFree_Equiv" test1,
@@ -367,6 +381,8 @@ tests = hUnitTestToTests $ TestList [TestLabel "pec_Cyclo_ParamFree_Equiv" test1
                                      TestLabel "ppec_Cyclo_Param_Equiv_3" test22,
                                      TestLabel "pec_Cyclo_Param_Inequiv_1" test23,
                                      TestLabel "pec_Cyclo_Param_Inequiv_2" test24,
-                                     TestLabel "pec_Cyclo_Param_Inequiv_3" test25]
+                                     TestLabel "pec_Cyclo_Param_Inequiv_3" test25,
+                                     TestLabel "pec_Precomp_Param_Equiv" test26,
+                                     TestLabel "pec_Precomp_Param_Inequiv" test27]
 
 main = defaultMain tests

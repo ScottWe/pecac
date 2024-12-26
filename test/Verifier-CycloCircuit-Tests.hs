@@ -295,6 +295,8 @@ test29 = TestCase (assertEqual "findLinearPhase handles 2 parameter, mixed linea
 -----------------------------------------------------------------------------------------
 -- precomputeMat: Empty Circuits (Valid Parameters)
 
+precomputeMat circ = evaluateCirc $! precomputeCirc circ
+
 test30 = TestCase (assertEqual "precomputeMat handles empty 1-qubit, 1-param, circuits."
                                (Just mat_I)
                                (precomputeMat pcirc null_1angle))

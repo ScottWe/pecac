@@ -21,7 +21,8 @@ import Pecac.Verifier.CycloGate
   , CycMat
   )
 import Pecac.Verifier.CycloCircuit
-  ( precomputeMat
+  ( evaluateCirc
+  , precomputeCirc
   , findGlobalPhase
   , phaseEquiv
   )
@@ -29,7 +30,7 @@ import Pecac.Verifier.PEC
   ( EquivFun
   , PECRes (..)
   , Side
-  , pec
+  , pec'
   )
 import PecacExe.ErrorLogging (sideToString)
 import PecacExe.IOUtils
@@ -99,7 +100,7 @@ printEqSuccess pset = do
 -- standard out.
 runExactPec :: EquivFun CycMat -> ParamCirc -> ParamCirc -> IO ()
 runExactPec eq lhs rhs =
-    case pec lhs rhs precomputeMat eq of
+    case pec' lhs rhs precomputeCirc evaluateCirc eq of
         BadCutoff           -> putStrLn "Failed to compute cutoff."
         EvalFail side theta -> printEvalFailure side theta
         EqFail theta        -> printEqFailure theta
