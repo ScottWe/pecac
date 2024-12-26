@@ -53,12 +53,15 @@ swapAtImpl k a b =
 -- requires that both 0 <= a <= k and 0 <= b <= k, else an error is raised.
 swapAt :: (Num a) => Int -> Int -> Int -> Matrix.Matrix a
 swapAt k a b
-    | a == b    = Matrix.iden $ 2^k
-    | b < a     = swapAt k b a
-    | k < 0     = error $ emsg "k"
-    | a < 0     = error $ emsg "a"
-    | b < 0     = error $ emsg "b"
-    | k < b     = error $ emsg "(k - b)"
+    -- The swap should only happen once.
+    | b < a = swapAt k b a
+    -- Determines that (k, b, b) is valid for the case where a == b.
+    | k < 0  = error $ emsg "k"
+    | b < 0  = error $ emsg "b"
+    | k < b  = error $ emsg "(k - b)"
+    | a == b = Matrix.iden $ 2^k
+    -- Determines that (k, a, b) is valid for the case where a != b.
+    | a < 0 = error $ emsg "a"
     | otherwise = swapAtImpl k a b
     where emsg x = "swapAt requires non-negative index: " ++ x ++ "."
 
@@ -95,7 +98,7 @@ permuteQs j []     k mat = applyMatrixBetween 0 (k - j) mat
 permuteQs j (q:qs) k mat =
     if j == q
     then permuteQs nextj qs k mat
-    else swapAndApply k j q $ permuteQs nextj (opSwap qs j q) k mat
+    else swapAndApply k j q $! permuteQs nextj (opSwap qs j q) k mat
     where nextj = j + 1
 
 -- | Takes as input the number of qubits (k) and the operands (qubits) to a qubit

@@ -69,7 +69,7 @@ composeMatsImpl (m1:m2:mats) = (gateCompose m1 m2) : composeMatsImpl mats
 composeMats :: Int -> [CycMat] -> CycMat
 composeMats n []   = idGate n
 composeMats n [m]  = m
-composeMats n mats = composeMats n $ composeMatsImpl mats
+composeMats n mats = composeMats n $! composeMatsImpl mats
 
 -- | Takes as input the number of qubits (n), an instantiation for each angle in the gate
 -- list (as a rational degree), and a list of gates. Returns a matrix which corresponds

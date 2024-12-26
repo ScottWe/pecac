@@ -15,6 +15,7 @@ module Pecac.Analyzer.Cutoffs
 -----------------------------------------------------------------------------------------
 -- * Import Section.
 
+import Data.List (foldl')
 import Data.Ratio
   ( denominator
   , numerator
@@ -99,7 +100,7 @@ lambdaZip lambda_j alpha_j = lambda_j + abs alpha_j
 gatesToLambda :: Int -> [GateSummary] -> Maybe [Integer]
 gatesToLambda n gates = maybeApply (gatesToAlphas gates) apply
     where init  = repeatn 0 n
-          apply = foldl (mergeWith lambdaZip 0) init
+          apply = foldl' (mergeWith lambdaZip 0) init
 
 -- | Computes the lambda vector associated with the gates in a circuit (see gatesToLambda
 -- for more details).
@@ -131,7 +132,7 @@ foldKappa kappa alpha = kappa + kappaTerm alpha
 -- of the kappa terms associated with each gate's alpha vector. For more detail, see the
 -- functions kappaTerm and gatesToAlphas.
 gatesToKappa :: [GateSummary] -> Maybe Integer
-gatesToKappa gates = maybeApply (gatesToAlphas gates) (foldl foldKappa 0)
+gatesToKappa gates = maybeApply (gatesToAlphas gates) (foldl' foldKappa 0)
 
 -- | Computes the kappa vector associated with the gates in a circuit (see gatesToKappa
 -- for more details).

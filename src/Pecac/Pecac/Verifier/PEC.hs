@@ -12,6 +12,7 @@ module Pecac.Verifier.PEC
 -----------------------------------------------------------------------------------------
 -- * Import Section.
 
+import Data.List (foldl')
 import Data.Maybe (isNothing)
 import Data.Ratio ((%))
 import Pecac.Rational (qceil)
@@ -104,7 +105,7 @@ cutoffToParamSet n = map (indexToRev n) [0 .. (n - 1)]
 pecRun :: [[Revolution]] -> [Revolution] -> CircFun a -> CircFun a -> EquivFun a
                          -> Maybe PECRes
 pecRun []           thetas lhsFn rhsFn eq = pecCase thetas lhsFn rhsFn eq
-pecRun (pset:psets) thetas lhsFn rhsFn eq = foldl f Nothing pset
+pecRun (pset:psets) thetas lhsFn rhsFn eq = foldl' f Nothing pset
     where f res x = if isNothing res then pecRun psets (x:thetas) lhsFn rhsFn eq else res
 
 -- | Takes as input a list of cutoff bounds for the parameters, a pair of parameterized

@@ -26,6 +26,7 @@ module Pecac.Affine
 -- * Import Section.
 
 import Data.Group
+import Data.List (foldl')
 import Pecac.List
   ( mergeWith
   , prettyList
@@ -149,7 +150,7 @@ skew seq (Affine c1 o1) = affine c2 o1
 eval :: (RMod a b) => Affine a b -> [b] -> Maybe b
 eval (Affine coeffs offset) values =
     if length coeffs <= length values
-    then Just $ foldl (<>) offset $ zipWith scale coeffs values 
+    then Just $ foldl' (<>) offset $ zipWith scale coeffs values 
     else Nothing
 
 -- | Applies fold to the coefficients of an affine linear sum. Note that trailing zero

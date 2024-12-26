@@ -8,6 +8,7 @@ module Pecac.Analyzer.Integrality
 -----------------------------------------------------------------------------------------
 -- * Import Section.
 
+import Data.List (foldl')
 import Data.Ratio (denominator)
 import Pecac.Affine
   ( Affine
@@ -41,7 +42,7 @@ lcdFold lcds (RotSummary _ aff _) = mergeWith lcm 1 lcds denoms
 -- returned as an array of integers, such that element j is the lowest common denominator
 -- for parameter theta_j.
 circuitToLcd :: ParamCirc -> [Integer]
-circuitToLcd circ = foldl lcdFold init $ toGates circ
+circuitToLcd circ = foldl' lcdFold init $ toGates circ
     where init = repeatn 1 $ toParamCount circ
 
 -----------------------------------------------------------------------------------------
