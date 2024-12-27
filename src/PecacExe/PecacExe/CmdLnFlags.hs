@@ -1,7 +1,5 @@
 -- | Command flags between command-line parsers.
 
-{-# LANGUAGE DeriveDataTypeable #-}
-
 module PecacExe.CmdLnFlags
   ( def
   , gphaseFlag

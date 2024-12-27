@@ -41,15 +41,15 @@ import qualified Pecac.Verifier.Matrix as Matrix
 
 -- | The inclusion of 0 into the cyclotomic numbers.
 zero :: Cyclotomic.Cyclotomic
-zero = fromInteger 0
+zero = 0
 
 -- | The inclusion of 1 into the cyclotomic numbers.
 one :: Cyclotomic.Cyclotomic
-one = fromInteger 1
+one = 1
 
 -- | The inclusion of 2 into the cyclotomic numbers.
 two :: Cyclotomic.Cyclotomic
-two = fromInteger 2
+two = 2
 
 -- | The inclusion of 1/2 into the cyclotomic numbers.
 half :: Cyclotomic.Cyclotomic

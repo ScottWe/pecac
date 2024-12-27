@@ -137,7 +137,7 @@ pec' circ1 circ2 precomp eval eq =
 -- evaluation fails at any point, then an error result which summarizes the failure is
 -- returned.
 pec :: ParamCirc -> ParamCirc -> EvalFun ParamCirc a -> EquivFun a -> PECRes
-pec circ1 circ2 eval eq = pec' circ1 circ2 id eval eq
+pec circ1 circ2 = pec' circ1 circ2 id
 
 -----------------------------------------------------------------------------------------
 -- * Probabilistic Equivalence Checking.

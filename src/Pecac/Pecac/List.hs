@@ -30,7 +30,7 @@ repeatn x n = take n $ repeat x
 -- operation (see zipWith).
 mergeWith :: (a -> a -> a) -> a -> [a] -> [a] -> [a]
 mergeWith _ v []     []     = []
-mergeWith f v xs     []     = map (\x -> f x v) xs
+mergeWith f v xs     []     = map (`f` v) xs
 mergeWith f v []     ys     = map (f v) ys
 mergeWith f v (x:xs) (y:ys) = f x y : mergeWith f v xs ys
 

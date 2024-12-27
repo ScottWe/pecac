@@ -1,7 +1,5 @@
 -- | Utilities for working with cyclotomic numbers.
 
-{-# LANGUAGE TemplateHaskell #-}
-
 module Pecac.Cyclotomic
   ( einv
   , cycOrder

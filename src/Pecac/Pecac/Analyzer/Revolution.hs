@@ -1,7 +1,6 @@
 -- | Types and functions for working with rational revolutions (multiples of 2*pi).
 
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 
 module Pecac.Analyzer.Revolution

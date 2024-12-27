@@ -75,7 +75,7 @@ data ExprErr = IntVarUse String
 binOp :: Expr -> Expr -> (Expr -> Either a b) -> (b -> b -> b) -> Either a b
 binOp lexpr rexpr reader f =
     branchRight (reader lexpr) $ \lhs ->
-        updateRight (reader rexpr) $ \rhs -> f lhs rhs
+        updateRight (reader rexpr) (f lhs)
 
 -- | Helper function to fold over a unary term in an expression tree. Takes as input the
 -- target expression (expr), a function to recurse over this subtree (rader), and a
@@ -83,7 +83,7 @@ binOp lexpr rexpr reader f =
 -- (reader expr) does not return an error-value (i.e., a left value), then f is applied
 -- to the right, and this new term is returned. Otherwise, the error is propogated.
 unaryOp :: Expr -> (Expr -> Either a b) -> (b -> b) -> Either a b
-unaryOp expr reader f = updateRight (reader expr) f
+unaryOp expr reader = updateRight (reader expr)
 
 -- | Helper function to interpret sub-expressions as integer literals.
 toRat :: Expr -> Either ExprErr Rational
@@ -95,7 +95,7 @@ toRat (Brack expr)        = toRat expr
 toRat (Negate expr)       = unaryOp expr toRat negate
 toRat (VarId name)        = Left $ IntVarUse name
 toRat (CellId name idx)   = Left $ IntArrUse name idx
-toRat (ConstNat n)        = Right $ (toInteger n) % 1
+toRat (ConstNat n)        = Right $ toInteger n % 1
 toRat Pi                  = Left $ AngleAsInt "pi"
 toRat Tau                 = Left $ AngleAsInt "tau"
 
@@ -285,7 +285,7 @@ data RawConfigs = RawConfigs Bool [Polarity] [Operand]
 -- then the corresponding GateErr is returned.
 getConfigs :: QubitReg -> Int -> RawConfigs -> Either GateErr GateConfigs
 getConfigs qvar baseAirty (RawConfigs inv ctrls ops) =
-    case (toQubitList qvar arity ops) of
+    case toQubitList qvar arity ops of
         Left err     -> Left $ GateOperandErr err
         Right qubits -> Right $ GateConfigs inv ctrls qubits
     where arity = baseAirty + length ctrls

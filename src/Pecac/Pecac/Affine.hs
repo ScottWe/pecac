@@ -62,7 +62,7 @@ deriving instance (RMod a b, Eq a, Eq b) => Eq (Affine a b)
 
 -- | Helper constant to refer to the additive identity.
 _zero :: (Num a) => a
-_zero = fromInteger 0
+_zero = 0
 
 -- | Helper method to eliminate trailing zeros for a vector of numbers.
 _reduce :: (Num a, Eq a) => [a] -> [a]
@@ -84,7 +84,7 @@ lit = Affine []
 
 -- | Helper method to construct an affine linear function.
 affine :: (RMod a b, Eq a) => [a] -> b -> Affine a b
-affine coeffs offset = Affine (_reduce coeffs) offset
+affine coeffs = Affine (_reduce coeffs)
 
 -- | Helper method to construct a linear function from a list of coefficients.
 linear :: (RMod a b, Eq a) => [a] -> Affine a b

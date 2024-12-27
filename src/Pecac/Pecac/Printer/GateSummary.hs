@@ -45,7 +45,7 @@ import Pecac.Parser.Syntax
 -----------------------------------------------------------------------------------------
 -- * Expression Conversion.
 
--- | 
+-- |  Constructs the literal portion of a parameter reference with coefficients.
 makeIntegralLit :: Integer -> Expr
 makeIntegralLit num =
     if num < 0
@@ -97,7 +97,7 @@ extractIntegralOffset num = Times (makeIntegralLit num) Tau
 extractOffset :: Affine Rational Revolution -> Maybe Expr
 extractOffset aff
     | value == 0 = Nothing
-    | denom == 1 = Just $ nexpr
+    | denom == 1 = Just nexpr
     | otherwise  = Just $ Div nexpr $ ConstNat denom
     where value = asRational $ getOffset aff
           denom = denominator value

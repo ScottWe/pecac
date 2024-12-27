@@ -62,7 +62,7 @@ gateCompose m1 m2 = Matrix.compose m2 m1
 composeMatsImpl :: [CycMat] -> [CycMat]
 composeMatsImpl []           = []
 composeMatsImpl [m]          = [m]
-composeMatsImpl (m1:m2:mats) = (gateCompose m1 m2) : composeMatsImpl mats
+composeMatsImpl (m1:m2:mats) = gateCompose m1 m2 : composeMatsImpl mats
 
 -- | Takes as input the number of qubits (n), and a sequence of cyclotomic operators.
 -- Multiplies the sequence in a divide-and-conqure strategy.
@@ -110,7 +110,7 @@ precomputeGate n gate =
 -- composed via matrix multiplication.
 reduceGates :: [Precomputed] -> [Precomputed]
 reduceGates []                    = []
-reduceGates (Right m1:Right m2:l) = reduceGates $ (Right $ gateCompose m1 m2) : l
+reduceGates (Right m1:Right m2:l) = reduceGates $ Right (gateCompose m1 m2) : l
 reduceGates (v:l)                 = v : reduceGates l
 
 -- | Takes as input input the number of qubits (n), a list of rational degrees and a
