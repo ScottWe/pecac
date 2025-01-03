@@ -48,7 +48,7 @@ ratioToRev n d = if d == 0 then Nothing else Just $ rationalToRev $ n % d
 
 -- | Converts a string to a revolution, according to the format in Parser.Revolution.
 strToRev :: String -> Maybe Revolution
-strToRev src = branchJust (parseRevolution src) $ \(n, d) -> ratioToRev n d
+strToRev src = branchJust (parseRevolution src) (uncurry ratioToRev)
 
 -----------------------------------------------------------------------------------------
 -- * Displaying Revolution.

@@ -22,7 +22,7 @@ import qualified Data.List.NonEmpty as NonEmpty
  
 -- | Takes as input a value x and an integer n. Returns a list which repeats x n-times.
 repeatn :: a -> Int -> [a]
-repeatn x n = take n $ repeat x
+repeatn x n = replicate n x
 
 -- | Takes as input a binary operator, a default value, and two lists of the same type.
 -- First, the smaller list is padded (at  the end) with the default value, until the two
@@ -43,7 +43,7 @@ mergeWith f v (x:xs) (y:ys) = f x y : mergeWith f v xs ys
 -- function operations on multisets rather than sets.
 getCombinations :: [[a]] -> [[a]]
 getCombinations []         = [[]]
-getCombinations (set:sets) = concat $ map f $ getCombinations sets
+getCombinations (set:sets) = concatMap f $ getCombinations sets
     where f seq = map (:seq) set
 
 -----------------------------------------------------------------------------------------
