@@ -12,7 +12,7 @@ from qiskit.circuit.library import ExcitationPreserving
 from qiskit.providers.fake_provider import GenericBackendV2
 from qiskit.qasm3 import dumps
 
-from ansatz_setup import make_ansatz
+from ansatz_setup import FaultInjector, make_ansatz
 
 # Bounds for the ansatz repetitions.
 MIN_REPS = 1
@@ -29,7 +29,7 @@ entanglement = ["full", "reverse_linear", "sca"]
 # same size, and uses these qubits in place of registers. The number of qubits is taken
 # as an input.
 def lift_registers(qnum, text):
-    qvar = "qs"
+    qvar = "q"
 
     # Checks if low-level registers are in use.
     if "$" in text:
@@ -43,6 +43,9 @@ def lift_registers(qnum, text):
         lines = text.splitlines()
         lines.insert(2, "qubit[" + str(qnum) + "] " + qvar + ";")
         text = "\n".join(lines)
+    elif (qnum == 1) and ("qubit[2]" in text):
+        # This case can arise when injecting faults into a 1 qubit circuit.
+        text = text.replace("qubit[2]", "qubit[1]")
 
     return text
 
@@ -98,11 +101,17 @@ if qnum <= 2:
     strategies = [entanglement[0]]
 
 # Generates all circuts with the specified number of qubits.
+seed = 0
 for i in range(0, len(ansatz)):
     for e in strategies:
         for r in range(MIN_REPS, MAX_REPS):
             # Generates the pair of circuits.
             qc1, qc2 = make_ansatz(ansatz[i], qnum, e, r, backend)
+
+            # Injects a fault into the transpiled circuit.
+            qc3 = FaultInjector(seed, True)(qc2)
+            qc4 = FaultInjector(seed, False)(qc2)
+            seed = seed + 1
 
             # Logs the circuits to the specified files.
             bname = names[i] + "_" + e + "_q" + str(qnum) + "_r" + str(r)
@@ -110,3 +119,7 @@ for i in range(0, len(ansatz)):
                 f.write(pecac_dumps(qnum, qc1))
             with open(dest + "/" + bname + ".transpile.qasm", "w") as f:
                 f.write(pecac_dumps(qnum, qc2))
+            with open(dest + "/" + bname + ".f.fault.qasm", "w") as f:
+                f.write(pecac_dumps(qnum, qc3))
+            with open(dest + "/" + bname + ".p.fault.qasm", "w") as f:
+                f.write(pecac_dumps(qnum, qc4))

@@ -1,6 +1,7 @@
 import numpy as np
 
 from qiskit import transpile
+from qiskit.circuit import ParameterExpression
 from qiskit.circuit import QuantumCircuit
 from qiskit.circuit.library import TwoLocal
 from qiskit.circuit.library import ExcitationPreserving
@@ -37,6 +38,64 @@ class EPTranslator(TransformationPass):
                 dag.substitute_node_with_dag(node, circuit_to_dag(replacement))
 
         return dag
+
+# Determines if a node in a CircuitDAG corresponds to a parameterized Rz gate.
+def is_parameterized_rz(node):
+    if node.op.name != "rz":
+        return False
+    if type(node.op.params[0]) in (int, float):
+        return False
+    return True
+
+# Returns the first parameter of parameterized rotation.
+def get_param(node):
+    params = node.op.params[0]
+    if isinstance(params, ParameterExpression):
+        return list(params.parameters)[0]
+    else:
+        return params
+
+# Pass to inject a fault into a quantum circuit.
+class FaultInjector(TransformationPass):
+    def __init__(self, seed, freq, *args, **kwargs):
+        self.fault_seed = seed
+        self.freq_fault = freq
+        super().__init__(*args, **kwargs)
+
+    def run(self, dag):
+        # Determines the number of Rz gates.
+        rz_count = 0
+        for node in dag.op_nodes():
+            if is_parameterized_rz(node):
+                rz_count = rz_count + 1     
+
+        # Determines the Rz gate to replace.
+        offset = self.fault_seed % rz_count
+        target = None
+        for node in dag.op_nodes():
+            if is_parameterized_rz(node):
+                if offset == 0:
+                    target = node
+                    break
+                offset = offset - 1
+
+        # Determines the replacement gate.
+        pexpr = target.op.params[0]
+        replacement = QuantumCircuit(1)
+        if self.freq_fault:
+            # Error in frequency.
+            param = get_param(target)
+            replacement.rz(pexpr, 0)
+            replacement.rz(param, 0)
+        else: 
+            # Error in phase.
+            replacement.rz(pexpr + np.pi / 5, 0)
+
+        # Performs the substitution
+        dag.substitute_node_with_dag(target, circuit_to_dag(replacement))
+
+        return dag
+
 
 # Helper method for consistent generation of test circuits for evaluation.
 def make_ansatz(builder, qnum, entanglement, reps, backend):
