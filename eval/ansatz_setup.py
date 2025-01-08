@@ -106,7 +106,7 @@ def make_ansatz(builder, qnum, entanglement, reps, backend):
     params["reps"]         = reps
     params["flatten"]      = True
     if builder == TwoLocal:
-        params["rotation_blocks"]     = ["ry"]
+        params["rotation_blocks"]     = ["rx"]
         params["entanglement_blocks"] = ["cx"]
 
     # Generates the circuit, and its hardware transpiled representation.
