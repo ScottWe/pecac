@@ -85,11 +85,26 @@ pecCase thetas lhsFn rhsFn eq =
 -----------------------------------------------------------------------------------------
 -- * Deterministic Equivalence Checking.
 
+-- | Helper method to generate the numbers from 0 to (n - 1). When (n < 2), this function
+-- is equivalent to [0 .. (n - 1)]. When (n >= 2), this function is instead equivalent to
+-- [1, 0] ++ [2 .. (n - 1)]. This ensures that 1 comes before 0, and increases the chance
+-- that PEC will find parameter-dependant faults more efficiently.
+-- 
+-- Note: Global phase inference already ensures that the circuits at parameter 0.
+cutoffToIndices:: Integer -> [Integer]
+cutoffToIndices 0 = []
+cutoffToIndices 1 = [0]
+cutoffToIndices 2 = [1, 0]
+cutoffToIndices 3 = [1, 0, 2]
+cutoffToIndices 4 = [1, 0, 2, 3]
+cutoffToIndices 5 = [1, 0, 2, 3, 4]
+cutoffToIndices n = [1, 0] ++ [2 .. (n - 1)]
+
 -- | Takes as input the cutoff value for a specific parameter, and returns a sufficient
 -- number of distinct rational multiples of pi from [0, 4), such that parameterized
 -- equivalence can be determined.
 cutoffToParamSet :: Integer -> [Revolution]
-cutoffToParamSet n = map (indexToRev denom) $ [0 .. (n - 1)]
+cutoffToParamSet n = map (indexToRev denom) (cutoffToIndices n)
     where denom = if rem n 2 == 0 then n else n + 1
 
 -- | Takes as input a list of parameter sets, a list of rational angles, and the
