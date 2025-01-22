@@ -68,6 +68,7 @@ for i in range(0, len(ansatz)):
                 worksheet.write(row, 5, qc1.size())
                 worksheet.write(row, 6, qc2.size())
                 row += 1
+            if n < 3: break
 
 # Closes the workbook.
 workbook.close()
