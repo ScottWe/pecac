@@ -18,6 +18,7 @@ import PecacExe.CmdLnFlags
   , probFlags
   , seedFlags
   , srcFlags
+  , trialFlags
   )
 import PecacExe.CmdLnParser
   ( Data
@@ -34,6 +35,7 @@ data PPecTool = PPecTool { prob   :: Rational
                          , rhs    :: String
                          , gphase :: Bool
                          , seed   :: Maybe Int
+                         , trials :: Int
                          } deriving (Show, Eq, Data, Typeable)
 
 -------------------------------------------------------------------------------
@@ -45,6 +47,7 @@ ppecMode = PPecTool { prob   = probFlags $ 1 % 1
                     , rhs    = srcFlags def
                     , gphase = gphaseFlag def
                     , seed   = seedFlags def
+                    , trials = trialFlags 1
                     }
 
 -------------------------------------------------------------------------------

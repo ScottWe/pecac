@@ -7,6 +7,7 @@ module PecacExe.CmdLnFlags
   , radFlags
   , seedFlags
   , srcFlags
+  , trialFlags
   ) where
 
 -----------------------------------------------------------------------------------------
@@ -57,3 +58,8 @@ seedFlags x = x &= help "A manual random seed for deterministic tests."
 -- an argument, since flags are impure.
 gphaseFlag :: Bool -> Bool
 gphaseFlag x = x &= help "Compare circuits upto global phase."
+
+-- | Returns the flags for the --trials argument. The default value is taken as
+-- an argument, since flags are impure
+trialFlags :: Int -> Int
+trialFlags x = x &= help "Number of trials to perform."
