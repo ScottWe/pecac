@@ -123,6 +123,11 @@ executable pecac_reparam
   main-is:             Reparam/Main.hs
   other-modules:       Reparam.CmdLn
 
+executable pecac_lphase
+  import:              basic-exe-props
+  main-is:             LPhase/Main.hs
+  other-modules:       LPhase.CmdLn
+
 -----------------------------------------------------------------------------------------
 -- Unit Testing.
 
