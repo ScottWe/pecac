@@ -160,6 +160,11 @@ test-suite analyzer-integrality-tests
   main-is:             Analyzer-Integrality-Tests.hs
   type:                exitcode-stdio-1.0
 
+test-suite analyzer-problem-tests
+  import:              basic-unit-test-props
+  main-is:             Analyzer-Problem-Tests.hs
+  type:                exitcode-stdio-1.0
+
 test-suite analyzer-revolution-tests
   import:              basic-unit-test-props
   main-is:             Analyzer-Revolution-Tests.hs

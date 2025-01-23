@@ -4,6 +4,7 @@ module Pecac.Analyzer.Problem
   ( ParamArr (..)
   , ParamCirc (..)
   , QubitReg (..)
+  , addGlobalPhase
   , toGates
   , toParamCount
   ) where
@@ -11,7 +12,12 @@ module Pecac.Analyzer.Problem
 -----------------------------------------------------------------------------------------
 -- * Import Section.
 
-import Pecac.Analyzer.Gate (GateSummary (..))
+import Pecac.Affine (Affine)
+import Pecac.Analyzer.Gate
+  ( GateSummary (..)
+  , createGlobalPhase
+  )
+import Pecac.Analyzer.Revolution (Revolution)
 
 -----------------------------------------------------------------------------------------
 -- * Datatypes for Circuit Parameters.
@@ -27,6 +33,11 @@ data QubitReg = QubitReg String Int deriving (Show, Eq)
 
 -- | Abstract description of a parameterized OpenQASM circuit.
 data ParamCirc = ParamCirc ParamArr QubitReg [GateSummary] deriving (Show, Eq)
+
+-- | Modifies the circuit to include a global phase.
+addGlobalPhase :: Affine Rational Revolution -> ParamCirc -> ParamCirc
+addGlobalPhase params (ParamCirc parr qreg gates) = ParamCirc parr qreg $ gphase : gates
+    where gphase = createGlobalPhase params
 
 -- | Returns the number of parameters in a circuit.
 toParamCount :: ParamCirc -> Int

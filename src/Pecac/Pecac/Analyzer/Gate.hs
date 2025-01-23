@@ -6,6 +6,7 @@ module Pecac.Analyzer.Gate
   , PlainName (..)
   , Polarity (..)
   , RotName (..)
+  , createGlobalPhase
   , getConfigs
   , getPlainArity
   , getRotArity
@@ -151,3 +152,8 @@ isParameterized (RotSummary _ coeffs _) = not $ isConstant coeffs
 getConfigs :: GateSummary -> GateConfigs
 getConfigs (PlainSummary _ confs) = confs
 getConfigs (RotSummary _ _ confs) = confs
+
+-- | Returns a global phase gate with the provided parameters.
+createGlobalPhase :: Affine Rational Revolution -> GateSummary
+createGlobalPhase params = RotSummary GPhase params configs
+    where configs = GateConfigs False [] []
