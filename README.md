@@ -1,7 +1,7 @@
 # PECAC: A Parameterized Equivalence Checker for Ansatz Circuits
 
 PECAC is an automated equivalence checker for parameterized quantum circuits written in OpenQASM 3.
-A parameterized quantum circuit is a quantum circuit which one or more rotations has a symbolic parameter.
+A parameterized quantum circuit is a quantum circuit in which one or more rotations has a symbolic parameter.
 Two parameterized circuits are said to be equivalent if they agree on all assignments to their symbolic parameters.
 Currently, PECAC supports exact equivalence and equivalence up-to global phase.
 
