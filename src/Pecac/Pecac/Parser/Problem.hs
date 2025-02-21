@@ -111,7 +111,7 @@ _REQ_INCLUDES = Set.fromList ["stdgates.inc"]
 data CircErr = UnsupportedVersion String
              | MissingIncludes (NonEmpty.NonEmpty String)
              | UnsupportedIncludes (NonEmpty.NonEmpty String)
-             | InvalidStmt StmtErr
+             | InvalidStmt String StmtErr
              deriving (Show, Eq)
 
 -- | Predicate to identify OpenQASM versions supported by pecac.
@@ -149,5 +149,5 @@ qasmToParamCirc (QASMFile ver incls [] stmts) =
         Just diff -> Left $ MissingIncludes diff
         Nothing   -> case hasExtraIncludes incls of
             Just diff -> Left $ UnsupportedIncludes diff
-            Nothing   -> updateLeft (summarizeStmts stmts) InvalidStmt
+            Nothing   -> updateLeft (summarizeStmts stmts) (InvalidStmt "main")
 qasmToParamCirc _ = error "Procedure delcarations are not supported."

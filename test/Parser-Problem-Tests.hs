@@ -223,7 +223,7 @@ test22 = TestCase (assertEqual "qasmToParamCirc identifies extra include files (
           reqs  = NonEmpty.fromList [extra]
 
 test23 = TestCase (assertEqual "qasmToParamCirc handles invalid statements."
-                               (Left $ InvalidStmt error)
+                               (Left $ InvalidStmt "main" error)
                                (qasmToParamCirc file))
     where bname = "bad"
           pdecl = ParamDeclStmt $ ParamArrDecl "theta" 5

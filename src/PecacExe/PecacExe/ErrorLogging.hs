@@ -125,7 +125,8 @@ logCircErr (MissingIncludes incls) = [msg]
     where msg = "Missing required include files: " ++ prettyNonEmpty show incls ++ "."
 logCircErr (UnsupportedIncludes incls) = [msg]
     where msg = "Unsupported include files: " ++ prettyNonEmpty show incls ++ "."
-logCircErr (InvalidStmt err) = logStmtErr err
+logCircErr (InvalidStmt ctx err) = msg : logStmtErr err
+    where msg = "Invalid statement in context: " ++ ctx ++ "."
 
 -- | Returns a textual representation of Side values.
 sideToString :: Side -> String
