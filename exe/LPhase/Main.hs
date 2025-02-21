@@ -65,9 +65,9 @@ doEncode src = tryFindLinearPhase (doEncodeCb src) src
 -- candidate is found, then the results are logged to the console. Otherwise, an error is
 -- reported to the console.
 doInfer :: ParamCirc -> ParamCirc -> IO ()
-doInfer = do
+doInfer src otr = do
     putStrLn "Found candidate global phase alpha."
-    tryFindLinearPhase $ logShowableVect "alpha"
+    tryFindLinearPhase (logShowableVect "alpha") src otr
 
 -----------------------------------------------------------------------------------------
 -- * Entry Point.
