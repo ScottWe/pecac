@@ -3,6 +3,7 @@
 module Pecac.Parser.Syntax
   ( BaseGate (..)
   , Expr (..)
+  , FDecl (..)
   , Gate (..)
   , Operand (..)
   , ParamDecl (..)
@@ -15,13 +16,16 @@ module Pecac.Parser.Syntax
 -- * QASM File Strucutre.
 
 -- | The snytactic structure of an OpenQASM file which conforms to pecac.
-data QASMFile = QASMFile String [String] [Stmt] deriving (Show, Eq)
+data QASMFile = QASMFile String [String] [FDecl] [Stmt] deriving (Show, Eq)
 
 -- | The supported statements in a pecac-compliant OpenQASM 3 file.
 data Stmt = GateStmt Gate
           | ParamDeclStmt ParamDecl
           | QubitDeclStmt QubitDecl
           deriving (Show, Eq)
+
+-- | The supported declarations in a pecac-compliant OpenQASM 3 file.
+data FDecl = GateDecl String [String] [String] [Stmt] deriving (Show, Eq)
 
 -----------------------------------------------------------------------------------------
 -- * QASM Gates.

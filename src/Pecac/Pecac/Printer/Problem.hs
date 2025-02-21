@@ -16,11 +16,13 @@ import Pecac.Analyzer.Problem
   )
 import Pecac.List (prettyIntercalate)
 import Pecac.Parser.Syntax
-  ( ParamDecl (ParamArrDecl)
+  ( FDecl
+  , ParamDecl (ParamArrDecl)
   , QubitDecl (QubitArrDecl)
   , QASMFile (..)
   , Stmt (..)
   )
+import Pecac.Printer.FDecl (printFDecl)
 import Pecac.Printer.GateSummary (summaryToGate)
 import Pecac.Printer.Stmt (printStmt)
 
@@ -38,7 +40,7 @@ declareQubits (QubitReg name sz) = QubitDeclStmt $ QubitArrDecl name sz
 -- | Converts a parameterized circuit to its corresponding syntactic statement. The
 -- version defaults to 3.0, and the library "stdgates.inc" is included.
 encodeProblem :: ParamCirc -> QASMFile
-encodeProblem (ParamCirc parr qreg gates) = QASMFile "3.0" ["stdgates.inc"] stmts
+encodeProblem (ParamCirc parr qreg gates) = QASMFile "3.0" ["stdgates.inc"] [] stmts
     where pstmt = declareParams parr
           qstmt = declareQubits qreg
           gstmt = map (GateStmt . summaryToGate parr qreg) gates
@@ -51,12 +53,32 @@ encodeProblem (ParamCirc parr qreg gates) = QASMFile "3.0" ["stdgates.inc"] stmt
 formatInclude :: String -> String
 formatInclude incl = "include \"" ++ incl ++ "\";"
 
+-- | Helper method to print each include statement, with proper spacing.
+formatIncludeLine :: [String] -> String
+formatIncludeLine []    = ""
+formatIncludeLine incls = "\n" ++ itext
+    where itext = prettyIntercalate "\n" formatInclude incls
+
+-- | Helper method to print each include function declaration, with proper spacing. This
+-- tring will include newlines separating the function definitions from the previous
+-- block in the file.
+formatDeclLines :: [FDecl] -> String
+formatDeclLines []    = ""
+formatDeclLines decls = "\n\n" ++ ftext
+    where ftext = prettyIntercalate "\n\n" printFDecl decls
+
+-- | Helper method to print the statements in the main procedure of the program, with
+-- proper spacing. This string will include newlines separating the function definitions
+-- from the previous block in the file.
+formatMain :: [Stmt] -> String
+formatMain []   = ""
+formatMain main = "\n\n" ++ mtext
+    where mtext = prettyIntercalate "\n" printStmt main
+
 -- | Converts a QASMFile to a textual representation.
 printFile :: QASMFile -> String
-printFile (QASMFile vers incls stmts) =
-    if itext == ""
-    then vtext ++ "\n\n" ++ stext
-    else vtext ++ "\n" ++ itext ++ "\n\n" ++ stext
+printFile (QASMFile vers incls decls main) = vtext ++ itext ++ ftext ++ mtext
     where vtext = "OPENQASM " ++ vers ++ ";"
-          itext = prettyIntercalate "\n" formatInclude incls
-          stext = prettyIntercalate "\n" printStmt stmts
+          itext = formatIncludeLine incls
+          ftext = formatDeclLines decls
+          mtext = formatMain main

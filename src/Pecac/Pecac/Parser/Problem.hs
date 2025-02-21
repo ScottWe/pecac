@@ -142,7 +142,7 @@ hasExtraIncludes incl = getInclDiff (Set.fromList incl) _REQ_INCLUDES
 -- (see summarizeStmts). Otherwise, an error is returned explaining why the file metadata
 -- does not conform to the requirements of pecac. 
 qasmToParamCirc :: QASMFile -> Either CircErr ParamCirc
-qasmToParamCirc (QASMFile ver incls stmts) =
+qasmToParamCirc (QASMFile ver incls [] stmts) =
     if not $ isVerSupported ver
     then Left $ UnsupportedVersion ver
     else case hasMissingIncludes incls of
@@ -150,3 +150,4 @@ qasmToParamCirc (QASMFile ver incls stmts) =
         Nothing   -> case hasExtraIncludes incls of
             Just diff -> Left $ UnsupportedIncludes diff
             Nothing   -> updateLeft (summarizeStmts stmts) InvalidStmt
+qasmToParamCirc _ = error "Procedure delcarations are not supported."

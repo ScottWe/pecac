@@ -22,102 +22,102 @@ runPasmQasm :: String -> Either String QASMFile
 runPasmQasm = parseQasm file
 
 test1 = TestCase (assertEqual "Can parse version line (1/2)."
-                              (Right $ QASMFile "2.0" [] [])
+                              (Right $ QASMFile "2.0" [] [] [])
                               (runPasmQasm "OPENQASM 2.0;"))
 
 test2 = TestCase (assertEqual "Can parse version line (2/2)."
-                              (Right $ QASMFile "3.0" [] [])
+                              (Right $ QASMFile "3.0" [] [] [])
                               (runPasmQasm "OPENQASM 3.0;"))
 
 test3 = TestCase (assertEqual "Can parse include lines (1/3)."
-                              (Right $ QASMFile "3" ["stdgates.inc"] [])
+                              (Right $ QASMFile "3" ["stdgates.inc"] [] [])
                               (runPasmQasm "include \"stdgates.inc\";"))
 
 test4 = TestCase (assertEqual "Can parse include lines (2/3)."
-                              (Right $ QASMFile "3" ["test.inc"] [])
+                              (Right $ QASMFile "3" ["test.inc"] [] [])
                               (runPasmQasm "include \"test.inc\";"))
 
 test5 = TestCase (assertEqual "Can parse include lines (3/3)."
-                              (Right $ QASMFile "3" ["test.inc", "stdgates.inc"] [])
+                              (Right $ QASMFile "3" ["test.inc", "stdgates.inc"] [] [])
                               (runPasmQasm lines))
     where lines = "include \"test.inc\";" ++ "\n" ++
                   "include \"stdgates.inc\";"
 
 test6 = TestCase (assertEqual "Can parse param declaration list (var)."
-                              (Right $ QASMFile "3" [] [decl])
+                              (Right $ QASMFile "3" [] [] [decl])
                               (runPasmQasm "input angle theta;"))
     where decl = ParamDeclStmt $ ParamVarDecl "theta"
 
 test7 = TestCase (assertEqual "Can parse param declaration list (array)."
-                              (Right $ QASMFile "3" [] [decl])
+                              (Right $ QASMFile "3" [] [] [decl])
                               (runPasmQasm "input array[angle, 12] theta;"))
     where decl = ParamDeclStmt $ ParamArrDecl "theta" 12
 
 test8 = TestCase (assertEqual "Can parse qubit declaration list (var)."
-                              (Right $ QASMFile "3" [] [decl])
+                              (Right $ QASMFile "3" [] [] [decl])
                               (runPasmQasm "qubit q;"))
     where decl = QubitDeclStmt $ QubitVarDecl "q"
 
 test9 = TestCase (assertEqual "Can parse qubit declaration list (array)."
-                              (Right $ QASMFile "3" [] [decl])
+                              (Right $ QASMFile "3" [] [] [decl])
                               (runPasmQasm "qubit[7] qs;"))
     where decl = QubitDeclStmt $ QubitArrDecl "qs" 7
 
 test10 = TestCase (assertEqual "Can parse qreg declaration list (var)."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm "qreg q1;"))
     where decl = QubitDeclStmt $ QubitVarDecl "q1"
 
 test11 = TestCase (assertEqual "Can parse qreg declaration list (array)."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm "qreg qs1[77];"))
     where decl = QubitDeclStmt $ QubitArrDecl "qs1" 77
 
 test12 = TestCase (assertEqual "Can parse basic gates (one operand)."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm "x qs[1];"))
     where decl = GateStmt $ Gate $ PlainGate "x" [QReg "qs" 1]
 
 test13 = TestCase (assertEqual "Can parse basic gates (three operands)."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm "ccx q, qs[1], qs1[4];"))
     where decl = GateStmt $ Gate $ PlainGate "ccx" [QVar "q", QReg "qs" 1, QReg "qs1" 4]
 
 test14 = TestCase (assertEqual "Can parse rotation gates (one operand)."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm "rz(theta[1]) qs[1];"))
     where expr = CellId "theta" 1
           decl = GateStmt $ Gate $ RotGate "rz" expr [QReg "qs" 1]
 
 test15 = TestCase (assertEqual "Can parse rotation gates (three operands)."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm "ccrz(theta[1]) qs1[5], x, y;"))
     where expr = CellId "theta" 1
           decl = GateStmt $ Gate $ RotGate "ccrz" expr [QReg "qs1" 5, QVar "x", QVar "y"]
 
 test16 = TestCase (assertEqual "Can parse rotation gates (complicated expression)."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm line))
     where line = "rz(theta[1] + 5 * x + (-2) * rho[5]) q;"
           decl = GateStmt $ Gate $ RotGate "rz" complexExpr [QVar "q"]
 
 test17 = TestCase (assertEqual "Can parse controlled gate."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm "ctrl @ x q;"))
     where decl = GateStmt $ CtrlMod $ Gate $ PlainGate "x" [QVar "q"]
 
 test18 = TestCase (assertEqual "Can parse negatively controlled gate."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm "negctrl @ x q;"))
     where decl = GateStmt $ NegCtrlMod $ Gate $ PlainGate "x" [QVar "q"]
 
 test19 = TestCase (assertEqual "Can parse inverse gate."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm "inv @ x q;"))
     where decl = GateStmt $ InvMod $ Gate $ PlainGate "x" [QVar "q"]
 
 test20 = TestCase (assertEqual "Can parse mixed statement (1/2)."
-                               (Right $ QASMFile "2.0" ["stdgates.inc"] body)
+                               (Right $ QASMFile "2.0" ["stdgates.inc"] [] body)
                                (runPasmQasm lines))
     where lines = "OPENQASM 2.0;" ++ "\n" ++
                   "include \"stdgates.inc\";" ++ "\n" ++
@@ -133,7 +133,7 @@ test20 = TestCase (assertEqual "Can parse mixed statement (1/2)."
                   GateStmt $ Gate $ RotGate "crz" (CellId "theta" 1) [QReg "qs" 1, QVar "q1"]]
 
 test21 = TestCase (assertEqual "Can parse mixed statement (2/2)."
-                               (Right $ QASMFile "3" [] body)
+                               (Right $ QASMFile "3" [] [] body)
                                (runPasmQasm lines))
     where lines = "input array[angle, 5] phi;" ++ "\n" ++
                   "qubit q1;" ++ "\n" ++
@@ -176,22 +176,22 @@ test27 = TestCase (assertBool "Special constants are rejected as identifiers (6/
 -- Constant Angle Parsing
 
 test28 = TestCase (assertEqual "Can parse rotation gates with literal pi (1/2)."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm "rz(pi) qs[1];"))
     where decl = GateStmt $ Gate $ RotGate "rz" Pi [QReg "qs" 1]
 
 test29 = TestCase (assertEqual "Can parse rotation gates with literal pi (2/2)."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm "rz(π) qs[1];"))
     where decl = GateStmt $ Gate $ RotGate "rz" Pi [QReg "qs" 1]
 
 test30 = TestCase (assertEqual "Can parse rotation gates with literal tau (1/2)."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm "rz(tau) qs[1];"))
     where decl = GateStmt $ Gate $ RotGate "rz" Tau [QReg "qs" 1]
 
 test31 = TestCase (assertEqual "Can parse rotation gates with literal tau (2/2)."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm "rz(τ) qs[1];"))
     where decl = GateStmt $ Gate $ RotGate "rz" Tau [QReg "qs" 1]
 
@@ -199,12 +199,12 @@ test31 = TestCase (assertEqual "Can parse rotation gates with literal tau (2/2).
 -- Parsing Division Expressions
 
 test32 = TestCase (assertEqual "Can parse simple division statements."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm "rz(pi / 2) q;"))
     where decl = GateStmt $ Gate $ RotGate "rz" (Div Pi $ ConstNat 2) [QVar "q"]
 
 test33 = TestCase (assertEqual "Can parse complex division statements."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm line))
     where line = "rz((theta[1] + 5 * x + (-2) * rho[5]) / (2 + 3)) q;"
           expr = Div (Brack complexExpr) (Brack $ Plus (ConstNat 2) (ConstNat 3))
@@ -214,14 +214,57 @@ test33 = TestCase (assertEqual "Can parse complex division statements."
 -- Parsing Global Phase Gates
 
 test34 = TestCase (assertEqual "Can parse global phase gates (zero operands)."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm "gphase(pi);"))
     where decl = GateStmt $ Gate $ RotGate "gphase" Pi []
 
 test35 = TestCase (assertEqual "Can parse rotation gates (one operand)."
-                               (Right $ QASMFile "3" [] [decl])
+                               (Right $ QASMFile "3" [] [] [decl])
                                (runPasmQasm "ctrl @ gphase(pi) qs[1];"))
     where decl = GateStmt $ CtrlMod $ Gate $ RotGate "gphase" Pi [QReg "qs" 1]
+
+-----------------------------------------------------------------------------------------
+-- Parsing Function Declarations
+
+test36 = TestCase (assertEqual "Can parse OpenQASM 3 functions (no parameters)."
+                               (Right $ QASMFile "3" [] [fdecl] [])
+                               (runPasmQasm fdstr))
+    where fdecl = GateDecl "g" [] ["q"] [GateStmt $ Gate $ PlainGate "x" [QVar "q"]]
+          fdstr = "gate g q { x q; }"
+
+test37 = TestCase (assertEqual "Can parse OpenQASM 3 functions (empty parameters)."
+                               (Right $ QASMFile "3" [] [gdecl] [])
+                               (runPasmQasm fdstr))
+    where gdecl = GateDecl "gy" [] ["q1"] [GateStmt $ Gate $ PlainGate "y" [QVar "q1"]]
+          fdstr = "gate gy () q1 { y q1; }"
+
+test38 = TestCase (assertEqual "Can parse OpenQASM 3 functions (no body)."
+                               (Right $ QASMFile "3" [] [gdecl] [])
+                               (runPasmQasm fdstr))
+    where gdecl = GateDecl "gy" ["p1", "p2", "p3"] ["q1", "q2"] []
+          fdstr = "gate gy (p1, p2, p3) q1, q2 { }"
+
+test39 = TestCase (assertEqual "Can parse OpenQASM 3 functions."
+                               (Right $ QASMFile "3" [] [gdecl] [])
+                               (runPasmQasm fdstr))
+    where gstmt = GateStmt $ Gate $ RotGate "rz" (VarId "theta") [QVar "q"]
+          gdecl = GateDecl "mygate" ["theta"] ["q"] [gstmt]
+          fdstr = "gate mygate (theta) q { rz(theta) q; }"
+
+test40 = TestCase (assertEqual "Can parse OpenQASM 3 functions in a file."
+                               (Right $ QASMFile "3" ["stdgates.inc"] [gdecl] stmts)
+                               (runPasmQasm fdstr))
+    where rgate = GateStmt $ Gate $ RotGate "rz" (VarId "theta") [QVar "q1"]
+          xgate = GateStmt $ Gate $ PlainGate "x" [QVar "q2"]
+          qdecl = QubitDeclStmt $ QubitVarDecl "qq"
+          fcall = GateStmt $ Gate $ PlainGate "mygate" [QVar "qq"]
+          gdecl = GateDecl "mygate" ["theta"] ["q1", "q2"] [rgate, xgate]
+          stmts = [qdecl, fcall]
+          fdstr = "OPENQASM 3;" ++ "\n" ++
+                  "include \"stdgates.inc\";" ++ "\n" ++
+                  "gate mygate (theta) q1, q2 { rz(theta) q1; x q2; }" ++ "\n" ++
+                  "qubit qq;" ++ "\n" ++
+                  "mygate qq;"
 
 -----------------------------------------------------------------------------------------
 -- Orchestrates tests.
@@ -260,6 +303,11 @@ tests = hUnitTestToTests $ TestList [TestLabel "Valid_Version_1" test1,
                                      TestLabel "Valid_Div_1" test32,
                                      TestLabel "Valid_Div_2" test33,
                                      TestLabel "GPhase_ZeroOps" test34,
-                                     TestLabel "GPhase_OneOp" test35]
+                                     TestLabel "GPhase_OneOp" test35,
+                                     TestLabel "GateDecl_NoParams" test36,
+                                     TestLabel "GateDecl_EmptyParams" test37,
+                                     TestLabel "GateDecl_NoBody" test38,
+                                     TestLabel "GateDecl_Full" test39,
+                                     TestLabel "GateDecl_InFile" test40]
 
 main = defaultMain tests

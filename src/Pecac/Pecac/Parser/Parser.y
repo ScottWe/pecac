@@ -18,6 +18,7 @@ import Pecac.Parser.Syntax
     include         { Token _ TokenInclude }
     path            { Token _ (TokenPath $$) }
     ctrl            { Token _ TokenCtrl }
+    gate            { Token _ TokenGate }
     negctrl         { Token _ TokenNegCtrl }
     inv             { Token _ TokenInv }
     gphase          { Token _ TokenGPhase }
@@ -37,6 +38,8 @@ import Pecac.Parser.Syntax
     '/'             { Token _ TokenSlash }
     '('             { Token _ TokenLParen }
     ')'             { Token _ TokenRParen }
+    '{'             { Token _ TokenLBrace }
+    '}'             { Token _ TokenRBrace }
     '['             { Token _ TokenLBrack }
     ']'             { Token _ TokenRBrack }
     ','             { Token _ TokenComma }
@@ -50,7 +53,7 @@ import Pecac.Parser.Syntax
 ------------------------
 -- | General File Format
 
-Program : Version Includes StmtList               { QASMFile $1 $2 $3 }
+Program : Version Includes FuncList StmtList      { QASMFile $1 $2 $3 $4 }
 
 Version : {- empty -}                             { "3" }
         | openqasm version ';'                    { $2 }
@@ -66,6 +69,23 @@ StmtList : {- empty -}                            { [] }
 Stmt : Gate ';'                                   { GateStmt $1 }
      | ParamDecl ';'                              { ParamDeclStmt $1 }
      | QubitDecl ';'                              { QubitDeclStmt $1 }
+
+--------------------
+-- | Function Format
+
+IdList : id                                       { [$1] }
+       | id ',' IdList                            { $1 : $3 }
+
+OptIdList : {- empty -}                           { [] }
+          | IdList                                { $1 }
+
+FuncList : {- empty -}                            { [] }
+         | Func FuncList                          { $1 : $2 }
+
+Func : gate id '(' OptIdList ')' IdList Body      { GateDecl $2 $4 $6 $7 }
+     | gate id IdList Body                        { GateDecl $2 [] $3 $4 }
+
+Body : '{' StmtList '}'                           { $2 }
 
 -----------------------
 -- | Declaration Format

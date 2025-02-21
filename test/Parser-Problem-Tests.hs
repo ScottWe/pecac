@@ -164,7 +164,7 @@ test16 = TestCase (assertEqual "qasmToParamCirc handles version 3 files."
           qsize = 100
           pdecl = ParamDeclStmt $ ParamArrDecl pname psize
           qdecl = QubitDeclStmt $ QubitArrDecl qname qsize
-          file  = QASMFile "3" ["stdgates.inc"] [pdecl, qdecl, gate1, gate2, gate3]
+          file  = QASMFile "3" ["stdgates.inc"] [] [pdecl, qdecl, gate1, gate2, gate3]
           pvar  = ParamArr pname psize
           qvar  = QubitReg qname qsize
 
@@ -176,7 +176,7 @@ test17 = TestCase (assertEqual "qasmToParamCirc handles version 3.0 files."
           qsize = 100
           pdecl = ParamDeclStmt $ ParamArrDecl pname psize
           qdecl = QubitDeclStmt $ QubitArrDecl qname qsize
-          file  = QASMFile "3.0" ["stdgates.inc"] [pdecl, qdecl, gate1, gate3]
+          file  = QASMFile "3.0" ["stdgates.inc"] [] [pdecl, qdecl, gate1, gate3]
           pvar  = ParamArr pname psize
           qvar  = QubitReg qname qsize
 
@@ -186,7 +186,7 @@ test18 = TestCase (assertEqual "qasmToParamCirc rejects unsupported versions (1/
     where pdecl = ParamDeclStmt $ ParamArrDecl "theta" 5
           qdecl = QubitDeclStmt $ QubitArrDecl qname 100
           vers  = "2.0"
-          file  = QASMFile vers ["stdgates.inc"] [pdecl, qdecl, gate1, gate3]
+          file  = QASMFile vers ["stdgates.inc"] [] [pdecl, qdecl, gate1, gate3]
 
 test19 = TestCase (assertEqual "qasmToParamCirc rejects unsupported versions (2/2)."
                                (Left $ UnsupportedVersion vers)
@@ -194,14 +194,14 @@ test19 = TestCase (assertEqual "qasmToParamCirc rejects unsupported versions (2/
     where pdecl = ParamDeclStmt $ ParamArrDecl "theta" 5
           qdecl = QubitDeclStmt $ QubitArrDecl qname 100
           vers  = "2"
-          file  = QASMFile vers ["stdgates.inc"] [pdecl, qdecl, gate1, gate3]
+          file  = QASMFile vers ["stdgates.inc"] [] [pdecl, qdecl, gate1, gate3]
 
 test20 = TestCase (assertEqual "qasmToParamCirc identifies missing include files."
                                (Left $ MissingIncludes reqs)
                                (qasmToParamCirc file))
     where pdecl = ParamDeclStmt $ ParamArrDecl "theta" 5
           qdecl = QubitDeclStmt $ QubitArrDecl qname 100
-          file  = QASMFile "3.0" [] [pdecl, qdecl, gate1, gate3]
+          file  = QASMFile "3.0" [] [] [pdecl, qdecl, gate1, gate3]
           reqs  = NonEmpty.fromList ["stdgates.inc"]
 
 test21 = TestCase (assertEqual "qasmToParamCirc identifies extra include files (1/2)."
@@ -210,7 +210,7 @@ test21 = TestCase (assertEqual "qasmToParamCirc identifies extra include files (
     where pdecl = ParamDeclStmt $ ParamArrDecl "theta" 5
           qdecl = QubitDeclStmt $ QubitArrDecl qname 100
           extra = "mylib.inc"
-          file  = QASMFile "3.0" ["stdgates.inc", extra] [pdecl, qdecl, gate1, gate3]
+          file  = QASMFile "3.0" ["stdgates.inc", extra] [] [pdecl, qdecl, gate1, gate3]
           reqs  = NonEmpty.fromList [extra]
 
 test22 = TestCase (assertEqual "qasmToParamCirc identifies extra include files (2/2)."
@@ -219,7 +219,7 @@ test22 = TestCase (assertEqual "qasmToParamCirc identifies extra include files (
     where pdecl = ParamDeclStmt $ ParamArrDecl "theta" 5
           qdecl = QubitDeclStmt $ QubitArrDecl qname 100
           extra = "mylib.inc"
-          file  = QASMFile "3" [extra, "stdgates.inc"] [pdecl, qdecl, gate1, gate3]
+          file  = QASMFile "3" [extra, "stdgates.inc"] [] [pdecl, qdecl, gate1, gate3]
           reqs  = NonEmpty.fromList [extra]
 
 test23 = TestCase (assertEqual "qasmToParamCirc handles invalid statements."
@@ -231,7 +231,7 @@ test23 = TestCase (assertEqual "qasmToParamCirc handles invalid statements."
           bgate = Gate $ PlainGate bname [QReg qname 10]
           bdecl = GateStmt bgate
           error = InvalidGate bgate $ UnknownPlainName bname
-          file  = QASMFile "3" ["stdgates.inc"] [pdecl, qdecl, gate1, bdecl, gate3]
+          file  = QASMFile "3" ["stdgates.inc"] [] [pdecl, qdecl, gate1, bdecl, gate3]
 
 -----------------------------------------------------------------------------------------
 -- Orchestrates tests.

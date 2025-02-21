@@ -48,6 +48,8 @@ tokens :-
     <commentsl>     .                                 ;
     <commentml>     \*\/                              { begin 0 }
     <commentml>     [.\n]                             ;
+    -- Scope Keywords.
+    <0>             gate                              { constLex TokenGate }
     -- Gates and Modifiers.
     <0>             ctrl                              { constLex TokenCtrl }
     <0>             negctrl                           { constLex TokenNegCtrl }
@@ -77,6 +79,8 @@ tokens :-
     <0>             \)                                { constLex TokenRParen }
     <0>             \[                                { constLex TokenLBrack }
     <0>             \]                                { constLex TokenRBrack }
+    <0>             \{                                { constLex TokenLBrace }
+    <0>             \}                                { constLex TokenRBrace }
     <0>             \,                                { constLex TokenComma }
     <0>             \;                                { constLex TokenSemicolon }
 
@@ -98,6 +102,7 @@ data TokenClass = TokenOpenQasm
                 | TokenVer String
                 | TokenInclude
                 | TokenPath String
+                | TokenGate
                 | TokenCtrl
                 | TokenNegCtrl
                 | TokenInv
@@ -122,6 +127,8 @@ data TokenClass = TokenOpenQasm
                 | TokenRParen
                 | TokenLBrack
                 | TokenRBrack
+                | TokenLBrace
+                | TokenRBrace
                 | TokenComma
                 | TokenSemicolon
                 | TokenEOF
@@ -135,6 +142,7 @@ unlex TokenOpenQasm    = "OPENQASM"
 unlex (TokenVer str)   = str  
 unlex TokenInclude     = "include"
 unlex (TokenPath fp)   = fp
+unlex TokenGate        = "gate"
 unlex TokenCtrl        = "ctrl"
 unlex TokenNegCtrl     = "negctrl"
 unlex TokenInv         = "inv"
@@ -159,6 +167,8 @@ unlex TokenLParen      = "("
 unlex TokenRParen      = ")"
 unlex TokenLBrack      = "["
 unlex TokenRBrack      = "]"
+unlex TokenLBrace      = "{"
+unlex TokenRBrace      = "}"
 unlex TokenComma       = ","
 unlex TokenSemicolon   = ";"
 unlex TokenEOF         = "<EOF>"

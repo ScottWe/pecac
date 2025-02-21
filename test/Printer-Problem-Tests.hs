@@ -93,21 +93,46 @@ stmt_rot2 pvar qvar = GateStmt $ Gate $ RotGate "ry" (expr2 pvar) [QReg qvar 5]
 -----------------------------------------------------------------------------------------
 -- QASM Files.
 
-file1 :: String -> [String] -> QASMFile
-file1 ver incls = QASMFile ver incls [pdecl1, qdecl1]
-
-file2 :: String -> [String] -> QASMFile
-file2 ver incls = QASMFile ver incls [pdecl1, qdecl2, stmt_plain1 "qs"]
-
-file3 :: String -> [String] -> QASMFile
-file3 ver incls = QASMFile ver incls [pdecl2, qdecl1, stmt_rot1 "ps"]
-
-file4 :: String -> [String] -> QASMFile
-file4 ver incls = QASMFile ver incls [pdecl2, qdecl2, gstmt1, gstmt2, gstmt3, gstmt4]
+stmts2 :: [Stmt]
+stmts2 = [pdecl2, qdecl2, gstmt1, gstmt2, gstmt3, gstmt4]
     where gstmt1 = stmt_plain1 "qs"
           gstmt2 = stmt_rot1 "ps"
           gstmt3 = stmt_plain2 "qs"
           gstmt4 = stmt_rot2 "ps" "qs"
+
+gdecl1 :: FDecl
+gdecl1 = GateDecl "mygate" ["expr1", "expr2"] ["q1", "q2"] []
+
+gdecl2 :: FDecl
+gdecl2 = GateDecl "altgate" [] ["q1"] [stmt1, stmt2]
+    where vname = "q1"
+          vsymb = QVar vname
+          stmt1 = GateStmt $ Gate $ PlainGate "x" [vsymb]
+          stmt2 = GateStmt $ Gate $ PlainGate "y" [vsymb]
+
+file1 :: String -> [String] -> QASMFile
+file1 ver incls = QASMFile ver incls [] [pdecl1, qdecl1]
+
+file2 :: String -> [String] -> QASMFile
+file2 ver incls = QASMFile ver incls [] [pdecl1, qdecl2, stmt_plain1 "qs"]
+
+file3 :: String -> [String] -> QASMFile
+file3 ver incls = QASMFile ver incls [] [pdecl2, qdecl1, stmt_rot1 "ps"]
+
+file4 :: String -> [String] -> QASMFile
+file4 ver incls = QASMFile ver incls [] stmts2
+
+file5 :: String -> [String] -> QASMFile
+file5 ver incls = QASMFile ver incls [gdecl1] []
+
+file6 :: String -> [String] -> QASMFile
+file6 ver incls = QASMFile ver incls [gdecl1] stmts2
+
+file7 :: String -> [String] -> QASMFile
+file7 ver incls = QASMFile ver incls [gdecl2] stmts2
+
+file8 :: String -> [String] -> QASMFile
+file8 ver incls = QASMFile ver incls [gdecl1, gdecl2] []
 
 -----------------------------------------------------------------------------------------
 -- encodeProblem
@@ -241,6 +266,86 @@ fileSemTest circs reps = fileSemTestImpl 0 circs reps
 test10 = TestCase $ fileSemTest testInput fileReps
 
 -----------------------------------------------------------------------------------------
+-- printFile: Gate Declarations
+
+body5a :: String
+body5a = "OPENQASM 2.0;\n\n" ++
+         "gate mygate (expr1, expr2) q1, q2 {\n}"
+
+body5b :: String
+body5b = "OPENQASM 3;\n" ++
+        "include \"stdgates.inc\";\n\n" ++
+         "gate mygate (expr1, expr2) q1, q2 {\n}"
+
+body6a :: String
+body6a = "OPENQASM 2.0;\n\n" ++
+         "gate mygate (expr1, expr2) q1, q2 {\n}\n\n" ++
+         "input array[angle, 150] ps;\n" ++
+         "qubit[150] qs;\n" ++
+         "x qs[1];\n" ++
+         "gphase(ps[0]);\n" ++
+         "h qs[3];\n" ++
+         "ry(ps[2]) qs[5];"
+
+body6b :: String
+body6b = "OPENQASM 3;\n" ++
+         "include \"stdgates.inc\";\n\n" ++
+         "gate mygate (expr1, expr2) q1, q2 {\n}\n\n" ++
+         "input array[angle, 150] ps;\n" ++
+         "qubit[150] qs;\n" ++
+         "x qs[1];\n" ++
+         "gphase(ps[0]);\n" ++
+         "h qs[3];\n" ++
+         "ry(ps[2]) qs[5];"
+
+body7 :: String
+body7 = "OPENQASM 3;\n" ++
+        "include \"stdgates.inc\";\n\n" ++
+        "gate altgate q1 {\n" ++
+        "    x q1;\n" ++
+        "    y q1;\n" ++
+        "}\n\n" ++
+        "input array[angle, 150] ps;\n" ++
+        "qubit[150] qs;\n" ++
+        "x qs[1];\n" ++
+        "gphase(ps[0]);\n" ++
+        "h qs[3];\n" ++
+        "ry(ps[2]) qs[5];"
+
+body8 :: String
+body8 = "OPENQASM 3;\n" ++
+        "include \"stdgates.inc\";\n\n" ++
+        "gate mygate (expr1, expr2) q1, q2 {\n}\n\n" ++
+        "gate altgate q1 {\n" ++
+        "    x q1;\n" ++
+        "    y q1;\n" ++
+        "}"
+
+test11 = TestCase (assertEqual "Printing of an OpenQASM file with empty gate decl (1/4)."
+                               body5a
+                               (printFile $ file5 "2.0" []))
+
+test12 = TestCase (assertEqual "Printing of an OpenQASM file with empty gate decl (2/4)."
+                               body5b
+                               (printFile $ file5 "3" ["stdgates.inc"]))
+
+test13 = TestCase (assertEqual "Printing of an OpenQASM file with empty gate decl (3/4)."
+                               body6a
+                               (printFile $ file6 "2.0" []))
+
+test14 = TestCase (assertEqual "Printing of an OpenQASM file with empty gate decl (4/4)."
+                               body6b
+                               (printFile $ file6 "3" ["stdgates.inc"]))
+
+test15 = TestCase (assertEqual "Printing of an OpenQASM file with non-empty gate decl."
+                               body7
+                               (printFile $ file7 "3" ["stdgates.inc"]))
+
+test16 = TestCase (assertEqual "Printing of an OpenQASM file with multiple gate decl."
+                               body8
+                               (printFile $ file8 "3" ["stdgates.inc"]))
+
+-----------------------------------------------------------------------------------------
 -- Orchestrates tests.
 
 tests = hUnitTestToTests $ TestList [TestLabel "encodeProblem_NoGates" test1,
@@ -252,6 +357,12 @@ tests = hUnitTestToTests $ TestList [TestLabel "encodeProblem_NoGates" test1,
                                      TestLabel "printFile_2" test7,
                                      TestLabel "printFile_3" test8,
                                      TestLabel "printFile_4" test9,
-                                     TestLabel "SemanticValidation_printFile" test10]
+                                     TestLabel "SemanticValidation_printFile" test10,
+                                     TestLabel "printFile_GateDecl_1" test11,
+                                     TestLabel "printFile_GateDecl_2" test12,
+                                     TestLabel "printFile_GateDecl_3" test13,
+                                     TestLabel "printFile_GateDecl_4" test14,
+                                     TestLabel "printFile_GateDecl_5" test15,
+                                     TestLabel "printFile_GateDecl_6" test16]
 
 main = defaultMain tests

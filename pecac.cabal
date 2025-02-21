@@ -34,6 +34,7 @@ library
                        Pecac.Parser.Revolution
                        Pecac.Parser.Syntax
                        Pecac.Printer.Expr
+                       Pecac.Printer.FDecl
                        Pecac.Printer.Gate
                        Pecac.Printer.GateSummary
                        Pecac.Printer.General
