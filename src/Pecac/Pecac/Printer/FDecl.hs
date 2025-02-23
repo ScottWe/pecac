@@ -1,8 +1,8 @@
--- | Functions to print statements.
+-- | Functions to print function delcarations.
 
 module Pecac.Printer.FDecl (printFDecl) where
 
--------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
 -- * Import Section.
 
 import Pecac.List

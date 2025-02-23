@@ -28,6 +28,7 @@ library
                        Pecac.Analyzer.Integrality
                        Pecac.Analyzer.Problem
                        Pecac.Analyzer.Revolution
+                       Pecac.Parser.FDecl
                        Pecac.Parser.Gate
                        Pecac.Parser.Parser
                        Pecac.Parser.Problem
@@ -184,6 +185,11 @@ test-suite parser-parser-tests
 test-suite parser-problem-tests
   import:              basic-unit-test-props
   main-is:             Parser-Problem-Tests.hs
+  type:                exitcode-stdio-1.0
+
+test-suite parser-fdecl-tests
+  import:              basic-unit-test-props
+  main-is:             Parser-FDecl-Tests.hs
   type:                exitcode-stdio-1.0
 
 test-suite parser-revolution-tests
